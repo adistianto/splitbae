@@ -22,7 +22,25 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   String dco_decode_String(dynamic raw);
 
   @protected
+  double dco_decode_f_64(dynamic raw);
+
+  @protected
+  List<String> dco_decode_list_String(dynamic raw);
+
+  @protected
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
+
+  @protected
+  List<ReceiptItem> dco_decode_list_receipt_item(dynamic raw);
+
+  @protected
+  List<SplitResult> dco_decode_list_split_result(dynamic raw);
+
+  @protected
+  ReceiptItem dco_decode_receipt_item(dynamic raw);
+
+  @protected
+  SplitResult dco_decode_split_result(dynamic raw);
 
   @protected
   int dco_decode_u_8(dynamic raw);
@@ -34,7 +52,25 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   String sse_decode_String(SseDeserializer deserializer);
 
   @protected
+  double sse_decode_f_64(SseDeserializer deserializer);
+
+  @protected
+  List<String> sse_decode_list_String(SseDeserializer deserializer);
+
+  @protected
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
+
+  @protected
+  List<ReceiptItem> sse_decode_list_receipt_item(SseDeserializer deserializer);
+
+  @protected
+  List<SplitResult> sse_decode_list_split_result(SseDeserializer deserializer);
+
+  @protected
+  ReceiptItem sse_decode_receipt_item(SseDeserializer deserializer);
+
+  @protected
+  SplitResult sse_decode_split_result(SseDeserializer deserializer);
 
   @protected
   int sse_decode_u_8(SseDeserializer deserializer);
@@ -52,10 +88,34 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_String(String self, SseSerializer serializer);
 
   @protected
+  void sse_encode_f_64(double self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_String(List<String> self, SseSerializer serializer);
+
+  @protected
   void sse_encode_list_prim_u_8_strict(
     Uint8List self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_list_receipt_item(
+    List<ReceiptItem> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_split_result(
+    List<SplitResult> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_receipt_item(ReceiptItem self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_split_result(SplitResult self, SseSerializer serializer);
 
   @protected
   void sse_encode_u_8(int self, SseSerializer serializer);

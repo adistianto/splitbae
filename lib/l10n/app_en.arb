@@ -1,0 +1,99 @@
+{
+  "@@locale": "en",
+  "appTitle": "SplitBae",
+  "@appTitle": {
+    "description": "App name shown in the title bar. Keep short; do not translate the brand if policy says so."
+  },
+  "addItemTooltip": "Add item",
+  "@addItemTooltip": {
+    "description": "Tooltip for the app bar button that opens the add-receipt-line flow."
+  },
+  "addPerson": "Add person",
+  "@addPerson": {
+    "description": "Label on the FAB that adds another participant to the split."
+  },
+  "settings": "Settings",
+  "@settings": {
+    "description": "Title for the settings screen and its entry in navigation."
+  },
+  "settingsLanguage": "Language",
+  "@settingsLanguage": {
+    "description": "Section header for language / locale preferences."
+  },
+  "settingsLanguageSubtitle": "Uses your phone language until you pick one here.",
+  "@settingsLanguageSubtitle": {
+    "description": "Explains that the app follows the OS locale until the user overrides."
+  },
+  "languageDevice": "Use device language",
+  "@languageDevice": {
+    "description": "Option to follow the system locale instead of a fixed app language."
+  },
+  "languageEnglish": "English",
+  "@languageEnglish": {
+    "description": "Fixed language option: English."
+  },
+  "languageIndonesian": "Bahasa Indonesia",
+  "@languageIndonesian": {
+    "description": "Fixed language option: Indonesian (use the autonym in target locale)."
+  },
+  "settingsDefaultCurrency": "Default currency for new items",
+  "@settingsDefaultCurrency": {
+    "description": "Settings row: default ISO currency for new line items."
+  },
+  "settingsDefaultCurrencySubtitle": "You can still pick another currency per item.",
+  "@settingsDefaultCurrencySubtitle": {
+    "description": "Clarifies that per-line currency can differ from the default."
+  },
+  "addItemTitle": "Add item",
+  "@addItemTitle": {
+    "description": "Title of the modal or sheet for creating a receipt line."
+  },
+  "addItemSubtitle": "Amount is in the currency you select below.",
+  "@addItemSubtitle": {
+    "description": "Explains that the amount uses the selected currency."
+  },
+  "itemNameLabel": "Item name",
+  "@itemNameLabel": {
+    "description": "Form label for the line description (e.g. food name)."
+  },
+  "itemNameHint": "e.g. Fried rice",
+  "@itemNameHint": {
+    "description": "Placeholder example for the item name field."
+  },
+  "priceLabel": "Amount",
+  "@priceLabel": {
+    "description": "Form label for the monetary amount (not the word Price if Amount fits better)."
+  },
+  "priceHint": "15000",
+  "@priceHint": {
+    "description": "Numeric placeholder example without currency symbol (locale formats it)."
+  },
+  "currencyLabel": "Currency",
+  "@currencyLabel": {
+    "description": "Label for ISO currency selector (IDR, USD, …)."
+  },
+  "cancel": "Cancel",
+  "@cancel": {
+    "description": "Generic dismiss action on dialogs."
+  },
+  "save": "Save",
+  "@save": {
+    "description": "Generic confirm action to persist the form."
+  },
+  "errorNameRequired": "Item name is required.",
+  "@errorNameRequired": {
+    "description": "Validation: user left the item name empty."
+  },
+  "errorPriceRequired": "Amount is required.",
+  "@errorPriceRequired": {
+    "description": "Validation: user left the amount empty."
+  },
+  "errorPriceInvalid": "Enter a valid positive amount.",
+  "@errorPriceInvalid": {
+    "description": "Validation: amount is not a positive number."
+  },
+  "splitSubtitle": "Per person, grouped by currency (no FX conversion).",
+  "@splitSubtitle": {
+    "description": "Explains the split list: one row per person per currency; no exchange rates."
+  }
+}

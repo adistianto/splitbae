@@ -6,5 +6,67 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `fmt`, `fmt`
+
 String greet({required String name}) =>
     RustLib.instance.api.crateApiSimpleGreet(name: name);
+
+/// Equal split per currency bucket (no FX conversion).
+List<SplitResult> calculateSplit({
+  required List<ReceiptItem> items,
+  required List<String> participants,
+}) => RustLib.instance.api.crateApiSimpleCalculateSplit(
+  items: items,
+  participants: participants,
+);
+
+class ReceiptItem {
+  final String name;
+  final double price;
+
+  /// ISO 4217 code (e.g. IDR, USD).
+  final String currencyCode;
+
+  const ReceiptItem({
+    required this.name,
+    required this.price,
+    required this.currencyCode,
+  });
+
+  @override
+  int get hashCode => name.hashCode ^ price.hashCode ^ currencyCode.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ReceiptItem &&
+          runtimeType == other.runtimeType &&
+          name == other.name &&
+          price == other.price &&
+          currencyCode == other.currencyCode;
+}
+
+class SplitResult {
+  final String personName;
+  final double totalOwed;
+  final String currencyCode;
+
+  const SplitResult({
+    required this.personName,
+    required this.totalOwed,
+    required this.currencyCode,
+  });
+
+  @override
+  int get hashCode =>
+      personName.hashCode ^ totalOwed.hashCode ^ currencyCode.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SplitResult &&
+          runtimeType == other.runtimeType &&
+          personName == other.personName &&
+          totalOwed == other.totalOwed &&
+          currencyCode == other.currencyCode;
+}

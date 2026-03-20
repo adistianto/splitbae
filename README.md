@@ -1,17 +1,26 @@
-# splitbae
+# SplitBae
 
-A new Flutter project.
+Offline-first bill splitting (**Splid × Splitty**): Flutter UI, **Rust** logic via **flutter_rust_bridge**, **Riverpod** state. See **[`.cursorrules`](.cursorrules)** for architecture, MVP (“Perfect Local Utility”), and design direction (Material 3 Expressive vs Liquid Glass).
 
-## Getting Started
+## Requirements
 
-This project is a starting point for a Flutter application.
+- [Flutter](https://docs.flutter.dev/get-started/install) (stable)
+- [Rust](https://rustup.rs/) (for `rust/`)
 
-A few resources to get you started if this is your first Flutter project:
+## Quick start
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+```bash
+flutter pub get
+flutter gen-l10n
+cd rust && cargo check && cd ..
+flutter_rust_bridge_codegen generate   # if you changed Rust FRB API
+flutter run
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Contributing
+
+See **[`CONTRIBUTING.md`](CONTRIBUTING.md)** (trunk-based workflow, Issues, codegen).
+
+## License
+
+Private / unpublished — adjust when you publish.
