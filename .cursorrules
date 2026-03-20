@@ -112,3 +112,6 @@ Recurring expenses, auto-categories (server or light rules), advanced splits (sh
 
 ## Cursor / AI usage
 Prefer edits that **match existing style**. No drive-by renames. No essay comments. When adding files, place them under the **layout above** unless a one-off script in `tool/`.
+
+## License
+The project is **Apache License 2.0** (`LICENSE`). New **third-party** code and dependencies must stay **license-compatible**; document notable obligations (NOTICE, attribution) when required.

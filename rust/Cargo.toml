@@ -2,6 +2,8 @@
 name = "rust_lib_splitbae"
 version = "0.1.0"
 edition = "2021"
+license = "Apache-2.0"
+description = "SplitBae Rust core (flutter_rust_bridge)"
 
 [lib]
 crate-type = ["cdylib", "staticlib"]

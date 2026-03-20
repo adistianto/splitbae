@@ -1,5 +1,7 @@
 # Contributing to SplitBae
 
+SplitBae is licensed under the **[Apache License 2.0](LICENSE)**. Contributions you merge are under that license. When adding **dependencies** (Dart crates, Flutter plugins, Rust crates), prefer **Apache-2.0–compatible** licenses; flag **copyleft** or **proprietary** terms in PRs for review.
+
 ## Before you change code
 
 1. Read **[`.cursorrules`](.cursorrules)** — architecture, MVP scope, and style expectations are defined there.

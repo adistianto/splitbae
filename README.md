@@ -23,4 +23,4 @@ See **[`CONTRIBUTING.md`](CONTRIBUTING.md)** (trunk-based workflow, Issues, code
 
 ## License
 
-Private / unpublished — adjust when you publish.
+[Apache License 2.0](LICENSE). By contributing, you agree your contributions are under the same license.
