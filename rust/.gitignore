@@ -1,1 +1,9 @@
 /target
+/build/
+/.dart_tool/
+/target/
+.DS_Store
+
+# Rust build artifacts
+/rust/target/
+/target/
