@@ -17,6 +17,10 @@ flutter_rust_bridge_codegen generate   # if you changed Rust FRB API
 flutter run
 ```
 
+## Local data & encryption
+
+Bill lines and participants live in an on-device **Drift** database with optional **SQLCipher**. Toggling encryption in Settings recreates the database; details are under **Local database (Drift + SQLCipher)** in [`CONTRIBUTING.md`](CONTRIBUTING.md).
+
 ## Contributing
 
 See **[`CONTRIBUTING.md`](CONTRIBUTING.md)** (trunk-based workflow, Issues, codegen).

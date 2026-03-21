@@ -19,11 +19,21 @@ SplitBae is licensed under the **[Apache License 2.0](LICENSE)**. Contributions 
 |------|---------|
 | Dependencies | `flutter pub get` |
 | Localization codegen | `flutter gen-l10n` (or automatic with `flutter pub get` when ARBs change) |
+| Drift (SQLite) codegen | `dart run build_runner build --delete-conflicting-outputs` after editing `lib/core/database/app_database.dart` |
+| Unit tests (VM) | `flutter test` — DB smoke tests use `NativeDatabase.memory()` (plain SQLite, not SQLCipher) |
 | Rust ↔ Dart bridge | From repo root: `flutter_rust_bridge_codegen generate` |
 | Rust check | `cd rust && cargo check` |
 | Analyze | `dart analyze` / `flutter analyze` |
 
 After changing **`rust/src/api/`** or FRB types, regenerate the bridge **before** opening a PR.
+
+## Local database (Drift + SQLCipher)
+
+- **Schema**: `lib/core/database/app_database.dart` (versioned migrations). Generated code: `app_database.g.dart` (do not hand-edit). **v2** adds indexes on `participants(ledger_id)` and `receipt_lines(ledger_id, created_at_ms)` for list/FK workloads.
+- **Prefs key**: `kEncryptDatabasePreferenceKey` in `lib/core/prefs_keys.dart` (shared by settings UI and `openAppDatabase`).
+- **Encryption**: optional, via **SQLCipher** (`sqflite_sqlcipher`). When **Encrypt local database** is on, the passphrase is stored in **Flutter Secure Storage** (`splitbae_sqlcipher_passphrase_v1`), generated with **256 bits** of `Random.secure()` entropy (Base64URL). Turning encryption **off** removes that key from secure storage after the DB files are deleted.
+- **Toggling encryption** in Settings shows a confirmation, then **persists the new flag**, **deletes** the SQLite files (including WAL/SHM), **reopens** the DB in the new mode, and **re-seeds** the default ledger. There is **no in-place re-key** yet—local bill data is intentionally wiped (secure-by-design: no mixed plain/encrypted file state).
+- **Runtime swap**: `AppDatabaseController` (`lib/core/providers/database_providers.dart`) holds the active `AppDatabase` so the process does not need a full app restart after a successful toggle.
 
 ## Style
 

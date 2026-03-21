@@ -82,4 +82,28 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get splitSubtitle => 'Per orang, per mata uang (tanpa konversi kurs).';
+
+  @override
+  String get settingsDataPrivacy => 'Data & privasi';
+
+  @override
+  String get settingsEncryptDatabase => 'Enkripsi basis data lokal';
+
+  @override
+  String get settingsEncryptDatabaseSubtitle =>
+      'Sangat disarankan jika ponsel bisa hilang atau dicuri—melindungi nama dan nominal saat disimpan. Default: mati.';
+
+  @override
+  String get settingsEncryptChangeTitle => 'Ubah enkripsi basis data?';
+
+  @override
+  String get settingsEncryptChangeBody =>
+      'Untuk menerapkan ini, data tagihan lokal akan dihapus dan diganti basis data baru yang kosong. Tidak bisa dibatalkan.';
+
+  @override
+  String get settingsEncryptChangeConfirm => 'Hapus dan lanjutkan';
+
+  @override
+  String get settingsEncryptChangeError =>
+      'Basis data tidak bisa diperbarui. Coba lagi atau mulai ulang aplikasi.';
 }

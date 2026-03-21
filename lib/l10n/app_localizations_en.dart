@@ -82,4 +82,28 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get splitSubtitle =>
       'Per person, grouped by currency (no FX conversion).';
+
+  @override
+  String get settingsDataPrivacy => 'Data & privacy';
+
+  @override
+  String get settingsEncryptDatabase => 'Encrypt local database';
+
+  @override
+  String get settingsEncryptDatabaseSubtitle =>
+      'Strongly recommended if your phone could be lost or stolen—it protects names and amounts at rest. Off by default.';
+
+  @override
+  String get settingsEncryptChangeTitle => 'Change database encryption?';
+
+  @override
+  String get settingsEncryptChangeBody =>
+      'To apply this, your local bill data will be erased and replaced with a fresh empty database. This cannot be undone.';
+
+  @override
+  String get settingsEncryptChangeConfirm => 'Erase and continue';
+
+  @override
+  String get settingsEncryptChangeError =>
+      'Could not update the database. Try again or restart the app.';
 }

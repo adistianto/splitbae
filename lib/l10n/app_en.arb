@@ -95,5 +95,33 @@
   "splitSubtitle": "Per person, grouped by currency (no FX conversion).",
   "@splitSubtitle": {
     "description": "Explains the split list: one row per person per currency; no exchange rates."
+  },
+  "settingsDataPrivacy": "Data & privacy",
+  "@settingsDataPrivacy": {
+    "description": "Section header for storage and encryption preferences."
+  },
+  "settingsEncryptDatabase": "Encrypt local database",
+  "@settingsEncryptDatabase": {
+    "description": "Toggle label: SQLCipher-style encryption for the on-device database when implemented."
+  },
+  "settingsEncryptDatabaseSubtitle": "Strongly recommended if your phone could be lost or stolen—it protects names and amounts at rest. Off by default.",
+  "@settingsEncryptDatabaseSubtitle": {
+    "description": "Explains why enabling encryption matters; note default is off."
+  },
+  "settingsEncryptChangeTitle": "Change database encryption?",
+  "@settingsEncryptChangeTitle": {
+    "description": "Dialog title when toggling SQLCipher on or off."
+  },
+  "settingsEncryptChangeBody": "To apply this, your local bill data will be erased and replaced with a fresh empty database. This cannot be undone.",
+  "@settingsEncryptChangeBody": {
+    "description": "Warns that toggling encryption wipes local DB; MVP has no migrate-in-place."
+  },
+  "settingsEncryptChangeConfirm": "Erase and continue",
+  "@settingsEncryptChangeConfirm": {
+    "description": "Destructive confirmation to wipe local data and recreate the DB."
+  },
+  "settingsEncryptChangeError": "Could not update the database. Try again or restart the app.",
+  "@settingsEncryptChangeError": {
+    "description": "Snack bar when DB recreate fails after encryption toggle."
   }
 }

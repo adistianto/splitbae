@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:splitbae/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:splitbae/app_settings.dart';
+import 'package:splitbae/core/data/ledger_repository.dart';
+import 'package:splitbae/core/database/database_opener.dart';
+import 'package:splitbae/core/providers/database_providers.dart';
 import 'package:splitbae/money_format.dart';
 import 'package:splitbae/providers.dart';
 import 'package:splitbae/screens/settings_screen.dart';
@@ -11,7 +14,16 @@ import 'package:splitbae/widgets/add_receipt_item_sheet.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await RustLib.init();
-  runApp(const ProviderScope(child: SplitBaeApp()));
+  final db = await openAppDatabase();
+  await LedgerRepository(db).ensureSeedData();
+  runApp(
+    ProviderScope(
+      overrides: [
+        appDatabaseProvider.overrideWith((ref) => AppDatabaseController(db)),
+      ],
+      child: const SplitBaeApp(),
+    ),
+  );
 }
 
 class SplitBaeApp extends ConsumerWidget {
@@ -145,8 +157,10 @@ class HomeScreen extends ConsumerWidget {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          ref.read(participantsProvider.notifier).addParticipant('New Friend');
+        onPressed: () async {
+          await ref
+              .read(participantsProvider.notifier)
+              .addParticipant('New Friend');
         },
         label: Text(l10n.addPerson),
         icon: const Icon(Icons.person_add),

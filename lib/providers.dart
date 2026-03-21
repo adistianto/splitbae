@@ -1,45 +1,63 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:splitbae/core/domain/ledger_ids.dart';
+import 'package:splitbae/core/providers/database_providers.dart';
 import 'package:splitbae/src/rust/api/simple.dart';
 
 class ItemsNotifier extends StateNotifier<List<ReceiptItem>> {
-  ItemsNotifier()
-      : super([
-          const ReceiptItem(
-            name: 'Nasi Goreng',
-            price: 45000,
-            currencyCode: 'IDR',
-          ),
-          const ReceiptItem(
-            name: 'Es Teh',
-            price: 15000,
-            currencyCode: 'IDR',
-          ),
-        ]);
-
-  void addItem(String name, double price, String currencyCode) {
-    state = [
-      ...state,
-      ReceiptItem(name: name, price: price, currencyCode: currencyCode),
-    ];
+  ItemsNotifier(this._ref) : super(const []) {
+    _load();
   }
+
+  final Ref _ref;
+
+  Future<void> _load() async {
+    final repo = _ref.read(lineItemRepositoryProvider);
+    state = await repo.listForLedger(kDefaultLedgerId);
+  }
+
+  Future<void> addItem(String name, double price, String currencyCode) async {
+    final repo = _ref.read(lineItemRepositoryProvider);
+    await repo.addLine(
+      ledgerId: kDefaultLedgerId,
+      label: name,
+      amount: price,
+      currencyCode: currencyCode,
+    );
+    await _load();
+  }
+
+  /// After the on-disk database is recreated (e.g. encryption mode change).
+  Future<void> reloadFromDatabase() => _load();
 }
 
 final itemsProvider =
     StateNotifierProvider<ItemsNotifier, List<ReceiptItem>>((ref) {
-  return ItemsNotifier();
+  return ItemsNotifier(ref);
 });
 
 class ParticipantsNotifier extends StateNotifier<List<String>> {
-  ParticipantsNotifier() : super(['Adistianto', 'Gemini', 'Nic']);
-
-  void addParticipant(String name) {
-    state = [...state, name];
+  ParticipantsNotifier(this._ref) : super(const []) {
+    _load();
   }
+
+  final Ref _ref;
+
+  Future<void> _load() async {
+    final repo = _ref.read(participantRepositoryProvider);
+    state = await repo.listDisplayNames(kDefaultLedgerId);
+  }
+
+  Future<void> addParticipant(String name) async {
+    await _ref.read(participantRepositoryProvider).addParticipant(name);
+    await _load();
+  }
+
+  Future<void> reloadFromDatabase() => _load();
 }
 
 final participantsProvider =
     StateNotifierProvider<ParticipantsNotifier, List<String>>((ref) {
-  return ParticipantsNotifier();
+  return ParticipantsNotifier(ref);
 });
 
 final splitProvider = FutureProvider<List<SplitResult>>((ref) async {

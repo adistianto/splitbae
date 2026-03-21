@@ -241,6 +241,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Per person, grouped by currency (no FX conversion).'**
   String get splitSubtitle;
+
+  /// Section header for storage and encryption preferences.
+  ///
+  /// In en, this message translates to:
+  /// **'Data & privacy'**
+  String get settingsDataPrivacy;
+
+  /// Toggle label: SQLCipher-style encryption for the on-device database when implemented.
+  ///
+  /// In en, this message translates to:
+  /// **'Encrypt local database'**
+  String get settingsEncryptDatabase;
+
+  /// Explains why enabling encryption matters; note default is off.
+  ///
+  /// In en, this message translates to:
+  /// **'Strongly recommended if your phone could be lost or stolen—it protects names and amounts at rest. Off by default.'**
+  String get settingsEncryptDatabaseSubtitle;
+
+  /// Dialog title when toggling SQLCipher on or off.
+  ///
+  /// In en, this message translates to:
+  /// **'Change database encryption?'**
+  String get settingsEncryptChangeTitle;
+
+  /// Warns that toggling encryption wipes local DB; MVP has no migrate-in-place.
+  ///
+  /// In en, this message translates to:
+  /// **'To apply this, your local bill data will be erased and replaced with a fresh empty database. This cannot be undone.'**
+  String get settingsEncryptChangeBody;
+
+  /// Destructive confirmation to wipe local data and recreate the DB.
+  ///
+  /// In en, this message translates to:
+  /// **'Erase and continue'**
+  String get settingsEncryptChangeConfirm;
+
+  /// Snack bar when DB recreate fails after encryption toggle.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not update the database. Try again or restart the app.'**
+  String get settingsEncryptChangeError;
 }
 
 class _AppLocalizationsDelegate

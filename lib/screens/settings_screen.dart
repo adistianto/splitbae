@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:splitbae/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:splitbae/app_settings.dart';
+import 'package:splitbae/core/providers/database_providers.dart';
 import 'package:splitbae/currency_catalog.dart';
+import 'package:splitbae/providers.dart';
 
 enum _LanguageChoice { device, english, indonesian }
 
@@ -36,6 +38,69 @@ _LanguageChoice _languageChoice(AppSettings s) {
   if (s.followSystemLocale) return _LanguageChoice.device;
   if (s.appLocaleCode == 'id') return _LanguageChoice.indonesian;
   return _LanguageChoice.english;
+}
+
+Future<void> _onEncryptDatabaseToggle({
+  required BuildContext context,
+  required WidgetRef ref,
+  required bool requested,
+}) async {
+  final current = ref.read(appSettingsProvider).encryptDatabase;
+  if (requested == current) return;
+
+  final l10n = AppLocalizations.of(context)!;
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(l10n.settingsEncryptChangeTitle),
+      content: Text(l10n.settingsEncryptChangeBody),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(false),
+          child: Text(l10n.cancel),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(ctx).pop(true),
+          child: Text(l10n.settingsEncryptChangeConfirm),
+        ),
+      ],
+    ),
+  );
+  if (confirmed != true || !context.mounted) return;
+
+  final previous = current;
+  showDialog<void>(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) => const PopScope(
+      canPop: false,
+      child: Center(child: CircularProgressIndicator()),
+    ),
+  );
+
+  try {
+    await ref.read(appSettingsProvider.notifier).setEncryptDatabase(requested);
+    await ref.read(appDatabaseProvider.notifier).resetLocalDatabase();
+    await ref.read(itemsProvider.notifier).reloadFromDatabase();
+    await ref.read(participantsProvider.notifier).reloadFromDatabase();
+  } catch (_) {
+    await ref.read(appSettingsProvider.notifier).setEncryptDatabase(previous);
+    try {
+      await ref.read(appDatabaseProvider.notifier).resetLocalDatabase();
+      await ref.read(itemsProvider.notifier).reloadFromDatabase();
+      await ref.read(participantsProvider.notifier).reloadFromDatabase();
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.settingsEncryptChangeError)),
+        );
+      }
+    }
+  } finally {
+    if (context.mounted) {
+      Navigator.of(context, rootNavigator: true).pop();
+    }
+  }
 }
 
 class SettingsScreen extends ConsumerWidget {
@@ -120,6 +185,29 @@ class SettingsScreen extends ConsumerWidget {
               onSelected: (code) {
                 if (code != null) notifier.setDefaultCurrency(code);
               },
+            ),
+          ),
+          const Divider(height: 32),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: Text(
+              l10n.settingsDataPrivacy,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+          ),
+          SwitchListTile.adaptive(
+            value: settings.encryptDatabase,
+            onChanged: (enabled) => _onEncryptDatabaseToggle(
+              context: context,
+              ref: ref,
+              requested: enabled,
+            ),
+            title: Text(l10n.settingsEncryptDatabase),
+            subtitle: Text(
+              l10n.settingsEncryptDatabaseSubtitle,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
             ),
           ),
         ],

@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'core/prefs_keys.dart';
+
+export 'core/prefs_keys.dart' show kEncryptDatabasePreferenceKey;
+
 const _kFollowSystem = 'follow_system_locale';
 const _kAppLocaleCode = 'app_locale_code';
 const _kDefaultCurrency = 'default_currency';
@@ -11,6 +15,7 @@ class AppSettings {
     required this.followSystemLocale,
     required this.appLocaleCode,
     required this.defaultCurrencyCode,
+    required this.encryptDatabase,
   });
 
   /// When true, [MaterialApp.locale] stays null so Flutter follows the device.
@@ -22,6 +27,10 @@ class AppSettings {
   /// Default ISO 4217 code for new receipt lines.
   final String defaultCurrencyCode;
 
+  /// When true, local SQLite should use encryption (SQLCipher) once implemented.
+  /// Default off; user is nudged to enable in Settings.
+  final bool encryptDatabase;
+
   Locale? get materialLocale =>
       followSystemLocale ? null : Locale(appLocaleCode);
 
@@ -29,12 +38,14 @@ class AppSettings {
     bool? followSystemLocale,
     String? appLocaleCode,
     String? defaultCurrencyCode,
+    bool? encryptDatabase,
   }) {
     return AppSettings(
       followSystemLocale: followSystemLocale ?? this.followSystemLocale,
       appLocaleCode: appLocaleCode ?? this.appLocaleCode,
       defaultCurrencyCode:
           defaultCurrencyCode ?? this.defaultCurrencyCode,
+      encryptDatabase: encryptDatabase ?? this.encryptDatabase,
     );
   }
 
@@ -44,6 +55,7 @@ class AppSettings {
       followSystemLocale: p.getBool(_kFollowSystem) ?? true,
       appLocaleCode: p.getString(_kAppLocaleCode) ?? 'en',
       defaultCurrencyCode: p.getString(_kDefaultCurrency) ?? 'IDR',
+      encryptDatabase: p.getBool(kEncryptDatabasePreferenceKey) ?? false,
     );
   }
 
@@ -52,6 +64,7 @@ class AppSettings {
     await p.setBool(_kFollowSystem, followSystemLocale);
     await p.setString(_kAppLocaleCode, appLocaleCode);
     await p.setString(_kDefaultCurrency, defaultCurrencyCode);
+    await p.setBool(kEncryptDatabasePreferenceKey, encryptDatabase);
   }
 }
 
@@ -62,6 +75,7 @@ class AppSettingsNotifier extends StateNotifier<AppSettings> {
             followSystemLocale: true,
             appLocaleCode: 'en',
             defaultCurrencyCode: 'IDR',
+            encryptDatabase: false,
           ),
         ) {
     _hydrate();
@@ -91,6 +105,12 @@ class AppSettingsNotifier extends StateNotifier<AppSettings> {
     state = next;
     await next.persist();
   }
+
+  Future<void> setEncryptDatabase(bool enabled) async {
+    final next = state.copyWith(encryptDatabase: enabled);
+    state = next;
+    await next.persist();
+  }
 }
 
 final appSettingsProvider =
@@ -100,4 +120,8 @@ final appSettingsProvider =
 
 final defaultCurrencyProvider = Provider<String>((ref) {
   return ref.watch(appSettingsProvider).defaultCurrencyCode;
+});
+
+final encryptDatabaseProvider = Provider<bool>((ref) {
+  return ref.watch(appSettingsProvider).encryptDatabase;
 });

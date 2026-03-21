@@ -23,5 +23,12 @@
   "errorNameRequired": "Nama item wajib diisi.",
   "errorPriceRequired": "Jumlah wajib diisi.",
   "errorPriceInvalid": "Masukkan nominal yang valid (positif).",
-  "splitSubtitle": "Per orang, per mata uang (tanpa konversi kurs)."
+  "splitSubtitle": "Per orang, per mata uang (tanpa konversi kurs).",
+  "settingsDataPrivacy": "Data & privasi",
+  "settingsEncryptDatabase": "Enkripsi basis data lokal",
+  "settingsEncryptDatabaseSubtitle": "Sangat disarankan jika ponsel bisa hilang atau dicuri—melindungi nama dan nominal saat disimpan. Default: mati.",
+  "settingsEncryptChangeTitle": "Ubah enkripsi basis data?",
+  "settingsEncryptChangeBody": "Untuk menerapkan ini, data tagihan lokal akan dihapus dan diganti basis data baru yang kosong. Tidak bisa dibatalkan.",
+  "settingsEncryptChangeConfirm": "Hapus dan lanjutkan",
+  "settingsEncryptChangeError": "Basis data tidak bisa diperbarui. Coba lagi atau mulai ulang aplikasi."
 }

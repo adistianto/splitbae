@@ -136,7 +136,7 @@ class _AddItemFormCupertinoState extends ConsumerState<_AddItemFormCupertino> {
     super.dispose();
   }
 
-  void _submit(BuildContext context, AppLocalizations l10n) {
+  Future<void> _submit(BuildContext context, AppLocalizations l10n) async {
     setState(() => _error = null);
     final name = _nameCtrl.text.trim();
     if (name.isEmpty) {
@@ -149,7 +149,8 @@ class _AddItemFormCupertinoState extends ConsumerState<_AddItemFormCupertino> {
       setState(() => _error = l10n.errorPriceInvalid);
       return;
     }
-    ref.read(itemsProvider.notifier).addItem(name, price, _currencyCode);
+    await ref.read(itemsProvider.notifier).addItem(name, price, _currencyCode);
+    if (!context.mounted) return;
     Navigator.of(context).pop();
   }
 
@@ -364,12 +365,13 @@ class _AddItemFormMaterialState extends ConsumerState<_AddItemFormMaterial> {
     );
   }
 
-  void _submit(BuildContext context, AppLocalizations l10n) {
+  Future<void> _submit(BuildContext context, AppLocalizations l10n) async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     final name = _nameCtrl.text.trim();
     final raw = _priceCtrl.text.trim().replaceAll(RegExp(r'[^\d.]'), '');
     final price = double.parse(raw);
-    ref.read(itemsProvider.notifier).addItem(name, price, _currencyCode);
+    await ref.read(itemsProvider.notifier).addItem(name, price, _currencyCode);
+    if (!context.mounted) return;
     Navigator.of(context).pop();
   }
 
