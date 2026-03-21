@@ -308,6 +308,18 @@ abstract class AppLocalizations {
   /// **'Backup'**
   String get settingsBackup;
 
+  /// List tile title: opens export/import backup flow.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual backup'**
+  String get settingsBackupManualTitle;
+
+  /// Subtitle on Settings row that opens the manual backup screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Export or restore a .sb_backup file on this device.'**
+  String get settingsBackupEntrySubtitle;
+
   /// List tile: write .sb_backup and open share sheet.
   ///
   /// In en, this message translates to:

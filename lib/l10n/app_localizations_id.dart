@@ -121,6 +121,13 @@ class AppLocalizationsId extends AppLocalizations {
   String get settingsBackup => 'Cadangan';
 
   @override
+  String get settingsBackupManualTitle => 'Cadangan manual';
+
+  @override
+  String get settingsBackupEntrySubtitle =>
+      'Ekspor atau pulihkan file .sb_backup di perangkat ini.';
+
+  @override
   String get settingsBackupExport => 'Ekspor file cadangan';
 
   @override

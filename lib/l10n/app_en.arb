@@ -140,6 +140,14 @@
   "@settingsBackup": {
     "description": "Section header for manual backup export/import."
   },
+  "settingsBackupManualTitle": "Manual backup",
+  "@settingsBackupManualTitle": {
+    "description": "List tile title: opens export/import backup flow."
+  },
+  "settingsBackupEntrySubtitle": "Export or restore a .sb_backup file on this device.",
+  "@settingsBackupEntrySubtitle": {
+    "description": "Subtitle on Settings row that opens the manual backup screen."
+  },
   "settingsBackupExport": "Export backup file",
   "@settingsBackupExport": {
     "description": "List tile: write .sb_backup and open share sheet."

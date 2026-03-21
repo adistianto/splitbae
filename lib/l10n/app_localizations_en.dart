@@ -121,6 +121,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsBackup => 'Backup';
 
   @override
+  String get settingsBackupManualTitle => 'Manual backup';
+
+  @override
+  String get settingsBackupEntrySubtitle =>
+      'Export or restore a .sb_backup file on this device.';
+
+  @override
   String get settingsBackupExport => 'Export backup file';
 
   @override

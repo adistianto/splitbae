@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:splitbae/app_settings.dart';
 import 'package:splitbae/core/providers/database_providers.dart';
 import 'package:splitbae/core/platform/adaptive_confirm_dialog.dart';
+import 'package:splitbae/screens/backup_screen.dart';
 import 'package:splitbae/currency_catalog.dart';
 import 'package:splitbae/providers.dart';
 
@@ -98,87 +99,6 @@ Future<void> _onEncryptDatabaseToggle({
     if (context.mounted) {
       Navigator.of(context, rootNavigator: true).pop();
     }
-  }
-}
-
-void _showBlockingProgress(BuildContext context) {
-  showDialog<void>(
-    context: context,
-    barrierDismissible: false,
-    builder: (_) => const PopScope(
-      canPop: false,
-      child: Center(child: CircularProgressIndicator()),
-    ),
-  );
-}
-
-void _dismissBlockingProgress(BuildContext context) {
-  if (context.mounted) {
-    Navigator.of(context, rootNavigator: true).pop();
-  }
-}
-
-Future<void> _onExportBackup(BuildContext context, WidgetRef ref) async {
-  final l10n = AppLocalizations.of(context)!;
-  _showBlockingProgress(context);
-  try {
-    final svc = ref.read(backupServiceProvider);
-    final file = await svc.writeExportFile();
-    await svc.shareExportFile(file);
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(l10n.backupExportSuccess)));
-  } catch (_) {
-    if (context.mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.backupErrorExport)));
-    }
-  } finally {
-    _dismissBlockingProgress(context);
-  }
-}
-
-Future<void> _onImportBackup(BuildContext context, WidgetRef ref) async {
-  final l10n = AppLocalizations.of(context)!;
-  final confirmed = await showAdaptiveConfirmDialog(
-    context: context,
-    title: Text(l10n.backupImportConfirmTitle),
-    content: Text(l10n.backupImportConfirmBody),
-    cancelLabel: l10n.cancel,
-    confirmLabel: l10n.backupImportConfirmAction,
-  );
-  if (confirmed != true || !context.mounted) return;
-
-  _showBlockingProgress(context);
-  try {
-    final didImport = await ref
-        .read(backupServiceProvider)
-        .importFromUserPick();
-    if (!didImport) {
-      return;
-    }
-    await ref.read(itemsProvider.notifier).reloadFromDatabase();
-    await ref.read(participantsProvider.notifier).reloadFromDatabase();
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(l10n.backupImportSuccess)));
-  } on FormatException catch (_) {
-    if (context.mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.backupErrorInvalid)));
-    }
-  } catch (_) {
-    if (context.mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.backupErrorInvalid)));
-    }
-  } finally {
-    _dismissBlockingProgress(context);
   }
 }
 
@@ -301,26 +221,23 @@ class SettingsScreen extends ConsumerWidget {
               ),
             ),
             ListTile(
-              leading: const Icon(Icons.upload_file_outlined),
-              title: Text(l10n.settingsBackupExport),
+              leading: const Icon(Icons.backup_outlined),
+              title: Text(l10n.settingsBackupManualTitle),
               subtitle: Text(
-                l10n.settingsBackupExportSubtitle,
+                l10n.settingsBackupEntrySubtitle,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
-              onTap: () => _onExportBackup(context, ref),
-            ),
-            ListTile(
-              leading: const Icon(Icons.download_outlined),
-              title: Text(l10n.settingsBackupImport),
-              subtitle: Text(
-                l10n.settingsBackupImportSubtitle,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+              trailing: Icon(
+                Icons.chevron_right,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
-              onTap: () => _onImportBackup(context, ref),
+              onTap: () {
+                Navigator.of(context).push<void>(
+                  MaterialPageRoute<void>(builder: (_) => const BackupScreen()),
+                );
+              },
             ),
           ],
         );
