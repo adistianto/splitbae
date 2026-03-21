@@ -1,14 +1,23 @@
+import 'dart:ui';
+
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:splitbae/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:splitbae/app_settings.dart';
+import 'package:splitbae/core/platform/host_platform.dart';
 import 'package:splitbae/core/providers/database_providers.dart';
 import 'package:splitbae/core/platform/adaptive_confirm_dialog.dart';
+import 'package:splitbae/core/widgets/adaptive_app_bar.dart';
 import 'package:splitbae/screens/backup_screen.dart';
 import 'package:splitbae/currency_catalog.dart';
 import 'package:splitbae/providers.dart';
 
 enum _LanguageChoice { device, english, indonesian }
+
+bool _useExpressiveComponents(BuildContext context) {
+  return Theme.of(context).platform == TargetPlatform.android;
+}
 
 class _LanguageTile extends StatelessWidget {
   const _LanguageTile({
@@ -32,6 +41,46 @@ class _LanguageTile extends StatelessWidget {
       ),
       title: Text(label),
       onTap: onTap,
+    );
+  }
+}
+
+class _LanguageChoiceSegment extends StatelessWidget {
+  const _LanguageChoiceSegment({
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final _LanguageChoice selected;
+  final ValueChanged<_LanguageChoice> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return SegmentedButton<_LanguageChoice>(
+      showSelectedIcon: false,
+      segments: [
+        ButtonSegment<_LanguageChoice>(
+          value: _LanguageChoice.device,
+          icon: const Icon(Icons.phone_iphone_outlined),
+          label: Text(l10n.languageDevice),
+        ),
+        ButtonSegment<_LanguageChoice>(
+          value: _LanguageChoice.english,
+          icon: const Icon(Icons.language_outlined),
+          label: Text(l10n.languageEnglish),
+        ),
+        ButtonSegment<_LanguageChoice>(
+          value: _LanguageChoice.indonesian,
+          icon: const Icon(Icons.translate_outlined),
+          label: Text(l10n.languageIndonesian),
+        ),
+      ],
+      selected: {selected},
+      onSelectionChanged: (values) {
+        final choice = values.firstOrNull;
+        if (choice != null) onSelected(choice);
+      },
     );
   }
 }
@@ -177,21 +226,43 @@ class SettingsScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 8),
-            _LanguageTile(
-              label: l10n.languageDevice,
-              selected: selected == _LanguageChoice.device,
-              onTap: () => notifier.setFollowDeviceLanguage(),
-            ),
-            _LanguageTile(
-              label: l10n.languageEnglish,
-              selected: selected == _LanguageChoice.english,
-              onTap: () => notifier.setExplicitLanguage('en'),
-            ),
-            _LanguageTile(
-              label: l10n.languageIndonesian,
-              selected: selected == _LanguageChoice.indonesian,
-              onTap: () => notifier.setExplicitLanguage('id'),
-            ),
+            if (_useExpressiveComponents(context))
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: _LanguageChoiceSegment(
+                  selected: selected,
+                  onSelected: (choice) {
+                    switch (choice) {
+                      case _LanguageChoice.device:
+                        notifier.setFollowDeviceLanguage();
+                        break;
+                      case _LanguageChoice.english:
+                        notifier.setExplicitLanguage('en');
+                        break;
+                      case _LanguageChoice.indonesian:
+                        notifier.setExplicitLanguage('id');
+                        break;
+                    }
+                  },
+                ),
+              )
+            else ...[
+              _LanguageTile(
+                label: l10n.languageDevice,
+                selected: selected == _LanguageChoice.device,
+                onTap: () => notifier.setFollowDeviceLanguage(),
+              ),
+              _LanguageTile(
+                label: l10n.languageEnglish,
+                selected: selected == _LanguageChoice.english,
+                onTap: () => notifier.setExplicitLanguage('en'),
+              ),
+              _LanguageTile(
+                label: l10n.languageIndonesian,
+                selected: selected == _LanguageChoice.indonesian,
+                onTap: () => notifier.setExplicitLanguage('id'),
+              ),
+            ],
             const Divider(height: 32),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
@@ -261,11 +332,57 @@ class SettingsScreen extends ConsumerWidget {
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-              child: FilledButton.icon(
-                icon: const Icon(Icons.upload_file_outlined),
-                label: Text(l10n.settingsBackupExport),
-                onPressed: () => _exportBackup(context, ref),
-              ),
+              child: _useExpressiveComponents(context)
+                  ? MenuAnchor(
+                      menuChildren: [
+                        MenuItemButton(
+                          leadingIcon: const Icon(Icons.settings_backup_restore),
+                          onPressed: () {
+                            Navigator.of(context).push<void>(
+                              MaterialPageRoute<void>(
+                                builder: (_) => const BackupScreen(),
+                              ),
+                            );
+                          },
+                          child: Text(l10n.settingsBackupManualTitle),
+                        ),
+                      ],
+                      builder: (ctx, controller, _) => Row(
+                        children: [
+                          Expanded(
+                            child: FilledButton.icon(
+                              icon: const Icon(Icons.upload_file_outlined),
+                              label: Text(l10n.settingsBackupExport),
+                              style: FilledButton.styleFrom(
+                                shape: const RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.horizontal(
+                                    left: Radius.circular(20),
+                                  ),
+                                ),
+                              ),
+                              onPressed: () => _exportBackup(context, ref),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          IconButton.filledTonal(
+                            tooltip: l10n.settingsBackupManualTitle,
+                            onPressed: () {
+                              if (controller.isOpen) {
+                                controller.close();
+                              } else {
+                                controller.open();
+                              }
+                            },
+                            icon: const Icon(Icons.arrow_drop_down),
+                          ),
+                        ],
+                      ),
+                    )
+                  : FilledButton.icon(
+                      icon: const Icon(Icons.upload_file_outlined),
+                      label: Text(l10n.settingsBackupExport),
+                      onPressed: () => _exportBackup(context, ref),
+                    ),
             ),
             ListTile(
               leading: const Icon(Icons.backup_outlined),
@@ -294,9 +411,191 @@ class SettingsScreen extends ConsumerWidget {
     if (embedded) {
       return body;
     }
+    if (hostPlatformIsApple()) {
+      return CupertinoPageScaffold(
+        navigationBar: splitBaeCupertinoNavigationBar(
+          context: context,
+          title: l10n.settings,
+        ),
+        child: SafeArea(
+          child: _AppleLiquidSettingsBody(
+            settings: settings,
+            selected: selected,
+            notifier: notifier,
+            onExport: () => _exportBackup(context, ref),
+          ),
+        ),
+      );
+    }
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settings)),
       body: body,
+    );
+  }
+}
+
+class _AppleLiquidSettingsBody extends StatelessWidget {
+  const _AppleLiquidSettingsBody({
+    required this.settings,
+    required this.selected,
+    required this.notifier,
+    required this.onExport,
+  });
+
+  final AppSettings settings;
+  final _LanguageChoice selected;
+  final AppSettingsNotifier notifier;
+  final VoidCallback onExport;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    final isDark = MediaQuery.platformBrightnessOf(context) == Brightness.dark;
+    final base = isDark
+        ? const Color(0xFF1C1C1E).withValues(alpha: 0.66)
+        : CupertinoColors.systemBackground
+              .resolveFrom(context)
+              .withValues(alpha: 0.7);
+
+    Widget glassSection({required List<Widget> children}) {
+      final section = DecoratedBox(
+        decoration: BoxDecoration(
+          color: base,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: CupertinoColors.separator
+                .resolveFrom(context)
+                .withValues(alpha: 0.35),
+          ),
+          boxShadow: reduceMotion
+              ? null
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.08),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+        ),
+        child: Column(children: children),
+      );
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(18),
+        child: reduceMotion
+            ? section
+            : BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                child: section,
+              ),
+      );
+    }
+
+    Widget sectionTitle(String text) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(18, 14, 18, 8),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            text,
+            style: CupertinoTheme.of(context).textTheme.navTitleTextStyle.copyWith(
+              fontSize: 15,
+              color: CupertinoColors.secondaryLabel.resolveFrom(context),
+            ),
+          ),
+        ),
+      );
+    }
+
+    Widget divider() => DecoratedBox(
+      decoration: BoxDecoration(
+        border: Border(
+          top: BorderSide(
+            color: CupertinoColors.separator
+                .resolveFrom(context)
+                .withValues(alpha: 0.3),
+          ),
+        ),
+      ),
+      child: const SizedBox(height: 0),
+    );
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
+      children: [
+        sectionTitle(l10n.settingsLanguage),
+        glassSection(
+          children: [
+            CupertinoListTile(
+              title: Text(l10n.languageDevice),
+              trailing: selected == _LanguageChoice.device
+                  ? const Icon(CupertinoIcons.check_mark)
+                  : null,
+              onTap: notifier.setFollowDeviceLanguage,
+            ),
+            divider(),
+            CupertinoListTile(
+              title: Text(l10n.languageEnglish),
+              trailing: selected == _LanguageChoice.english
+                  ? const Icon(CupertinoIcons.check_mark)
+                  : null,
+              onTap: () => notifier.setExplicitLanguage('en'),
+            ),
+            divider(),
+            CupertinoListTile(
+              title: Text(l10n.languageIndonesian),
+              trailing: selected == _LanguageChoice.indonesian
+                  ? const Icon(CupertinoIcons.check_mark)
+                  : null,
+              onTap: () => notifier.setExplicitLanguage('id'),
+            ),
+          ],
+        ),
+        sectionTitle(l10n.settingsDefaultCurrency),
+        glassSection(
+          children: [
+            CupertinoListTile(
+              title: Text(l10n.settingsDefaultCurrencySubtitle),
+            ),
+            divider(),
+            for (final code in kSupportedCurrencyCodes) ...[
+              CupertinoListTile(
+                title: Text(currencyMenuLabel(code)),
+                trailing: settings.defaultCurrencyCode == code
+                    ? const Icon(CupertinoIcons.check_mark)
+                    : null,
+                onTap: () => notifier.setDefaultCurrency(code),
+              ),
+              if (code != kSupportedCurrencyCodes.last) divider(),
+            ],
+          ],
+        ),
+        sectionTitle(l10n.settingsBackup),
+        glassSection(
+          children: [
+            CupertinoListTile.notched(
+              title: Text(l10n.settingsBackupExport),
+              subtitle: Text(l10n.settingsBackupEntrySubtitle),
+              leading: const Icon(CupertinoIcons.square_arrow_up),
+              onTap: onExport,
+            ),
+            divider(),
+            CupertinoListTile.notched(
+              title: Text(l10n.settingsBackupManualTitle),
+              subtitle: Text(l10n.settingsBackupEntrySubtitle),
+              leading: const Icon(CupertinoIcons.tray_full),
+              trailing: const CupertinoListTileChevron(),
+              onTap: () {
+                Navigator.of(context).push<void>(
+                  CupertinoPageRoute<void>(
+                    builder: (_) => const BackupScreen(),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

@@ -14,7 +14,9 @@ ObstructingPreferredSizeWidget splitBaeCupertinoNavigationBar({
   final theme = Theme.of(context);
   return CupertinoNavigationBar(
     middle: Text(title),
-    backgroundColor: theme.colorScheme.surface,
+    backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.74),
+    enableBackgroundFilterBlur: true,
+    automaticBackgroundVisibility: true,
     border: Border(
       bottom: BorderSide(color: theme.colorScheme.outlineVariant, width: 0.5),
     ),

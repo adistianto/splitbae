@@ -1,4 +1,5 @@
 import 'dart:async' show unawaited;
+import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform;
@@ -305,17 +306,44 @@ class _AppleAddPersonFab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CupertinoButton.filled(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-      onPressed: onPressed,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(CupertinoIcons.person_add_solid, size: 20),
-          const SizedBox(width: 8),
-          Text(label),
-        ],
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    final isDark = MediaQuery.platformBrightnessOf(context) == Brightness.dark;
+    final tint = isDark
+        ? const Color(0xFF2C2C2E).withValues(alpha: 0.66)
+        : CupertinoColors.systemBackground
+              .resolveFrom(context)
+              .withValues(alpha: 0.74);
+    final pill = DecoratedBox(
+      decoration: BoxDecoration(
+        color: tint,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: CupertinoColors.separator
+              .resolveFrom(context)
+              .withValues(alpha: 0.32),
+        ),
       ),
+      child: CupertinoButton(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+        onPressed: onPressed,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(CupertinoIcons.person_add_solid, size: 20),
+            const SizedBox(width: 8),
+            Text(label),
+          ],
+        ),
+      ),
+    );
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: reduceMotion
+          ? pill
+          : BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+              child: pill,
+            ),
     );
   }
 }
