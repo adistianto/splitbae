@@ -57,9 +57,14 @@ class SplitHomeContent extends ConsumerWidget {
               ),
               title: Text(
                 line.receiptItem.name,
-                style: const TextStyle(fontWeight: FontWeight.w600),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
               ),
-              subtitle: Text(line.receiptItem.currencyCode),
+              subtitle: Text(
+                line.receiptItem.currencyCode,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -69,7 +74,7 @@ class SplitHomeContent extends ConsumerWidget {
                       currencyCode: line.receiptItem.currencyCode,
                       locale: locale,
                     ),
-                    style: TextStyle(
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                       color: Theme.of(context).colorScheme.primary,
                     ),
@@ -125,18 +130,22 @@ class SplitHomeContent extends ConsumerWidget {
               ),
               title: Text(
                 res.personName,
-                style: const TextStyle(fontWeight: FontWeight.bold),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
-              subtitle: Text(res.currencyCode),
+              subtitle: Text(
+                res.currencyCode,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
               trailing: Text(
                 formatCurrencyAmount(
                   amount: res.totalOwed,
                   currencyCode: res.currencyCode,
                   locale: locale,
                 ),
-                style: TextStyle(
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w900,
-                  fontSize: 15,
                   color: Theme.of(context).colorScheme.primary,
                 ),
               ),

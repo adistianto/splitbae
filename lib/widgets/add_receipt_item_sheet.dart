@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:splitbae/app_settings.dart';
 import 'package:splitbae/core/data/amount_minor.dart';
 import 'package:splitbae/core/domain/ledger_line_item.dart';
+import 'package:splitbae/core/platform/host_platform.dart';
 import 'package:splitbae/currency_catalog.dart';
 import 'package:splitbae/providers.dart';
 
@@ -17,8 +18,7 @@ Future<void> showAddReceiptItemSheet(
   WidgetRef ref, {
   LedgerLineItem? existingLine,
 }) {
-  final platform = Theme.of(context).platform;
-  if (platform == TargetPlatform.iOS) {
+  if (hostPlatformIsApple()) {
     return _showCupertinoGlassSheet(context, ref, existingLine: existingLine);
   }
   return _showMaterialExpressiveSheet(context, ref, existingLine: existingLine);
@@ -69,11 +69,40 @@ Future<void> _showCupertinoGlassSheet(
       final bottomInset = MediaQuery.viewInsetsOf(ctx).bottom;
       final brightness = MediaQuery.platformBrightnessOf(ctx);
       final isDark = brightness == Brightness.dark;
+      final reduceMotion = MediaQuery.disableAnimationsOf(ctx);
       final glassTint = isDark
           ? const Color(0xFF2C2C2E).withValues(alpha: 0.72)
           : CupertinoColors.systemBackground
                 .resolveFrom(ctx)
                 .withValues(alpha: 0.82);
+
+      final sheetBody = DecoratedBox(
+        decoration: BoxDecoration(
+          color: glassTint,
+          borderRadius: const BorderRadius.all(Radius.circular(22)),
+          border: Border.all(
+            color: CupertinoColors.separator
+                .resolveFrom(ctx)
+                .withValues(alpha: 0.35),
+          ),
+          boxShadow: reduceMotion
+              ? null
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.12),
+                    blurRadius: 32,
+                    offset: const Offset(0, 12),
+                  ),
+                ],
+        ),
+        child: CupertinoTheme(
+          data: CupertinoTheme.of(ctx).copyWith(
+            brightness: brightness,
+            primaryColor: CupertinoColors.activeBlue.resolveFrom(ctx),
+          ),
+          child: _AddItemFormCupertino(existingLine: existingLine),
+        ),
+      );
 
       return Padding(
         padding: EdgeInsets.only(left: 16, right: 16, bottom: 16 + bottomInset),
@@ -81,36 +110,12 @@ Future<void> _showCupertinoGlassSheet(
           top: false,
           child: ClipRRect(
             borderRadius: const BorderRadius.all(Radius.circular(22)),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: glassTint,
-                  borderRadius: const BorderRadius.all(Radius.circular(22)),
-                  border: Border.all(
-                    color: CupertinoColors.separator
-                        .resolveFrom(ctx)
-                        .withValues(alpha: 0.35),
+            child: reduceMotion
+                ? sheetBody
+                : BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
+                    child: sheetBody,
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(
-                        alpha: isDark ? 0.45 : 0.12,
-                      ),
-                      blurRadius: 32,
-                      offset: const Offset(0, 12),
-                    ),
-                  ],
-                ),
-                child: CupertinoTheme(
-                  data: CupertinoTheme.of(ctx).copyWith(
-                    brightness: brightness,
-                    primaryColor: CupertinoColors.activeBlue.resolveFrom(ctx),
-                  ),
-                  child: _AddItemFormCupertino(existingLine: existingLine),
-                ),
-              ),
-            ),
           ),
         ),
       );
@@ -200,16 +205,13 @@ class _AddItemFormCupertinoState extends ConsumerState<_AddItemFormCupertino> {
           Text(
             title,
             textAlign: TextAlign.center,
-            style: CupertinoTheme.of(
-              context,
-            ).textTheme.navLargeTitleTextStyle.copyWith(fontSize: 22),
+            style: CupertinoTheme.of(context).textTheme.navLargeTitleTextStyle,
           ),
           const SizedBox(height: 8),
           Text(
             l10n.addItemSubtitle,
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 13,
+            style: CupertinoTheme.of(context).textTheme.textStyle.copyWith(
               color: CupertinoColors.secondaryLabel.resolveFrom(context),
             ),
           ),
@@ -244,20 +246,19 @@ class _AddItemFormCupertinoState extends ConsumerState<_AddItemFormCupertino> {
                   Expanded(
                     child: Text(
                       l10n.currencyLabel,
-                      style: TextStyle(
-                        color: CupertinoColors.secondaryLabel.resolveFrom(
-                          context,
-                        ),
-                        fontSize: 15,
-                      ),
+                      style: CupertinoTheme.of(context).textTheme.textStyle
+                          .copyWith(
+                            color: CupertinoColors.secondaryLabel.resolveFrom(
+                              context,
+                            ),
+                          ),
                     ),
                   ),
                   Text(
                     _currencyCode,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 17,
-                    ),
+                    style: CupertinoTheme.of(
+                      context,
+                    ).textTheme.textStyle.copyWith(fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(width: 4),
                   Icon(
@@ -284,9 +285,8 @@ class _AddItemFormCupertinoState extends ConsumerState<_AddItemFormCupertino> {
             const SizedBox(height: 10),
             Text(
               _error!,
-              style: TextStyle(
+              style: CupertinoTheme.of(context).textTheme.textStyle.copyWith(
                 color: CupertinoColors.destructiveRed.resolveFrom(context),
-                fontSize: 13,
               ),
             ),
           ],

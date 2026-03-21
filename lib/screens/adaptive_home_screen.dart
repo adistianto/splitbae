@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -5,8 +6,10 @@ import 'package:flutter/services.dart';
 import 'package:splitbae/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:splitbae/core/domain/ledger_line_item.dart';
+import 'package:splitbae/core/layout/adaptive_insets.dart';
 import 'package:splitbae/core/layout/app_breakpoints.dart';
 import 'package:splitbae/core/platform/adaptive_confirm_dialog.dart';
+import 'package:splitbae/core/platform/host_platform.dart';
 import 'package:splitbae/core/platform/platform_capabilities.dart';
 import 'package:splitbae/core/widgets/adaptive_app_bar.dart';
 import 'package:splitbae/providers.dart';
@@ -71,56 +74,93 @@ class _AdaptiveHomeScreenState extends ConsumerState<AdaptiveHomeScreen> {
         final railExtended = width >= AppBreakpoints.railExtendedLabelsMin;
         final hinge = hingeAwarePadding(context);
 
-        final hPad = 16.0;
+        final hPad = splitBaePageHorizontalPadding(context);
 
         if (!useRail) {
           final maxContent = wc == AppWindowClass.medium
               ? 720.0
               : double.infinity;
+          final narrowActions = <Widget>[
+            splitBaeAdaptiveToolbarIcon(
+              context: context,
+              tooltip: l10n.peopleTooltip,
+              icon: Icons.group_outlined,
+              onPressed: () => showManageParticipantsSheet(context, ref),
+            ),
+            splitBaeAdaptiveToolbarIcon(
+              context: context,
+              tooltip: l10n.addItemTooltip,
+              icon: Icons.add_shopping_cart_outlined,
+              onPressed: () => showAddReceiptItemSheet(context, ref),
+            ),
+            splitBaeAdaptiveToolbarIcon(
+              context: context,
+              tooltip: _settingsTooltip(l10n.settings),
+              icon: Icons.settings_outlined,
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const SettingsScreen(),
+                  ),
+                );
+              },
+            ),
+          ];
+
+          final homeBody = Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: maxContent),
+              child: Padding(
+                padding: hinge,
+                child: SplitHomeContent(
+                  horizontalPadding: hPad,
+                  onConfirmDeleteLine: confirmDeleteLine,
+                  twoColumn: false,
+                ),
+              ),
+            ),
+          );
+
+          if (hostPlatformIsApple()) {
+            final theme = Theme.of(context);
+            final bottomPad = MediaQuery.paddingOf(context).bottom;
+            return CupertinoPageScaffold(
+              backgroundColor: theme.colorScheme.surface,
+              navigationBar: splitBaeCupertinoNavigationBar(
+                context: context,
+                title: l10n.appTitle,
+                actions: narrowActions,
+              ),
+              child: Material(
+                color: theme.colorScheme.surface,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    homeBody,
+                    Positioned(
+                      right: 16,
+                      bottom: 16 + bottomPad,
+                      child: _AppleAddPersonFab(
+                        label: l10n.addPerson,
+                        onPressed: () async {
+                          HapticFeedback.mediumImpact();
+                          await showAddParticipantSheet(context);
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
           return Scaffold(
             appBar: splitBaeAdaptiveAppBar(
               context: context,
               title: l10n.appTitle,
-              actions: [
-                splitBaeAdaptiveToolbarIcon(
-                  context: context,
-                  tooltip: l10n.peopleTooltip,
-                  icon: Icons.group_outlined,
-                  onPressed: () => showManageParticipantsSheet(context, ref),
-                ),
-                splitBaeAdaptiveToolbarIcon(
-                  context: context,
-                  tooltip: l10n.addItemTooltip,
-                  icon: Icons.add_shopping_cart_outlined,
-                  onPressed: () => showAddReceiptItemSheet(context, ref),
-                ),
-                splitBaeAdaptiveToolbarIcon(
-                  context: context,
-                  tooltip: _settingsTooltip(l10n.settings),
-                  icon: Icons.settings_outlined,
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => const SettingsScreen(),
-                      ),
-                    );
-                  },
-                ),
-              ],
+              actions: narrowActions,
             ),
-            body: Center(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: maxContent),
-                child: Padding(
-                  padding: hinge,
-                  child: SplitHomeContent(
-                    horizontalPadding: hPad,
-                    onConfirmDeleteLine: confirmDeleteLine,
-                    twoColumn: false,
-                  ),
-                ),
-              ),
-            ),
+            body: homeBody,
             floatingActionButton: FloatingActionButton.extended(
               onPressed: () async {
                 HapticFeedback.mediumImpact();
@@ -243,6 +283,30 @@ String _settingsTooltip(String settingsLabel) {
 
 class _OpenSettingsIntent extends Intent {
   const _OpenSettingsIntent();
+}
+
+/// Primary “add person” action on Apple narrow layout — Cupertino, not Material FAB.
+class _AppleAddPersonFab extends StatelessWidget {
+  const _AppleAddPersonFab({required this.label, required this.onPressed});
+
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return CupertinoButton.filled(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+      onPressed: onPressed,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(CupertinoIcons.person_add_solid, size: 20),
+          const SizedBox(width: 8),
+          Text(label),
+        ],
+      ),
+    );
+  }
 }
 
 /// Mouse / trackpad drag scrolling on desktop and web.

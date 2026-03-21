@@ -7,6 +7,7 @@ import 'package:splitbae/core/data/ledger_repository.dart';
 import 'package:splitbae/core/database/database_opener.dart';
 import 'package:splitbae/core/platform/platform_bootstrap.dart';
 import 'package:splitbae/core/providers/database_providers.dart';
+import 'package:splitbae/core/theme/splitbae_theme.dart';
 import 'package:splitbae/src/rust/frb_generated.dart';
 import 'package:splitbae/screens/adaptive_home_screen.dart';
 
@@ -48,12 +49,8 @@ class SplitBaeApp extends ConsumerWidget {
           supportedLocales: AppLocalizations.supportedLocales,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           scrollBehavior: const SplitBaeScrollBehavior(),
-          theme: ThemeData(
-            useMaterial3: true,
-            colorScheme: colorScheme,
-            brightness: Brightness.dark,
-            visualDensity: VisualDensity.adaptivePlatformDensity,
-          ),
+          theme: splitBaeMaterialTheme(colorScheme: colorScheme),
+          builder: splitBaeAppBuilder,
           home: const AdaptiveHomeScreen(),
         );
       },

@@ -1,29 +1,41 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:splitbae/core/platform/host_platform.dart';
 
-/// True when the shell should use [CupertinoNavigationBar] (iOS-style chrome).
-bool splitBaeUseCupertinoNavBar(BuildContext context) {
-  return Theme.of(context).platform == TargetPlatform.iOS;
+/// True when the shell should use Cupertino navigation chrome (iOS / macOS).
+bool splitBaeUseCupertinoNavBar() => hostPlatformIsApple();
+
+/// iOS top bar for [CupertinoPageScaffold] or Material [Scaffold.appBar].
+ObstructingPreferredSizeWidget splitBaeCupertinoNavigationBar({
+  required BuildContext context,
+  required String title,
+  List<Widget>? actions,
+}) {
+  final theme = Theme.of(context);
+  return CupertinoNavigationBar(
+    middle: Text(title),
+    backgroundColor: theme.colorScheme.surface,
+    border: Border(
+      bottom: BorderSide(color: theme.colorScheme.outlineVariant, width: 0.5),
+    ),
+    trailing: actions == null || actions.isEmpty
+        ? null
+        : Row(mainAxisSize: MainAxisSize.min, children: actions),
+  );
 }
 
-/// App bar that maps to [CupertinoNavigationBar] on iOS and [AppBar] elsewhere.
+/// App bar: [CupertinoNavigationBar] on iOS host, [AppBar] elsewhere.
 PreferredSizeWidget splitBaeAdaptiveAppBar({
   required BuildContext context,
   required String title,
   List<Widget>? actions,
   bool centerTitle = true,
 }) {
-  final theme = Theme.of(context);
-  if (splitBaeUseCupertinoNavBar(context)) {
-    return CupertinoNavigationBar(
-      middle: Text(title),
-      backgroundColor: theme.colorScheme.surface,
-      border: Border(
-        bottom: BorderSide(color: theme.colorScheme.outlineVariant, width: 0.5),
-      ),
-      trailing: actions == null || actions.isEmpty
-          ? null
-          : Row(mainAxisSize: MainAxisSize.min, children: actions),
+  if (splitBaeUseCupertinoNavBar()) {
+    return splitBaeCupertinoNavigationBar(
+      context: context,
+      title: title,
+      actions: actions,
     );
   }
   return AppBar(title: Text(title), centerTitle: centerTitle, actions: actions);
@@ -36,7 +48,7 @@ Widget splitBaeAdaptiveToolbarIcon({
   required VoidCallback onPressed,
   String? tooltip,
 }) {
-  if (splitBaeUseCupertinoNavBar(context)) {
+  if (splitBaeUseCupertinoNavBar()) {
     return CupertinoButton(
       padding: EdgeInsets.zero,
       onPressed: onPressed,
