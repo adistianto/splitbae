@@ -394,5 +394,146 @@
   "whoPaidBillTotalLabel": "Bill total",
   "@whoPaidBillTotalLabel": {
     "description": "Label before the required total for a currency in who-paid."
+  },
+  "postBillTitle": "Post bill",
+  "@postBillTitle": {
+    "description": "Bottom sheet title when saving the draft bill to history."
+  },
+  "postBillSubtitle": "This locks the current lines and payments into your history. You can start a new bill afterward.",
+  "@postBillSubtitle": {
+    "description": "Explains posting the draft bill."
+  },
+  "postBillDescriptionLabel": "Title (optional)",
+  "@postBillDescriptionLabel": {
+    "description": "Label for the posted expense title field."
+  },
+  "postBillDescriptionHint": "e.g. Team dinner",
+  "@postBillDescriptionHint": {
+    "description": "Placeholder for the posted bill title."
+  },
+  "postBillAction": "Post bill",
+  "@postBillAction": {
+    "description": "Primary button to commit the draft bill."
+  },
+  "postBillSuccess": "Bill posted.",
+  "@postBillSuccess": {
+    "description": "Snackbar after a successful post."
+  },
+  "postBillErrorEmpty": "Add at least one line before posting.",
+  "@postBillErrorEmpty": {
+    "description": "Error when posting with no receipt lines."
+  },
+  "postBillErrorNoParticipants": "Add people before posting.",
+  "@postBillErrorNoParticipants": {
+    "description": "Error when posting with no participants."
+  },
+  "postedBillsTitle": "Recent bills",
+  "@postedBillsTitle": {
+    "description": "Section header for posted (non-draft) transactions."
+  },
+  "postBillUntitled": "Untitled",
+  "@postBillUntitled": {
+    "description": "Shown when a posted bill has no title."
+  },
+  "navBillsTab": "Bills",
+  "@navBillsTab": {
+    "description": "Bottom navigation: posted bills feed."
+  },
+  "navSplitTab": "Split",
+  "@navSplitTab": {
+    "description": "Bottom navigation: draft bill workspace."
+  },
+  "navSplitTitle": "Split bill",
+  "@navSplitTitle": {
+    "description": "App bar title for the draft split workspace."
+  },
+  "billsScreenTitle": "Bills",
+  "@billsScreenTitle": {
+    "description": "App bar title for the posted bills list."
+  },
+  "billsEmptyState": "No bills yet. Add lines on Split, then post a bill.",
+  "@billsEmptyState": {
+    "description": "Empty state when there are no posted transactions."
+  },
+  "transactionDetailTabItems": "Items",
+  "@transactionDetailTabItems": {
+    "description": "Tab on posted bill detail: line items."
+  },
+  "transactionDetailTabPersons": "Persons",
+  "@transactionDetailTabPersons": {
+    "description": "Tab on posted bill detail: per-person totals owed."
+  },
+  "transactionDetailTabPayments": "Payments",
+  "@transactionDetailTabPayments": {
+    "description": "Tab on posted bill detail: who paid."
+  },
+  "transactionDetailMissing": "This bill could not be loaded.",
+  "@transactionDetailMissing": {
+    "description": "Error when transaction id is missing from the database."
+  },
+  "transactionDetailNoPayments": "No payments recorded for this bill.",
+  "@transactionDetailNoPayments": {
+    "description": "Empty state on Payments tab."
+  },
+  "transactionDetailNoShares": "No split for this line.",
+  "@transactionDetailNoShares": {
+    "description": "When a line has zero assigned shares."
+  },
+  "transactionDetailPersonsEmpty": "Nothing owed on this bill.",
+  "@transactionDetailPersonsEmpty": {
+    "description": "Persons tab when all per-person amounts are zero."
+  },
+  "settleUpSectionTitle": "Settle up",
+  "@settleUpSectionTitle": {
+    "description": "Section header above suggested settlement transfers."
+  },
+  "settlementPayerPays": "Pays",
+  "@settlementPayerPays": {
+    "description": "Label under payer name on settlement card."
+  },
+  "settlementPayeeReceives": "Receives",
+  "@settlementPayeeReceives": {
+    "description": "Label under payee name on settlement card."
+  },
+  "markAsPaid": "Mark as paid",
+  "@markAsPaid": {
+    "description": "Primary action on a suggested settlement card."
+  },
+  "settleUpAmountLabel": "Amount",
+  "@settleUpAmountLabel": {
+    "description": "Label beside the settlement amount on an expanded card."
+  },
+  "settleUpPayFull": "Pay full",
+  "@settleUpPayFull": {
+    "description": "Confirm recording the full suggested transfer."
+  },
+  "settleUpPartialPayment": "Partial payment",
+  "@settleUpPartialPayment": {
+    "description": "Switch to entering a partial settlement amount."
+  },
+  "settleUpUseFullAmount": "Use full amount",
+  "@settleUpUseFullAmount": {
+    "description": "Fills the partial payment field with the full owed amount."
+  },
+  "settleUpAmountOfTotal": "of {amount}",
+  "@settleUpAmountOfTotal": {
+    "description": "Reference to the total owed, shown beside Use full amount.",
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "settleUpPayPartial": "Pay Partial",
+  "@settleUpPayPartial": {
+    "description": "Submit a partial settlement after entering an amount."
+  },
+  "settleUpPartialHint": "Amount to record",
+  "@settleUpPartialHint": {
+    "description": "Hint for the partial payment text field."
+  },
+  "settleUpPartialInvalid": "Enter a valid amount greater than zero and not more than owed.",
+  "@settleUpPartialInvalid": {
+    "description": "Validation when partial amount is empty or out of range."
   }
 }

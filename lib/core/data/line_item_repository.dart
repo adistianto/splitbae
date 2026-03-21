@@ -12,6 +12,23 @@ class LineItemRepository {
 
   final AppDatabase _db;
 
+  /// Lines for any transaction (draft or posted).
+  Future<List<LedgerLineItem>> listLinesForTransaction({
+    required String ledgerId,
+    required String transactionId,
+  }) async {
+    final rows =
+        await (_db.select(_db.receiptLines)
+              ..where(
+                (t) =>
+                    t.ledgerId.equals(ledgerId) &
+                    t.transactionId.equals(transactionId),
+              )
+              ..orderBy([(t) => OrderingTerm(expression: t.createdAtMs)]))
+            .get();
+    return await _mapRowsToLineItems(rows);
+  }
+
   /// Lines for the ledger’s **draft** transaction (in-progress bill).
   Future<List<LedgerLineItem>> listLedgerLines(String ledgerId) async {
     final draftTx = draftTransactionIdForLedger(ledgerId);
@@ -24,6 +41,12 @@ class LineItemRepository {
               )
               ..orderBy([(t) => OrderingTerm(expression: t.createdAtMs)]))
             .get();
+    return await _mapRowsToLineItems(rows);
+  }
+
+  Future<List<LedgerLineItem>> _mapRowsToLineItems(
+    List<ReceiptLine> rows,
+  ) async {
     if (rows.isEmpty) return [];
 
     final lineIds = rows.map((r) => r.id).toList();

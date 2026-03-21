@@ -671,6 +671,210 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Bill total'**
   String get whoPaidBillTotalLabel;
+
+  /// Bottom sheet title when saving the draft bill to history.
+  ///
+  /// In en, this message translates to:
+  /// **'Post bill'**
+  String get postBillTitle;
+
+  /// Explains posting the draft bill.
+  ///
+  /// In en, this message translates to:
+  /// **'This locks the current lines and payments into your history. You can start a new bill afterward.'**
+  String get postBillSubtitle;
+
+  /// Label for the posted expense title field.
+  ///
+  /// In en, this message translates to:
+  /// **'Title (optional)'**
+  String get postBillDescriptionLabel;
+
+  /// Placeholder for the posted bill title.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Team dinner'**
+  String get postBillDescriptionHint;
+
+  /// Primary button to commit the draft bill.
+  ///
+  /// In en, this message translates to:
+  /// **'Post bill'**
+  String get postBillAction;
+
+  /// Snackbar after a successful post.
+  ///
+  /// In en, this message translates to:
+  /// **'Bill posted.'**
+  String get postBillSuccess;
+
+  /// Error when posting with no receipt lines.
+  ///
+  /// In en, this message translates to:
+  /// **'Add at least one line before posting.'**
+  String get postBillErrorEmpty;
+
+  /// Error when posting with no participants.
+  ///
+  /// In en, this message translates to:
+  /// **'Add people before posting.'**
+  String get postBillErrorNoParticipants;
+
+  /// Section header for posted (non-draft) transactions.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent bills'**
+  String get postedBillsTitle;
+
+  /// Shown when a posted bill has no title.
+  ///
+  /// In en, this message translates to:
+  /// **'Untitled'**
+  String get postBillUntitled;
+
+  /// Bottom navigation: posted bills feed.
+  ///
+  /// In en, this message translates to:
+  /// **'Bills'**
+  String get navBillsTab;
+
+  /// Bottom navigation: draft bill workspace.
+  ///
+  /// In en, this message translates to:
+  /// **'Split'**
+  String get navSplitTab;
+
+  /// App bar title for the draft split workspace.
+  ///
+  /// In en, this message translates to:
+  /// **'Split bill'**
+  String get navSplitTitle;
+
+  /// App bar title for the posted bills list.
+  ///
+  /// In en, this message translates to:
+  /// **'Bills'**
+  String get billsScreenTitle;
+
+  /// Empty state when there are no posted transactions.
+  ///
+  /// In en, this message translates to:
+  /// **'No bills yet. Add lines on Split, then post a bill.'**
+  String get billsEmptyState;
+
+  /// Tab on posted bill detail: line items.
+  ///
+  /// In en, this message translates to:
+  /// **'Items'**
+  String get transactionDetailTabItems;
+
+  /// Tab on posted bill detail: per-person totals owed.
+  ///
+  /// In en, this message translates to:
+  /// **'Persons'**
+  String get transactionDetailTabPersons;
+
+  /// Tab on posted bill detail: who paid.
+  ///
+  /// In en, this message translates to:
+  /// **'Payments'**
+  String get transactionDetailTabPayments;
+
+  /// Error when transaction id is missing from the database.
+  ///
+  /// In en, this message translates to:
+  /// **'This bill could not be loaded.'**
+  String get transactionDetailMissing;
+
+  /// Empty state on Payments tab.
+  ///
+  /// In en, this message translates to:
+  /// **'No payments recorded for this bill.'**
+  String get transactionDetailNoPayments;
+
+  /// When a line has zero assigned shares.
+  ///
+  /// In en, this message translates to:
+  /// **'No split for this line.'**
+  String get transactionDetailNoShares;
+
+  /// Persons tab when all per-person amounts are zero.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing owed on this bill.'**
+  String get transactionDetailPersonsEmpty;
+
+  /// Section header above suggested settlement transfers.
+  ///
+  /// In en, this message translates to:
+  /// **'Settle up'**
+  String get settleUpSectionTitle;
+
+  /// Label under payer name on settlement card.
+  ///
+  /// In en, this message translates to:
+  /// **'Pays'**
+  String get settlementPayerPays;
+
+  /// Label under payee name on settlement card.
+  ///
+  /// In en, this message translates to:
+  /// **'Receives'**
+  String get settlementPayeeReceives;
+
+  /// Primary action on a suggested settlement card.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as paid'**
+  String get markAsPaid;
+
+  /// Label beside the settlement amount on an expanded card.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get settleUpAmountLabel;
+
+  /// Confirm recording the full suggested transfer.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay full'**
+  String get settleUpPayFull;
+
+  /// Switch to entering a partial settlement amount.
+  ///
+  /// In en, this message translates to:
+  /// **'Partial payment'**
+  String get settleUpPartialPayment;
+
+  /// Fills the partial payment field with the full owed amount.
+  ///
+  /// In en, this message translates to:
+  /// **'Use full amount'**
+  String get settleUpUseFullAmount;
+
+  /// Reference to the total owed, shown beside Use full amount.
+  ///
+  /// In en, this message translates to:
+  /// **'of {amount}'**
+  String settleUpAmountOfTotal(String amount);
+
+  /// Submit a partial settlement after entering an amount.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay Partial'**
+  String get settleUpPayPartial;
+
+  /// Hint for the partial payment text field.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount to record'**
+  String get settleUpPartialHint;
+
+  /// Validation when partial amount is empty or out of range.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid amount greater than zero and not more than owed.'**
+  String get settleUpPartialInvalid;
 }
 
 class _AppLocalizationsDelegate

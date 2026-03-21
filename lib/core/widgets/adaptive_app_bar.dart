@@ -67,3 +67,32 @@ String splitBaeInitialGrapheme(String name) {
   final it = t.runes.iterator;
   return it.moveNext() ? String.fromCharCode(it.current).toUpperCase() : '?';
 }
+
+String _firstGraphemeUpper(String s) {
+  final t = s.trim();
+  if (t.isEmpty) return '';
+  final it = t.runes.iterator;
+  return it.moveNext() ? String.fromCharCode(it.current).toUpperCase() : '';
+}
+
+/// Up to two letters for avatar chips (first + last word, or first two graphemes).
+String splitBaeDisplayInitials(String name) {
+  final t = name.trim();
+  if (t.isEmpty) return '?';
+  final parts = t.split(RegExp(r'\s+'));
+  if (parts.length >= 2) {
+    final a = _firstGraphemeUpper(parts.first);
+    final b = _firstGraphemeUpper(parts.last);
+    if (a.isEmpty && b.isEmpty) return '?';
+    if (a.isEmpty) return b.length > 1 ? b.substring(0, 2) : b;
+    if (b.isEmpty) return a.length > 1 ? a.substring(0, 2) : a;
+    return '$a$b';
+  }
+  final runes = t.runes.toList();
+  if (runes.isEmpty) return '?';
+  if (runes.length == 1) {
+    return String.fromCharCode(runes.first).toUpperCase();
+  }
+  return (String.fromCharCode(runes[0]) + String.fromCharCode(runes[1]))
+      .toUpperCase();
+}

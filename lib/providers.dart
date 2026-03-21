@@ -1,9 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:splitbae/core/data/draft_payment_repository.dart';
+import 'package:splitbae/core/data/bill_posting_repository.dart';
 import 'package:splitbae/core/data/ledger_settlement_service.dart';
 import 'package:splitbae/core/domain/ledger_line_item.dart';
 import 'package:splitbae/core/domain/participant_entry.dart';
+import 'package:splitbae/core/domain/posted_bill_summary.dart';
 import 'package:splitbae/core/domain/ledger_ids.dart';
+import 'package:splitbae/core/domain/transaction_detail_data.dart';
 import 'package:splitbae/core/providers/database_providers.dart';
 import 'package:splitbae/core/database/app_database.dart'
     show SettlementTransfer, TransactionPayment;
@@ -80,6 +83,16 @@ class ItemsNotifier extends StateNotifier<List<LedgerLineItem>> {
 
   /// After the on-disk database is recreated (e.g. encryption mode change).
   Future<void> reloadFromDatabase() => _load();
+
+  /// Commits the draft bill to history and reloads the empty draft.
+  Future<void> postDraftBill(String description) async {
+    await _ref.read(billPostingRepositoryProvider).postDraftBill(
+          ledgerId: kDefaultLedgerId,
+          description: description,
+        );
+    await _load();
+    _ref.invalidate(postedBillSummariesProvider);
+  }
 }
 
 final itemsProvider =
@@ -164,6 +177,56 @@ final draftTransactionPaymentsProvider =
   ref.watch(participantsProvider);
   final db = ref.watch(appDatabaseProvider);
   return DraftPaymentRepository(db).listForDraft(kDefaultLedgerId);
+});
+
+/// Posted bills for the default ledger (feed + detail), newest first.
+final postedBillSummariesProvider =
+    FutureProvider.autoDispose<List<PostedBillSummary>>((ref) async {
+  ref.watch(itemsProvider);
+  final db = ref.watch(appDatabaseProvider);
+  return BillPostingRepository(db).listPostedBillSummaries(kDefaultLedgerId);
+});
+
+/// Loads a single posted transaction for the detail screen.
+final transactionDetailProvider =
+    FutureProvider.autoDispose.family<TransactionDetailData?, String>((
+  ref,
+  transactionId,
+) async {
+  ref.watch(participantsProvider);
+  return ref.read(transactionDetailRepositoryProvider).loadDetail(
+        ledgerId: kDefaultLedgerId,
+        transactionId: transactionId,
+      );
+});
+
+/// Split math for a posted transaction (same rules as the draft bill).
+final postedTransactionSplitProvider =
+    Provider.autoDispose.family<List<SplitResult>, String>((ref, txId) {
+  final detailAsync = ref.watch(transactionDetailProvider(txId));
+  return detailAsync.when(
+    data: (d) {
+      if (d == null || d.lines.isEmpty) return [];
+      final participants = ref.watch(participantsProvider);
+      return calculateSplitAssigned(
+        lines: d.lines
+            .map(
+              (e) => AssignedReceiptLine(
+                item: e.receiptItem,
+                assigneeIds: e.assignedParticipantIds,
+              ),
+            )
+            .toList(),
+        participants: participants
+            .map(
+              (e) => ParticipantRef(id: e.id, displayName: e.displayName),
+            )
+            .toList(),
+      );
+    },
+    loading: () => [],
+    error: (_, _) => [],
+  );
 });
 
 /// Rust minimal settlement edges from current ledger nets (items + participants + DB).

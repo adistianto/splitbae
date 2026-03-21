@@ -1,0 +1,192 @@
+import 'package:drift/drift.dart';
+import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
+import 'package:uuid/uuid.dart';
+
+import '../database/app_database.dart';
+import '../domain/ledger_ids.dart';
+import '../domain/posted_bill_summary.dart';
+import 'amount_minor.dart';
+import 'draft_payment_repository.dart';
+import 'line_item_repository.dart';
+import 'participant_repository.dart';
+import '../../src/rust/api/simple.dart' as rust;
+
+/// Moves the in-progress draft bill into a new [Transaction] row (history) and
+/// leaves the draft empty for the next bill.
+class BillPostingRepository {
+  BillPostingRepository(this._db);
+
+  final AppDatabase _db;
+
+  /// Posted bills with participant counts and primary-currency totals for the feed.
+  Future<List<PostedBillSummary>> listPostedBillSummaries(String ledgerId) async {
+    final txs = await listPostedTransactions(ledgerId);
+    final lineRepo = LineItemRepository(_db);
+    final out = <PostedBillSummary>[];
+    for (final t in txs) {
+      final participants = await (_db.select(_db.transactionParticipants)
+            ..where((x) => x.transactionId.equals(t.id)))
+          .get();
+      final lines = await lineRepo.listLinesForTransaction(
+        ledgerId: ledgerId,
+        transactionId: t.id,
+      );
+      var sumPrimary = 0;
+      for (final line in lines) {
+        if (line.receiptItem.currencyCode == t.currencyCode) {
+          sumPrimary += amountToMinorUnits(
+            line.receiptItem.price,
+            line.receiptItem.currencyCode,
+          );
+        }
+      }
+      out.add(
+        PostedBillSummary(
+          transaction: t,
+          participantCount: participants.length,
+          totalMinorPrimary: sumPrimary,
+        ),
+      );
+    }
+    return out;
+  }
+
+  /// Posted transactions for the ledger, newest first (excludes the draft row).
+  Future<List<Transaction>> listPostedTransactions(String ledgerId) async {
+    final draftId = draftTransactionIdForLedger(ledgerId);
+    final rows = await (_db.select(_db.transactions)
+          ..where((t) => t.ledgerId.equals(ledgerId))
+          ..orderBy([
+            (t) => OrderingTerm(
+                  expression: t.createdAtMs,
+                  mode: OrderingMode.desc,
+                ),
+          ]))
+        .get();
+    return rows.where((r) => r.id != draftId).toList();
+  }
+
+  /// Persists the current draft as a completed expense and clears the draft.
+  ///
+  /// Throws if there are no lines, no participants, or payments do not match
+  /// line totals (same rules as settlement).
+  Future<void> postDraftBill({
+    required String ledgerId,
+    required String description,
+    String category = 'other',
+  }) async {
+    final draftTx = draftTransactionIdForLedger(ledgerId);
+    final lines = await LineItemRepository(_db).listLedgerLines(ledgerId);
+    if (lines.isEmpty) {
+      throw StateError('empty_bill');
+    }
+
+    final participants = await ParticipantRepository(_db).listParticipants(
+      ledgerId,
+    );
+    if (participants.isEmpty) {
+      throw StateError('empty_participants');
+    }
+
+    final draftPay = DraftPaymentRepository(_db);
+    final totals = await draftPay.draftLineTotalsByCurrency(ledgerId);
+    final paymentRows = await draftPay.listForDraft(ledgerId);
+
+    final lineTotalsForValidate = <rust.LineTotalMinor>[];
+    for (final e in totals.entries) {
+      if (e.value > 0) {
+        lineTotalsForValidate.add(
+          rust.LineTotalMinor(
+            currencyCode: e.key,
+            amountMinor: PlatformInt64Util.from(e.value),
+          ),
+        );
+      }
+    }
+
+    final paymentsForValidate = <rust.DraftPaymentMinor>[];
+    final payerId = participants.first.id;
+    if (paymentRows.isEmpty) {
+      for (final e in totals.entries) {
+        if (e.value <= 0) continue;
+        paymentsForValidate.add(
+          rust.DraftPaymentMinor(
+            participantId: payerId,
+            currencyCode: e.key,
+            amountMinor: PlatformInt64Util.from(e.value),
+          ),
+        );
+      }
+    } else {
+      for (final r in paymentRows) {
+        if (r.amountMinor == 0) continue;
+        paymentsForValidate.add(
+          rust.DraftPaymentMinor(
+            participantId: r.participantId,
+            currencyCode: r.currencyCode,
+            amountMinor: PlatformInt64Util.from(r.amountMinor),
+          ),
+        );
+      }
+    }
+
+    rust.validateBillPaymentsSum(
+      lineTotalsMinor: lineTotalsForValidate,
+      payments: paymentsForValidate,
+    );
+
+    final primaryCcy = _primaryCurrency(totals);
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final postedId = const Uuid().v4();
+
+    await _db.transaction(() async {
+      await _db.into(_db.transactions).insert(
+            TransactionsCompanion.insert(
+              id: postedId,
+              ledgerId: ledgerId,
+              description: Value(description.trim()),
+              category: Value(category),
+              taxAmountMinor: const Value(0),
+              currencyCode: Value(primaryCcy),
+              kind: const Value('normal'),
+              createdAtMs: now,
+              updatedAtMs: now,
+            ),
+          );
+
+      for (final p in participants) {
+        await _db.into(_db.transactionParticipants).insert(
+              TransactionParticipantsCompanion.insert(
+                transactionId: postedId,
+                participantId: p.id,
+              ),
+            );
+      }
+
+      await (_db.update(_db.receiptLines)
+            ..where((t) => t.ledgerId.equals(ledgerId))
+            ..where((t) => t.transactionId.equals(draftTx)))
+          .write(ReceiptLinesCompanion(transactionId: Value(postedId)));
+
+      await (_db.update(_db.transactionPayments)
+            ..where((t) => t.transactionId.equals(draftTx)))
+          .write(TransactionPaymentsCompanion(transactionId: Value(postedId)));
+
+      await (_db.update(_db.transactions)..where((t) => t.id.equals(draftTx)))
+          .write(TransactionsCompanion(updatedAtMs: Value(now)));
+    });
+  }
+
+  String _primaryCurrency(Map<String, int> totals) {
+    if (totals.isEmpty) return 'IDR';
+    var best = '';
+    var bestAmt = -1;
+    for (final e in totals.entries) {
+      if (e.value > bestAmt) {
+        bestAmt = e.value;
+        best = e.key;
+      }
+    }
+    return best.isNotEmpty ? best : 'IDR';
+  }
+}

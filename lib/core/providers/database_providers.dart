@@ -6,6 +6,8 @@ import '../data/line_item_repository.dart';
 import '../data/participant_repository.dart';
 import '../data/backup_service.dart';
 import '../data/local_database_snapshot.dart';
+import '../data/bill_posting_repository.dart';
+import '../data/transaction_detail_repository.dart';
 import '../data/draft_payment_repository.dart';
 import '../data/settlement_repository.dart';
 import '../database/app_database.dart';
@@ -115,4 +117,13 @@ final settlementRepositoryProvider = Provider<SettlementRepository>((ref) {
 
 final draftPaymentRepositoryProvider = Provider<DraftPaymentRepository>((ref) {
   return DraftPaymentRepository(ref.watch(appDatabaseProvider));
+});
+
+final billPostingRepositoryProvider = Provider<BillPostingRepository>((ref) {
+  return BillPostingRepository(ref.watch(appDatabaseProvider));
+});
+
+final transactionDetailRepositoryProvider =
+    Provider<TransactionDetailRepository>((ref) {
+  return TransactionDetailRepository(ref.watch(appDatabaseProvider));
 });

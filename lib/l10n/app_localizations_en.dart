@@ -322,4 +322,112 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get whoPaidBillTotalLabel => 'Bill total';
+
+  @override
+  String get postBillTitle => 'Post bill';
+
+  @override
+  String get postBillSubtitle =>
+      'This locks the current lines and payments into your history. You can start a new bill afterward.';
+
+  @override
+  String get postBillDescriptionLabel => 'Title (optional)';
+
+  @override
+  String get postBillDescriptionHint => 'e.g. Team dinner';
+
+  @override
+  String get postBillAction => 'Post bill';
+
+  @override
+  String get postBillSuccess => 'Bill posted.';
+
+  @override
+  String get postBillErrorEmpty => 'Add at least one line before posting.';
+
+  @override
+  String get postBillErrorNoParticipants => 'Add people before posting.';
+
+  @override
+  String get postedBillsTitle => 'Recent bills';
+
+  @override
+  String get postBillUntitled => 'Untitled';
+
+  @override
+  String get navBillsTab => 'Bills';
+
+  @override
+  String get navSplitTab => 'Split';
+
+  @override
+  String get navSplitTitle => 'Split bill';
+
+  @override
+  String get billsScreenTitle => 'Bills';
+
+  @override
+  String get billsEmptyState =>
+      'No bills yet. Add lines on Split, then post a bill.';
+
+  @override
+  String get transactionDetailTabItems => 'Items';
+
+  @override
+  String get transactionDetailTabPersons => 'Persons';
+
+  @override
+  String get transactionDetailTabPayments => 'Payments';
+
+  @override
+  String get transactionDetailMissing => 'This bill could not be loaded.';
+
+  @override
+  String get transactionDetailNoPayments =>
+      'No payments recorded for this bill.';
+
+  @override
+  String get transactionDetailNoShares => 'No split for this line.';
+
+  @override
+  String get transactionDetailPersonsEmpty => 'Nothing owed on this bill.';
+
+  @override
+  String get settleUpSectionTitle => 'Settle up';
+
+  @override
+  String get settlementPayerPays => 'Pays';
+
+  @override
+  String get settlementPayeeReceives => 'Receives';
+
+  @override
+  String get markAsPaid => 'Mark as paid';
+
+  @override
+  String get settleUpAmountLabel => 'Amount';
+
+  @override
+  String get settleUpPayFull => 'Pay full';
+
+  @override
+  String get settleUpPartialPayment => 'Partial payment';
+
+  @override
+  String get settleUpUseFullAmount => 'Use full amount';
+
+  @override
+  String settleUpAmountOfTotal(String amount) {
+    return 'of $amount';
+  }
+
+  @override
+  String get settleUpPayPartial => 'Pay Partial';
+
+  @override
+  String get settleUpPartialHint => 'Amount to record';
+
+  @override
+  String get settleUpPartialInvalid =>
+      'Enter a valid amount greater than zero and not more than owed.';
 }

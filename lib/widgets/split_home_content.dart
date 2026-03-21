@@ -9,6 +9,7 @@ import 'package:splitbae/providers.dart';
 import 'package:splitbae/src/rust/api/simple.dart';
 import 'package:splitbae/widgets/add_receipt_item_sheet.dart';
 import 'package:splitbae/widgets/item_assignee_chips.dart';
+import 'package:splitbae/widgets/post_bill_sheet.dart';
 
 typedef ConfirmDeleteLine =
     Future<void> Function(
@@ -263,6 +264,19 @@ class SplitHomeContent extends ConsumerWidget {
 
     final billChildren = <Widget>[
       intro,
+      if (items.isNotEmpty && participants.isNotEmpty)
+        Padding(
+          padding: EdgeInsets.fromLTRB(
+            horizontalPadding,
+            8,
+            horizontalPadding,
+            4,
+          ),
+          child: FilledButton.tonal(
+            onPressed: () => showPostBillSheet(context, ref),
+            child: Text(l10n.postBillAction),
+          ),
+        ),
       billHeader,
       if (items.isEmpty) emptyBill else ...lineCards,
     ];

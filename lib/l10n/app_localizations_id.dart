@@ -325,4 +325,115 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get whoPaidBillTotalLabel => 'Total tagihan';
+
+  @override
+  String get postBillTitle => 'Posting tagihan';
+
+  @override
+  String get postBillSubtitle =>
+      'Baris dan pembayaran saat ini disimpan ke riwayat. Setelah itu Anda bisa mulai tagihan baru.';
+
+  @override
+  String get postBillDescriptionLabel => 'Judul (opsional)';
+
+  @override
+  String get postBillDescriptionHint => 'mis. Makan tim';
+
+  @override
+  String get postBillAction => 'Posting';
+
+  @override
+  String get postBillSuccess => 'Tagihan tersimpan.';
+
+  @override
+  String get postBillErrorEmpty => 'Tambah minimal satu baris sebelum posting.';
+
+  @override
+  String get postBillErrorNoParticipants =>
+      'Tambah orang dulu sebelum posting.';
+
+  @override
+  String get postedBillsTitle => 'Tagihan terbaru';
+
+  @override
+  String get postBillUntitled => 'Tanpa judul';
+
+  @override
+  String get navBillsTab => 'Tagihan';
+
+  @override
+  String get navSplitTab => 'Bagi';
+
+  @override
+  String get navSplitTitle => 'Bagi tagihan';
+
+  @override
+  String get billsScreenTitle => 'Tagihan';
+
+  @override
+  String get billsEmptyState =>
+      'Belum ada tagihan. Tambah baris di Bagi, lalu posting.';
+
+  @override
+  String get transactionDetailTabItems => 'Item';
+
+  @override
+  String get transactionDetailTabPersons => 'Orang';
+
+  @override
+  String get transactionDetailTabPayments => 'Bayar';
+
+  @override
+  String get transactionDetailMissing => 'Tagihan ini tidak bisa dimuat.';
+
+  @override
+  String get transactionDetailNoPayments =>
+      'Tidak ada pembayaran tercatat untuk tagihan ini.';
+
+  @override
+  String get transactionDetailNoShares =>
+      'Tidak ada pembagian untuk baris ini.';
+
+  @override
+  String get transactionDetailPersonsEmpty =>
+      'Tidak ada yang harus dibayar pada tagihan ini.';
+
+  @override
+  String get settleUpSectionTitle => 'Lunasi';
+
+  @override
+  String get settlementPayerPays => 'Membayar';
+
+  @override
+  String get settlementPayeeReceives => 'Menerima';
+
+  @override
+  String get markAsPaid => 'Tandai lunas';
+
+  @override
+  String get settleUpAmountLabel => 'Jumlah';
+
+  @override
+  String get settleUpPayFull => 'Bayar penuh';
+
+  @override
+  String get settleUpPartialPayment => 'Bayar sebagian';
+
+  @override
+  String get settleUpUseFullAmount => 'Pakai jumlah penuh';
+
+  @override
+  String settleUpAmountOfTotal(String amount) {
+    return 'dari $amount';
+  }
+
+  @override
+  String get settleUpPayPartial => 'Bayar sebagian';
+
+  @override
+  String get settleUpPartialHint => 'Jumlah yang dicatat';
+
+  @override
+  String get settleUpPartialInvalid =>
+      'Masukkan jumlah lebih dari nol dan tidak melebihi yang terutang.';
 }
