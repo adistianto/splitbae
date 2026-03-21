@@ -268,4 +268,61 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get emptyBillHint => 'Belum ada item. Tambah baris struk untuk mulai.';
+
+  @override
+  String get balancesTitle => 'Saldo';
+
+  @override
+  String get balancesTooltip => 'Saldo dan pelunasan';
+
+  @override
+  String get suggestedSettlementsTitle => 'Transfer yang disarankan';
+
+  @override
+  String get recordedSettlementsTitle => 'Transfer tercatat';
+
+  @override
+  String get allSettledUp => 'Semua sudah selesai untuk buku besar ini.';
+
+  @override
+  String get recordSettlementAction => 'Catat';
+
+  @override
+  String get recordSettlementConfirmTitle => 'Catat transfer ini?';
+
+  @override
+  String recordSettlementConfirmBody(
+    String fromName,
+    String toName,
+    String amount,
+  ) {
+    return '$fromName membayar $toName $amount.';
+  }
+
+  @override
+  String get settlementPayerModelHint =>
+      'Siapa membayar disimpan per mata uang pada draf tagihan. Gunakan Siapa bayar di layar utama untuk mengubah; total harus sama dengan baris struk.';
+
+  @override
+  String get whoPaidTooltip => 'Siapa bayar';
+
+  @override
+  String get whoPaidTitle => 'Siapa bayar';
+
+  @override
+  String get whoPaidSubtitle =>
+      'Jumlah harus berjumlah sama dengan total tiap mata uang (sama dengan struk).';
+
+  @override
+  String get whoPaidSave => 'Simpan';
+
+  @override
+  String get whoPaidReset => 'Orang pertama bayar semua';
+
+  @override
+  String get whoPaidEmptyBill =>
+      'Tambah baris struk dulu, lalu bagi siapa yang bayar.';
+
+  @override
+  String get whoPaidBillTotalLabel => 'Total tagihan';
 }

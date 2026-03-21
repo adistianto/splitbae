@@ -6,7 +6,7 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`, `fmt`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`
 
 String greet({required String name}) =>
     RustLib.instance.api.crateApiSimpleGreet(name: name);
@@ -19,6 +19,15 @@ List<SplitResult> calculateSplitAssigned({
 }) => RustLib.instance.api.crateApiSimpleCalculateSplitAssigned(
   lines: lines,
   participants: participants,
+);
+
+/// Ensures `sum(payments per currency) == line total per currency` in minor units.
+void validateBillPaymentsSum({
+  required List<LineTotalMinor> lineTotalsMinor,
+  required List<DraftPaymentMinor> payments,
+}) => RustLib.instance.api.crateApiSimpleValidateBillPaymentsSum(
+  lineTotalsMinor: lineTotalsMinor,
+  payments: payments,
 );
 
 /// Maps a decimal UI amount to integer minor units for persistence (e.g. SQLite).
@@ -68,6 +77,51 @@ class AssignedReceiptLine {
           assigneeIds == other.assigneeIds;
 }
 
+/// One payment slice toward the bill (participant × currency).
+class DraftPaymentMinor {
+  final String participantId;
+  final String currencyCode;
+  final PlatformInt64 amountMinor;
+
+  const DraftPaymentMinor({
+    required this.participantId,
+    required this.currencyCode,
+    required this.amountMinor,
+  });
+
+  @override
+  int get hashCode =>
+      participantId.hashCode ^ currencyCode.hashCode ^ amountMinor.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is DraftPaymentMinor &&
+          runtimeType == other.runtimeType &&
+          participantId == other.participantId &&
+          currencyCode == other.currencyCode &&
+          amountMinor == other.amountMinor;
+}
+
+/// Per-currency line total in minor units (from SQLite `receipt_lines`).
+class LineTotalMinor {
+  final String currencyCode;
+  final PlatformInt64 amountMinor;
+
+  const LineTotalMinor({required this.currencyCode, required this.amountMinor});
+
+  @override
+  int get hashCode => currencyCode.hashCode ^ amountMinor.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is LineTotalMinor &&
+          runtimeType == other.runtimeType &&
+          currencyCode == other.currencyCode &&
+          amountMinor == other.amountMinor;
+}
+
 class ParticipantRef {
   final String id;
   final String displayName;
@@ -113,11 +167,13 @@ class ReceiptItem {
 }
 
 class SplitResult {
+  final String participantId;
   final String personName;
   final double totalOwed;
   final String currencyCode;
 
   const SplitResult({
+    required this.participantId,
     required this.personName,
     required this.totalOwed,
     required this.currencyCode,
@@ -125,13 +181,17 @@ class SplitResult {
 
   @override
   int get hashCode =>
-      personName.hashCode ^ totalOwed.hashCode ^ currencyCode.hashCode;
+      participantId.hashCode ^
+      personName.hashCode ^
+      totalOwed.hashCode ^
+      currencyCode.hashCode;
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is SplitResult &&
           runtimeType == other.runtimeType &&
+          participantId == other.participantId &&
           personName == other.personName &&
           totalOwed == other.totalOwed &&
           currencyCode == other.currencyCode;

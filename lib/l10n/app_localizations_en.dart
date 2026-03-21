@@ -265,4 +265,61 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get emptyBillHint => 'No receipt lines yet. Add an item to start.';
+
+  @override
+  String get balancesTitle => 'Balances';
+
+  @override
+  String get balancesTooltip => 'Balances and settlements';
+
+  @override
+  String get suggestedSettlementsTitle => 'Suggested transfers';
+
+  @override
+  String get recordedSettlementsTitle => 'Recorded transfers';
+
+  @override
+  String get allSettledUp => 'Everyone is settled for this ledger.';
+
+  @override
+  String get recordSettlementAction => 'Record';
+
+  @override
+  String get recordSettlementConfirmTitle => 'Record this transfer?';
+
+  @override
+  String recordSettlementConfirmBody(
+    String fromName,
+    String toName,
+    String amount,
+  ) {
+    return '$fromName pays $toName $amount.';
+  }
+
+  @override
+  String get settlementPayerModelHint =>
+      'Who paid is stored per currency on the draft bill. Use Who paid on the home screen to edit; totals must match receipt lines.';
+
+  @override
+  String get whoPaidTooltip => 'Who paid';
+
+  @override
+  String get whoPaidTitle => 'Who paid';
+
+  @override
+  String get whoPaidSubtitle =>
+      'Amounts must add up to each currency’s line total (same as the receipt).';
+
+  @override
+  String get whoPaidSave => 'Save';
+
+  @override
+  String get whoPaidReset => 'First person pays all';
+
+  @override
+  String get whoPaidEmptyBill =>
+      'Add receipt lines first, then split who paid.';
+
+  @override
+  String get whoPaidBillTotalLabel => 'Bill total';
 }

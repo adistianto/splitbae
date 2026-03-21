@@ -1571,12 +1571,25 @@ class $TransactionPaymentsTable extends TransactionPayments
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _currencyCodeMeta = const VerificationMeta(
+    'currencyCode',
+  );
+  @override
+  late final GeneratedColumn<String> currencyCode = GeneratedColumn<String>(
+    'currency_code',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('IDR'),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
     transactionId,
     participantId,
     amountMinor,
+    currencyCode,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1628,6 +1641,15 @@ class $TransactionPaymentsTable extends TransactionPayments
     } else if (isInserting) {
       context.missing(_amountMinorMeta);
     }
+    if (data.containsKey('currency_code')) {
+      context.handle(
+        _currencyCodeMeta,
+        currencyCode.isAcceptableOrUnknown(
+          data['currency_code']!,
+          _currencyCodeMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -1653,6 +1675,10 @@ class $TransactionPaymentsTable extends TransactionPayments
         DriftSqlType.int,
         data['${effectivePrefix}amount_minor'],
       )!,
+      currencyCode: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}currency_code'],
+      )!,
     );
   }
 
@@ -1668,11 +1694,15 @@ class TransactionPayment extends DataClass
   final String transactionId;
   final String participantId;
   final int amountMinor;
+
+  /// ISO 4217; matches receipt line currency for this payment slice.
+  final String currencyCode;
   const TransactionPayment({
     required this.id,
     required this.transactionId,
     required this.participantId,
     required this.amountMinor,
+    required this.currencyCode,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1681,6 +1711,7 @@ class TransactionPayment extends DataClass
     map['transaction_id'] = Variable<String>(transactionId);
     map['participant_id'] = Variable<String>(participantId);
     map['amount_minor'] = Variable<int>(amountMinor);
+    map['currency_code'] = Variable<String>(currencyCode);
     return map;
   }
 
@@ -1690,6 +1721,7 @@ class TransactionPayment extends DataClass
       transactionId: Value(transactionId),
       participantId: Value(participantId),
       amountMinor: Value(amountMinor),
+      currencyCode: Value(currencyCode),
     );
   }
 
@@ -1703,6 +1735,7 @@ class TransactionPayment extends DataClass
       transactionId: serializer.fromJson<String>(json['transactionId']),
       participantId: serializer.fromJson<String>(json['participantId']),
       amountMinor: serializer.fromJson<int>(json['amountMinor']),
+      currencyCode: serializer.fromJson<String>(json['currencyCode']),
     );
   }
   @override
@@ -1713,6 +1746,7 @@ class TransactionPayment extends DataClass
       'transactionId': serializer.toJson<String>(transactionId),
       'participantId': serializer.toJson<String>(participantId),
       'amountMinor': serializer.toJson<int>(amountMinor),
+      'currencyCode': serializer.toJson<String>(currencyCode),
     };
   }
 
@@ -1721,11 +1755,13 @@ class TransactionPayment extends DataClass
     String? transactionId,
     String? participantId,
     int? amountMinor,
+    String? currencyCode,
   }) => TransactionPayment(
     id: id ?? this.id,
     transactionId: transactionId ?? this.transactionId,
     participantId: participantId ?? this.participantId,
     amountMinor: amountMinor ?? this.amountMinor,
+    currencyCode: currencyCode ?? this.currencyCode,
   );
   TransactionPayment copyWithCompanion(TransactionPaymentsCompanion data) {
     return TransactionPayment(
@@ -1739,6 +1775,9 @@ class TransactionPayment extends DataClass
       amountMinor: data.amountMinor.present
           ? data.amountMinor.value
           : this.amountMinor,
+      currencyCode: data.currencyCode.present
+          ? data.currencyCode.value
+          : this.currencyCode,
     );
   }
 
@@ -1748,14 +1787,15 @@ class TransactionPayment extends DataClass
           ..write('id: $id, ')
           ..write('transactionId: $transactionId, ')
           ..write('participantId: $participantId, ')
-          ..write('amountMinor: $amountMinor')
+          ..write('amountMinor: $amountMinor, ')
+          ..write('currencyCode: $currencyCode')
           ..write(')'))
         .toString();
   }
 
   @override
   int get hashCode =>
-      Object.hash(id, transactionId, participantId, amountMinor);
+      Object.hash(id, transactionId, participantId, amountMinor, currencyCode);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1763,7 +1803,8 @@ class TransactionPayment extends DataClass
           other.id == this.id &&
           other.transactionId == this.transactionId &&
           other.participantId == this.participantId &&
-          other.amountMinor == this.amountMinor);
+          other.amountMinor == this.amountMinor &&
+          other.currencyCode == this.currencyCode);
 }
 
 class TransactionPaymentsCompanion extends UpdateCompanion<TransactionPayment> {
@@ -1771,12 +1812,14 @@ class TransactionPaymentsCompanion extends UpdateCompanion<TransactionPayment> {
   final Value<String> transactionId;
   final Value<String> participantId;
   final Value<int> amountMinor;
+  final Value<String> currencyCode;
   final Value<int> rowid;
   const TransactionPaymentsCompanion({
     this.id = const Value.absent(),
     this.transactionId = const Value.absent(),
     this.participantId = const Value.absent(),
     this.amountMinor = const Value.absent(),
+    this.currencyCode = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   TransactionPaymentsCompanion.insert({
@@ -1784,6 +1827,7 @@ class TransactionPaymentsCompanion extends UpdateCompanion<TransactionPayment> {
     required String transactionId,
     required String participantId,
     required int amountMinor,
+    this.currencyCode = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        transactionId = Value(transactionId),
@@ -1794,6 +1838,7 @@ class TransactionPaymentsCompanion extends UpdateCompanion<TransactionPayment> {
     Expression<String>? transactionId,
     Expression<String>? participantId,
     Expression<int>? amountMinor,
+    Expression<String>? currencyCode,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1801,6 +1846,7 @@ class TransactionPaymentsCompanion extends UpdateCompanion<TransactionPayment> {
       if (transactionId != null) 'transaction_id': transactionId,
       if (participantId != null) 'participant_id': participantId,
       if (amountMinor != null) 'amount_minor': amountMinor,
+      if (currencyCode != null) 'currency_code': currencyCode,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1810,6 +1856,7 @@ class TransactionPaymentsCompanion extends UpdateCompanion<TransactionPayment> {
     Value<String>? transactionId,
     Value<String>? participantId,
     Value<int>? amountMinor,
+    Value<String>? currencyCode,
     Value<int>? rowid,
   }) {
     return TransactionPaymentsCompanion(
@@ -1817,6 +1864,7 @@ class TransactionPaymentsCompanion extends UpdateCompanion<TransactionPayment> {
       transactionId: transactionId ?? this.transactionId,
       participantId: participantId ?? this.participantId,
       amountMinor: amountMinor ?? this.amountMinor,
+      currencyCode: currencyCode ?? this.currencyCode,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1836,6 +1884,9 @@ class TransactionPaymentsCompanion extends UpdateCompanion<TransactionPayment> {
     if (amountMinor.present) {
       map['amount_minor'] = Variable<int>(amountMinor.value);
     }
+    if (currencyCode.present) {
+      map['currency_code'] = Variable<String>(currencyCode.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1849,6 +1900,7 @@ class TransactionPaymentsCompanion extends UpdateCompanion<TransactionPayment> {
           ..write('transactionId: $transactionId, ')
           ..write('participantId: $participantId, ')
           ..write('amountMinor: $amountMinor, ')
+          ..write('currencyCode: $currencyCode, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -6031,6 +6083,7 @@ typedef $$TransactionPaymentsTableCreateCompanionBuilder =
       required String transactionId,
       required String participantId,
       required int amountMinor,
+      Value<String> currencyCode,
       Value<int> rowid,
     });
 typedef $$TransactionPaymentsTableUpdateCompanionBuilder =
@@ -6039,6 +6092,7 @@ typedef $$TransactionPaymentsTableUpdateCompanionBuilder =
       Value<String> transactionId,
       Value<String> participantId,
       Value<int> amountMinor,
+      Value<String> currencyCode,
       Value<int> rowid,
     });
 
@@ -6119,6 +6173,11 @@ class $$TransactionPaymentsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get currencyCode => $composableBuilder(
+    column: $table.currencyCode,
+    builder: (column) => ColumnFilters(column),
+  );
+
   $$TransactionsTableFilterComposer get transactionId {
     final $$TransactionsTableFilterComposer composer = $composerBuilder(
       composer: this,
@@ -6185,6 +6244,11 @@ class $$TransactionPaymentsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get currencyCode => $composableBuilder(
+    column: $table.currencyCode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$TransactionsTableOrderingComposer get transactionId {
     final $$TransactionsTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -6246,6 +6310,11 @@ class $$TransactionPaymentsTableAnnotationComposer
 
   GeneratedColumn<int> get amountMinor => $composableBuilder(
     column: $table.amountMinor,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get currencyCode => $composableBuilder(
+    column: $table.currencyCode,
     builder: (column) => column,
   );
 
@@ -6336,12 +6405,14 @@ class $$TransactionPaymentsTableTableManager
                 Value<String> transactionId = const Value.absent(),
                 Value<String> participantId = const Value.absent(),
                 Value<int> amountMinor = const Value.absent(),
+                Value<String> currencyCode = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => TransactionPaymentsCompanion(
                 id: id,
                 transactionId: transactionId,
                 participantId: participantId,
                 amountMinor: amountMinor,
+                currencyCode: currencyCode,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -6350,12 +6421,14 @@ class $$TransactionPaymentsTableTableManager
                 required String transactionId,
                 required String participantId,
                 required int amountMinor,
+                Value<String> currencyCode = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => TransactionPaymentsCompanion.insert(
                 id: id,
                 transactionId: transactionId,
                 participantId: participantId,
                 amountMinor: amountMinor,
+                currencyCode: currencyCode,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

@@ -17,11 +17,13 @@ import 'package:splitbae/core/platform/platform_capabilities.dart';
 import 'package:splitbae/core/ocr/receipt_ocr_probe_provider.dart';
 import 'package:splitbae/core/widgets/adaptive_app_bar.dart';
 import 'package:splitbae/providers.dart';
+import 'package:splitbae/screens/balances_screen.dart';
 import 'package:splitbae/screens/settings_screen.dart';
 import 'package:splitbae/widgets/add_participant_sheet.dart';
 import 'package:splitbae/widgets/add_receipt_item_sheet.dart';
 import 'package:splitbae/widgets/manage_participants_sheet.dart';
 import 'package:splitbae/widgets/split_home_content.dart';
+import 'package:splitbae/widgets/who_paid_sheet.dart';
 
 Future<void> confirmDeleteLine(
   BuildContext context,
@@ -65,7 +67,7 @@ class _AdaptiveHomeScreenState extends ConsumerState<AdaptiveHomeScreen> {
     if (!mounted) return;
     final width = MediaQuery.sizeOf(context).width;
     if (width >= AppBreakpoints.expandedMin) {
-      setState(() => _railIndex = 1);
+      setState(() => _railIndex = 2);
     } else {
       Navigator.of(
         context,
@@ -95,9 +97,21 @@ class _AdaptiveHomeScreenState extends ConsumerState<AdaptiveHomeScreen> {
           final narrowActions = <Widget>[
             splitBaeAdaptiveToolbarIcon(
               context: context,
+              tooltip: l10n.balancesTooltip,
+              icon: Icons.account_balance_wallet_outlined,
+              onPressed: () => openBalancesScreen(context),
+            ),
+            splitBaeAdaptiveToolbarIcon(
+              context: context,
               tooltip: l10n.peopleTooltip,
               icon: Icons.group_outlined,
               onPressed: () => showManageParticipantsSheet(context, ref),
+            ),
+            splitBaeAdaptiveToolbarIcon(
+              context: context,
+              tooltip: l10n.whoPaidTooltip,
+              icon: Icons.payments_outlined,
+              onPressed: () => showWhoPaidSheet(context, ref),
             ),
             splitBaeAdaptiveToolbarIcon(
               context: context,
@@ -204,6 +218,11 @@ class _AdaptiveHomeScreenState extends ConsumerState<AdaptiveHomeScreen> {
                     label: Text(l10n.navHomeLabel),
                   ),
                   NavigationRailDestination(
+                    icon: const Icon(Icons.account_balance_wallet_outlined),
+                    selectedIcon: const Icon(Icons.account_balance_wallet),
+                    label: Text(l10n.balancesTitle),
+                  ),
+                  NavigationRailDestination(
                     icon: const Icon(Icons.settings_outlined),
                     selectedIcon: const Icon(Icons.settings),
                     label: Text(l10n.settings),
@@ -225,6 +244,12 @@ class _AdaptiveHomeScreenState extends ConsumerState<AdaptiveHomeScreen> {
                               icon: Icons.group_outlined,
                               onPressed: () =>
                                   showManageParticipantsSheet(context, ref),
+                            ),
+                            splitBaeAdaptiveToolbarIcon(
+                              context: context,
+                              tooltip: l10n.whoPaidTooltip,
+                              icon: Icons.payments_outlined,
+                              onPressed: () => showWhoPaidSheet(context, ref),
                             ),
                             splitBaeAdaptiveToolbarIcon(
                               context: context,
@@ -252,7 +277,20 @@ class _AdaptiveHomeScreenState extends ConsumerState<AdaptiveHomeScreen> {
                           icon: const Icon(Icons.person_add),
                         ),
                       )
-                    : const SafeArea(child: SettingsScreen(embedded: true)),
+                    : _railIndex == 1
+                        ? Scaffold(
+                            appBar: splitBaeAdaptiveAppBar(
+                              context: context,
+                              title: l10n.balancesTitle,
+                              centerTitle: false,
+                              actions: const [],
+                            ),
+                            body: Padding(
+                              padding: hinge,
+                              child: const BalancesScreen(embedded: true),
+                            ),
+                          )
+                        : const SafeArea(child: SettingsScreen(embedded: true)),
               ),
             ],
           ),

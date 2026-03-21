@@ -28,16 +28,28 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   AssignedReceiptLine dco_decode_assigned_receipt_line(dynamic raw);
 
   @protected
+  DraftPaymentMinor dco_decode_draft_payment_minor(dynamic raw);
+
+  @protected
   double dco_decode_f_64(dynamic raw);
 
   @protected
   PlatformInt64 dco_decode_i_64(dynamic raw);
 
   @protected
+  LineTotalMinor dco_decode_line_total_minor(dynamic raw);
+
+  @protected
   List<String> dco_decode_list_String(dynamic raw);
 
   @protected
   List<AssignedReceiptLine> dco_decode_list_assigned_receipt_line(dynamic raw);
+
+  @protected
+  List<DraftPaymentMinor> dco_decode_list_draft_payment_minor(dynamic raw);
+
+  @protected
+  List<LineTotalMinor> dco_decode_list_line_total_minor(dynamic raw);
 
   @protected
   List<NetBalance> dco_decode_list_net_balance(dynamic raw);
@@ -84,16 +96,34 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  DraftPaymentMinor sse_decode_draft_payment_minor(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   double sse_decode_f_64(SseDeserializer deserializer);
 
   @protected
   PlatformInt64 sse_decode_i_64(SseDeserializer deserializer);
 
   @protected
+  LineTotalMinor sse_decode_line_total_minor(SseDeserializer deserializer);
+
+  @protected
   List<String> sse_decode_list_String(SseDeserializer deserializer);
 
   @protected
   List<AssignedReceiptLine> sse_decode_list_assigned_receipt_line(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<DraftPaymentMinor> sse_decode_list_draft_payment_minor(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<LineTotalMinor> sse_decode_list_line_total_minor(
     SseDeserializer deserializer,
   );
 
@@ -153,10 +183,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_draft_payment_minor(
+    DraftPaymentMinor self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_f_64(double self, SseSerializer serializer);
 
   @protected
   void sse_encode_i_64(PlatformInt64 self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_line_total_minor(
+    LineTotalMinor self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_list_String(List<String> self, SseSerializer serializer);
@@ -164,6 +206,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_list_assigned_receipt_line(
     List<AssignedReceiptLine> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_draft_payment_minor(
+    List<DraftPaymentMinor> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_line_total_minor(
+    List<LineTotalMinor> self,
     SseSerializer serializer,
   );
 

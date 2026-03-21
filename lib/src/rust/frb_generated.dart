@@ -67,7 +67,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.11.1';
 
   @override
-  int get rustContentHash => -1932472599;
+  int get rustContentHash => -197485636;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -104,6 +104,11 @@ abstract class RustLibApi extends BaseApi {
   double crateApiSimpleMinorUnitsToAmount({
     required PlatformInt64 minor,
     required String currencyCode,
+  });
+
+  void crateApiSimpleValidateBillPaymentsSum({
+    required List<LineTotalMinor> lineTotalsMinor,
+    required List<DraftPaymentMinor> payments,
   });
 }
 
@@ -314,6 +319,36 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         argNames: ["minor", "currencyCode"],
       );
 
+  @override
+  void crateApiSimpleValidateBillPaymentsSum({
+    required List<LineTotalMinor> lineTotalsMinor,
+    required List<DraftPaymentMinor> payments,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_list_line_total_minor(lineTotalsMinor, serializer);
+          sse_encode_list_draft_payment_minor(payments, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 8)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiSimpleValidateBillPaymentsSumConstMeta,
+        argValues: [lineTotalsMinor, payments],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiSimpleValidateBillPaymentsSumConstMeta =>
+      const TaskConstMeta(
+        debugName: "validate_bill_payments_sum",
+        argNames: ["lineTotalsMinor", "payments"],
+      );
+
   @protected
   String dco_decode_String(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
@@ -333,6 +368,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  DraftPaymentMinor dco_decode_draft_payment_minor(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return DraftPaymentMinor(
+      participantId: dco_decode_String(arr[0]),
+      currencyCode: dco_decode_String(arr[1]),
+      amountMinor: dco_decode_i_64(arr[2]),
+    );
+  }
+
+  @protected
   double dco_decode_f_64(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as double;
@@ -342,6 +390,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   PlatformInt64 dco_decode_i_64(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dcoDecodeI64(raw);
+  }
+
+  @protected
+  LineTotalMinor dco_decode_line_total_minor(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return LineTotalMinor(
+      currencyCode: dco_decode_String(arr[0]),
+      amountMinor: dco_decode_i_64(arr[1]),
+    );
   }
 
   @protected
@@ -356,6 +416,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     return (raw as List<dynamic>)
         .map(dco_decode_assigned_receipt_line)
         .toList();
+  }
+
+  @protected
+  List<DraftPaymentMinor> dco_decode_list_draft_payment_minor(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_draft_payment_minor).toList();
+  }
+
+  @protected
+  List<LineTotalMinor> dco_decode_list_line_total_minor(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_line_total_minor).toList();
   }
 
   @protected
@@ -444,12 +516,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   SplitResult dco_decode_split_result(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 3)
-      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
     return SplitResult(
-      personName: dco_decode_String(arr[0]),
-      totalOwed: dco_decode_f_64(arr[1]),
-      currencyCode: dco_decode_String(arr[2]),
+      participantId: dco_decode_String(arr[0]),
+      personName: dco_decode_String(arr[1]),
+      totalOwed: dco_decode_f_64(arr[2]),
+      currencyCode: dco_decode_String(arr[3]),
     );
   }
 
@@ -483,6 +556,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  DraftPaymentMinor sse_decode_draft_payment_minor(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_participantId = sse_decode_String(deserializer);
+    var var_currencyCode = sse_decode_String(deserializer);
+    var var_amountMinor = sse_decode_i_64(deserializer);
+    return DraftPaymentMinor(
+      participantId: var_participantId,
+      currencyCode: var_currencyCode,
+      amountMinor: var_amountMinor,
+    );
+  }
+
+  @protected
   double sse_decode_f_64(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return deserializer.buffer.getFloat64();
@@ -492,6 +580,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   PlatformInt64 sse_decode_i_64(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return deserializer.buffer.getPlatformInt64();
+  }
+
+  @protected
+  LineTotalMinor sse_decode_line_total_minor(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_currencyCode = sse_decode_String(deserializer);
+    var var_amountMinor = sse_decode_i_64(deserializer);
+    return LineTotalMinor(
+      currencyCode: var_currencyCode,
+      amountMinor: var_amountMinor,
+    );
   }
 
   @protected
@@ -516,6 +615,34 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var ans_ = <AssignedReceiptLine>[];
     for (var idx_ = 0; idx_ < len_; ++idx_) {
       ans_.add(sse_decode_assigned_receipt_line(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<DraftPaymentMinor> sse_decode_list_draft_payment_minor(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <DraftPaymentMinor>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_draft_payment_minor(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<LineTotalMinor> sse_decode_list_line_total_minor(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <LineTotalMinor>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_line_total_minor(deserializer));
     }
     return ans_;
   }
@@ -631,10 +758,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   SplitResult sse_decode_split_result(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_participantId = sse_decode_String(deserializer);
     var var_personName = sse_decode_String(deserializer);
     var var_totalOwed = sse_decode_f_64(deserializer);
     var var_currencyCode = sse_decode_String(deserializer);
     return SplitResult(
+      participantId: var_participantId,
       personName: var_personName,
       totalOwed: var_totalOwed,
       currencyCode: var_currencyCode,
@@ -681,6 +810,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_draft_payment_minor(
+    DraftPaymentMinor self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.participantId, serializer);
+    sse_encode_String(self.currencyCode, serializer);
+    sse_encode_i_64(self.amountMinor, serializer);
+  }
+
+  @protected
   void sse_encode_f_64(double self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     serializer.buffer.putFloat64(self);
@@ -690,6 +830,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   void sse_encode_i_64(PlatformInt64 self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     serializer.buffer.putPlatformInt64(self);
+  }
+
+  @protected
+  void sse_encode_line_total_minor(
+    LineTotalMinor self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.currencyCode, serializer);
+    sse_encode_i_64(self.amountMinor, serializer);
   }
 
   @protected
@@ -710,6 +860,30 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
       sse_encode_assigned_receipt_line(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_draft_payment_minor(
+    List<DraftPaymentMinor> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_draft_payment_minor(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_line_total_minor(
+    List<LineTotalMinor> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_line_total_minor(item, serializer);
     }
   }
 
@@ -812,6 +986,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   void sse_encode_split_result(SplitResult self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.participantId, serializer);
     sse_encode_String(self.personName, serializer);
     sse_encode_f_64(self.totalOwed, serializer);
     sse_encode_String(self.currencyCode, serializer);

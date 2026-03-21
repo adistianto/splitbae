@@ -70,6 +70,8 @@ class TransactionPayments extends Table {
   TextColumn get participantId =>
       text().references(Participants, #id, onDelete: KeyAction.cascade)();
   IntColumn get amountMinor => integer()();
+  /// ISO 4217; matches receipt line currency for this payment slice.
+  TextColumn get currencyCode => text().withDefault(const Constant('IDR'))();
 
   @override
   Set<Column<Object>> get primaryKey => {id};
@@ -158,7 +160,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -211,6 +213,9 @@ class AppDatabase extends _$AppDatabase {
           await (update(receiptLines)..where((t) => t.ledgerId.equals(ledger.id)))
               .write(ReceiptLinesCompanion(transactionId: Value(draftId)));
         }
+      }
+      if (from < 5) {
+        await m.addColumn(transactionPayments, transactionPayments.currencyCode);
       }
     },
   );

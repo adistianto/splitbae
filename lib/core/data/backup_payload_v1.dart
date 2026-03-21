@@ -136,13 +136,11 @@ class BackupPayloadV1 {
     Object? raw,
   ) {
     if (version < 2 || raw is! List) return const [];
-    return raw
-        .map(
-          (e) => TransactionPayment.fromJson(
-            Map<String, dynamic>.from(e as Map),
-          ),
-        )
-        .toList();
+    return raw.map((e) {
+      final m = Map<String, dynamic>.from(e as Map);
+      m.putIfAbsent('currencyCode', () => 'IDR');
+      return TransactionPayment.fromJson(m);
+    }).toList();
   }
 
   static List<SettlementTransfer> _parseSettlementTransfers(

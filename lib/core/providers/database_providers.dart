@@ -6,6 +6,8 @@ import '../data/line_item_repository.dart';
 import '../data/participant_repository.dart';
 import '../data/backup_service.dart';
 import '../data/local_database_snapshot.dart';
+import '../data/draft_payment_repository.dart';
+import '../data/settlement_repository.dart';
 import '../database/app_database.dart';
 import '../database/database_files.dart';
 import '../database/database_opener.dart';
@@ -105,4 +107,12 @@ final participantRepositoryProvider = Provider<ParticipantRepository>((ref) {
 
 final backupServiceProvider = Provider<BackupService>((ref) {
   return BackupService(ref.watch(appDatabaseProvider));
+});
+
+final settlementRepositoryProvider = Provider<SettlementRepository>((ref) {
+  return SettlementRepository(ref.watch(appDatabaseProvider));
+});
+
+final draftPaymentRepositoryProvider = Provider<DraftPaymentRepository>((ref) {
+  return DraftPaymentRepository(ref.watch(appDatabaseProvider));
 });

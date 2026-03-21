@@ -571,6 +571,106 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No receipt lines yet. Add an item to start.'**
   String get emptyBillHint;
+
+  /// Title for the balances / settlement screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Balances'**
+  String get balancesTitle;
+
+  /// Toolbar or navigation tooltip for opening balances.
+  ///
+  /// In en, this message translates to:
+  /// **'Balances and settlements'**
+  String get balancesTooltip;
+
+  /// Section header for Rust-computed minimal settlement edges.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggested transfers'**
+  String get suggestedSettlementsTitle;
+
+  /// Section header for settlement rows saved in the local database.
+  ///
+  /// In en, this message translates to:
+  /// **'Recorded transfers'**
+  String get recordedSettlementsTitle;
+
+  /// Shown when there are no suggested settlement edges.
+  ///
+  /// In en, this message translates to:
+  /// **'Everyone is settled for this ledger.'**
+  String get allSettledUp;
+
+  /// Button to persist one suggested settlement as a completed transfer.
+  ///
+  /// In en, this message translates to:
+  /// **'Record'**
+  String get recordSettlementAction;
+
+  /// Confirmation dialog title when recording a settlement.
+  ///
+  /// In en, this message translates to:
+  /// **'Record this transfer?'**
+  String get recordSettlementConfirmTitle;
+
+  /// Confirmation dialog body; amount is already localized.
+  ///
+  /// In en, this message translates to:
+  /// **'{fromName} pays {toName} {amount}.'**
+  String recordSettlementConfirmBody(
+    String fromName,
+    String toName,
+    String amount,
+  );
+
+  /// Explains that per-currency payments drive settlement nets.
+  ///
+  /// In en, this message translates to:
+  /// **'Who paid is stored per currency on the draft bill. Use Who paid on the home screen to edit; totals must match receipt lines.'**
+  String get settlementPayerModelHint;
+
+  /// Toolbar: open editor for per-person payments toward the bill.
+  ///
+  /// In en, this message translates to:
+  /// **'Who paid'**
+  String get whoPaidTooltip;
+
+  /// Bottom sheet title for splitting payments by participant and currency.
+  ///
+  /// In en, this message translates to:
+  /// **'Who paid'**
+  String get whoPaidTitle;
+
+  /// Explains validation against line totals.
+  ///
+  /// In en, this message translates to:
+  /// **'Amounts must add up to each currency’s line total (same as the receipt).'**
+  String get whoPaidSubtitle;
+
+  /// Commits who-paid amounts to the local database.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get whoPaidSave;
+
+  /// Resets payments so the first participant pays each currency total.
+  ///
+  /// In en, this message translates to:
+  /// **'First person pays all'**
+  String get whoPaidReset;
+
+  /// Shown when opening who-paid with no bill lines.
+  ///
+  /// In en, this message translates to:
+  /// **'Add receipt lines first, then split who paid.'**
+  String get whoPaidEmptyBill;
+
+  /// Label before the required total for a currency in who-paid.
+  ///
+  /// In en, this message translates to:
+  /// **'Bill total'**
+  String get whoPaidBillTotalLabel;
 }
 
 class _AppLocalizationsDelegate

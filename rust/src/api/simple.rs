@@ -20,6 +20,7 @@ pub struct ReceiptItem {
 #[flutter_rust_bridge::frb]
 #[derive(Clone, Debug)]
 pub struct SplitResult {
+    pub participant_id: String,
     pub person_name: String,
     pub total_owed: f64,
     pub currency_code: String,
@@ -97,6 +98,7 @@ pub fn calculate_split_assigned(
                 .copied()
                 .unwrap_or(0.0);
             out.push(SplitResult {
+                participant_id: p.id.clone(),
                 person_name: p.display_name.clone(),
                 total_owed: amt,
                 currency_code: ccy.clone(),
@@ -110,6 +112,65 @@ pub fn calculate_split_assigned(
             .then_with(|| a.currency_code.cmp(&b.currency_code))
     });
     out
+}
+
+/// Per-currency line total in minor units (from SQLite `receipt_lines`).
+#[flutter_rust_bridge::frb]
+#[derive(Clone, Debug)]
+pub struct LineTotalMinor {
+    pub currency_code: String,
+    pub amount_minor: i64,
+}
+
+/// One payment slice toward the bill (participant × currency).
+#[flutter_rust_bridge::frb]
+#[derive(Clone, Debug)]
+pub struct DraftPaymentMinor {
+    pub participant_id: String,
+    pub currency_code: String,
+    pub amount_minor: i64,
+}
+
+/// Ensures `sum(payments per currency) == line total per currency` in minor units.
+#[flutter_rust_bridge::frb(sync)]
+pub fn validate_bill_payments_sum(
+    line_totals_minor: Vec<LineTotalMinor>,
+    payments: Vec<DraftPaymentMinor>,
+) -> Result<(), String> {
+    use std::collections::{BTreeSet, HashMap};
+
+    let mut line_sum: HashMap<String, i128> = HashMap::new();
+    for l in line_totals_minor {
+        let c = l.currency_code.trim().to_uppercase();
+        if c.is_empty() {
+            return Err("Empty currency in line totals".to_string());
+        }
+        *line_sum.entry(c).or_insert(0) += l.amount_minor as i128;
+    }
+
+    let mut pay_sum: HashMap<String, i128> = HashMap::new();
+    for p in payments {
+        let c = p.currency_code.trim().to_uppercase();
+        if c.is_empty() {
+            return Err("Empty currency in payment".to_string());
+        }
+        *pay_sum.entry(c).or_insert(0) += p.amount_minor as i128;
+    }
+
+    let mut all = BTreeSet::new();
+    all.extend(line_sum.keys().cloned());
+    all.extend(pay_sum.keys().cloned());
+
+    for c in all {
+        let ls = line_sum.get(&c).copied().unwrap_or(0);
+        let ps = pay_sum.get(&c).copied().unwrap_or(0);
+        if ls != ps {
+            return Err(format!(
+                "Payments for {c} sum to {ps} minor but line total is {ls}"
+            ));
+        }
+    }
+    Ok(())
 }
 
 // --- Amount encoding (keep all numeric money rules in Rust; Dart calls FRB only.) ---
@@ -206,5 +267,38 @@ mod tests {
         let m = amount_to_minor_units(45_000.0, "IDR".into());
         assert_eq!(m, 45_000);
         assert!((minor_units_to_amount(m, "IDR".into()) - 45_000.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn validate_bill_payments_ok() {
+        assert!(validate_bill_payments_sum(
+            vec![LineTotalMinor {
+                currency_code: "IDR".into(),
+                amount_minor: 100,
+            }],
+            vec![DraftPaymentMinor {
+                participant_id: "a".into(),
+                currency_code: "IDR".into(),
+                amount_minor: 100,
+            },],
+        )
+        .is_ok());
+    }
+
+    #[test]
+    fn validate_bill_payments_mismatch() {
+        let e = validate_bill_payments_sum(
+            vec![LineTotalMinor {
+                currency_code: "USD".into(),
+                amount_minor: 100,
+            }],
+            vec![DraftPaymentMinor {
+                participant_id: "a".into(),
+                currency_code: "USD".into(),
+                amount_minor: 50,
+            },],
+        )
+        .unwrap_err();
+        assert!(e.contains("USD"));
     }
 }

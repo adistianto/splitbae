@@ -78,5 +78,21 @@
   "addPersonNameHint": "mis. Adistianto",
   "participantNameRequired": "Isi nama dulu.",
   "emptyParticipantsHint": "Tambah orang untuk melihat pembagian tagihan.",
-  "emptyBillHint": "Belum ada item. Tambah baris struk untuk mulai."
+  "emptyBillHint": "Belum ada item. Tambah baris struk untuk mulai.",
+  "balancesTitle": "Saldo",
+  "balancesTooltip": "Saldo dan pelunasan",
+  "suggestedSettlementsTitle": "Transfer yang disarankan",
+  "recordedSettlementsTitle": "Transfer tercatat",
+  "allSettledUp": "Semua sudah selesai untuk buku besar ini.",
+  "recordSettlementAction": "Catat",
+  "recordSettlementConfirmTitle": "Catat transfer ini?",
+  "recordSettlementConfirmBody": "{fromName} membayar {toName} {amount}.",
+  "settlementPayerModelHint": "Siapa membayar disimpan per mata uang pada draf tagihan. Gunakan Siapa bayar di layar utama untuk mengubah; total harus sama dengan baris struk.",
+  "whoPaidTooltip": "Siapa bayar",
+  "whoPaidTitle": "Siapa bayar",
+  "whoPaidSubtitle": "Jumlah harus berjumlah sama dengan total tiap mata uang (sama dengan struk).",
+  "whoPaidSave": "Simpan",
+  "whoPaidReset": "Orang pertama bayar semua",
+  "whoPaidEmptyBill": "Tambah baris struk dulu, lalu bagi siapa yang bayar.",
+  "whoPaidBillTotalLabel": "Total tagihan"
 }

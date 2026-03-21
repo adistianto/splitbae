@@ -325,5 +325,74 @@
   "emptyBillHint": "No receipt lines yet. Add an item to start.",
   "@emptyBillHint": {
     "description": "Shown when the bill has no line items."
+  },
+  "balancesTitle": "Balances",
+  "@balancesTitle": {
+    "description": "Title for the balances / settlement screen."
+  },
+  "balancesTooltip": "Balances and settlements",
+  "@balancesTooltip": {
+    "description": "Toolbar or navigation tooltip for opening balances."
+  },
+  "suggestedSettlementsTitle": "Suggested transfers",
+  "@suggestedSettlementsTitle": {
+    "description": "Section header for Rust-computed minimal settlement edges."
+  },
+  "recordedSettlementsTitle": "Recorded transfers",
+  "@recordedSettlementsTitle": {
+    "description": "Section header for settlement rows saved in the local database."
+  },
+  "allSettledUp": "Everyone is settled for this ledger.",
+  "@allSettledUp": {
+    "description": "Shown when there are no suggested settlement edges."
+  },
+  "recordSettlementAction": "Record",
+  "@recordSettlementAction": {
+    "description": "Button to persist one suggested settlement as a completed transfer."
+  },
+  "recordSettlementConfirmTitle": "Record this transfer?",
+  "@recordSettlementConfirmTitle": {
+    "description": "Confirmation dialog title when recording a settlement."
+  },
+  "recordSettlementConfirmBody": "{fromName} pays {toName} {amount}.",
+  "@recordSettlementConfirmBody": {
+    "description": "Confirmation dialog body; amount is already localized.",
+    "placeholders": {
+      "fromName": { "type": "String" },
+      "toName": { "type": "String" },
+      "amount": { "type": "String" }
+    }
+  },
+  "settlementPayerModelHint": "Who paid is stored per currency on the draft bill. Use Who paid on the home screen to edit; totals must match receipt lines.",
+  "@settlementPayerModelHint": {
+    "description": "Explains that per-currency payments drive settlement nets."
+  },
+  "whoPaidTooltip": "Who paid",
+  "@whoPaidTooltip": {
+    "description": "Toolbar: open editor for per-person payments toward the bill."
+  },
+  "whoPaidTitle": "Who paid",
+  "@whoPaidTitle": {
+    "description": "Bottom sheet title for splitting payments by participant and currency."
+  },
+  "whoPaidSubtitle": "Amounts must add up to each currency’s line total (same as the receipt).",
+  "@whoPaidSubtitle": {
+    "description": "Explains validation against line totals."
+  },
+  "whoPaidSave": "Save",
+  "@whoPaidSave": {
+    "description": "Commits who-paid amounts to the local database."
+  },
+  "whoPaidReset": "First person pays all",
+  "@whoPaidReset": {
+    "description": "Resets payments so the first participant pays each currency total."
+  },
+  "whoPaidEmptyBill": "Add receipt lines first, then split who paid.",
+  "@whoPaidEmptyBill": {
+    "description": "Shown when opening who-paid with no bill lines."
+  },
+  "whoPaidBillTotalLabel": "Bill total",
+  "@whoPaidBillTotalLabel": {
+    "description": "Label before the required total for a currency in who-paid."
   }
 }
