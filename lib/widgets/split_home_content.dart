@@ -40,85 +40,89 @@ class SplitHomeContent extends ConsumerWidget {
     Locale locale,
   ) {
     final l10n = AppLocalizations.of(context)!;
-    return items
-        .map(
-          (line) => Card(
-            margin: EdgeInsets.symmetric(
-              horizontal: horizontalPadding,
-              vertical: 6,
-            ),
-            elevation: 0,
-            color: Theme.of(
-              context,
-            ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                ListTile(
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 4,
-                  ),
-                  title: Text(
-                    line.receiptItem.name,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                  ),
-                  subtitle: Text(
-                    line.receiptItem.currencyCode,
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        formatCurrencyAmount(
-                          amount: line.receiptItem.price,
-                          currencyCode: line.receiptItem.currencyCode,
-                          locale: locale,
-                        ),
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
-                      ),
-                      splitBaeAdaptiveToolbarIcon(
-                        context: context,
-                        tooltip: l10n.deleteAction,
-                        icon: Icons.delete_outline,
-                        onPressed: () => onConfirmDeleteLine(context, ref, line),
-                      ),
-                    ],
-                  ),
-                  onTap: () =>
-                      showAddReceiptItemSheet(context, ref, existingLine: line),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                  child: ItemAssigneeChips(
-                    participants: participants,
-                    assigneeIds: line.assignedParticipantIds.toSet(),
-                    dense: true,
-                    onAssigneesChanged: (ids) {
-                      ref.read(itemsProvider.notifier).setLineAssignments(
-                            lineId: line.id,
-                            selectedParticipantIds: ids,
-                          );
-                    },
-                  ),
-                ),
-              ],
-            ),
+    return items.map((line) {
+      final amountStr = formatCurrencyAmount(
+        amount: line.receiptItem.price,
+        currencyCode: line.receiptItem.currencyCode,
+        locale: locale,
+      );
+      return Semantics(
+        label: l10n.semanticsDraftBillLine(line.receiptItem.name, amountStr),
+        hint: l10n.semanticsDraftLineHint,
+        button: true,
+        child: Card(
+          margin: EdgeInsets.symmetric(
+            horizontal: horizontalPadding,
+            vertical: 6,
           ),
-        )
-        .toList();
+          elevation: 0,
+          color: Theme.of(
+            context,
+          ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ListTile(
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
+                ),
+                title: Text(
+                  line.receiptItem.name,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                subtitle: Text(
+                  line.receiptItem.currencyCode,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      amountStr,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                    splitBaeAdaptiveToolbarIcon(
+                      context: context,
+                      tooltip: l10n.deleteAction,
+                      icon: Icons.delete_outline,
+                      onPressed: () => onConfirmDeleteLine(context, ref, line),
+                    ),
+                  ],
+                ),
+                onTap: () =>
+                    showAddReceiptItemSheet(context, ref, existingLine: line),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                child: ItemAssigneeChips(
+                  participants: participants,
+                  assigneeIds: line.assignedParticipantIds.toSet(),
+                  dense: true,
+                  onAssigneesChanged: (ids) {
+                    ref
+                        .read(itemsProvider.notifier)
+                        .setLineAssignments(
+                          lineId: line.id,
+                          selectedParticipantIds: ids,
+                        );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }).toList();
   }
 
   List<Widget> _splitCards(
@@ -126,59 +130,62 @@ class SplitHomeContent extends ConsumerWidget {
     List<SplitResult> results,
     Locale locale,
   ) {
-    return results
-        .map(
-          (res) => Card(
-            margin: EdgeInsets.symmetric(
-              horizontal: horizontalPadding,
-              vertical: 6,
+    final l10n = AppLocalizations.of(context)!;
+    return results.map((res) {
+      final formatted = formatCurrencyAmount(
+        amount: res.totalOwed,
+        currencyCode: res.currencyCode,
+        locale: locale,
+      );
+      return Semantics(
+        label: l10n.semanticsSplitPersonRow(res.personName, formatted),
+        child: Card(
+          margin: EdgeInsets.symmetric(
+            horizontal: horizontalPadding,
+            vertical: 6,
+          ),
+          elevation: 0,
+          color: Theme.of(
+            context,
+          ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 8,
             ),
-            elevation: 0,
-            color: Theme.of(
-              context,
-            ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+            leading: CircleAvatar(
+              backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+              child: Text(
+                splitBaeInitialGrapheme(res.personName),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onPrimaryContainer,
+                ),
+              ),
             ),
-            child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 8,
-              ),
-              leading: CircleAvatar(
-                backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                child: Text(
-                  splitBaeInitialGrapheme(res.personName),
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onPrimaryContainer,
-                  ),
-                ),
-              ),
-              title: Text(
-                res.personName,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              subtitle: Text(
-                res.currencyCode,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              trailing: Text(
-                formatCurrencyAmount(
-                  amount: res.totalOwed,
-                  currencyCode: res.currencyCode,
-                  locale: locale,
-                ),
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w900,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
+            title: Text(
+              res.personName,
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            subtitle: Text(
+              res.currencyCode,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            trailing: Text(
+              formatted,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w900,
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
           ),
-        )
-        .toList();
+        ),
+      );
+    }).toList();
   }
 
   @override

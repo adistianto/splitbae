@@ -1151,6 +1151,44 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Swipe left to delete'**
   String get billSwipeDeleteHint;
+
+  /// Screen reader label for a draft receipt line (item + formatted amount).
+  ///
+  /// In en, this message translates to:
+  /// **'{itemName}, {formattedAmount}'**
+  String semanticsDraftBillLine(String itemName, String formattedAmount);
+
+  /// Accessibility hint for draft line row (opens editor).
+  ///
+  /// In en, this message translates to:
+  /// **'Double tap to edit.'**
+  String get semanticsDraftLineHint;
+
+  /// Screen reader label for per-person split owed row.
+  ///
+  /// In en, this message translates to:
+  /// **'{personName}, {formattedAmount}'**
+  String semanticsSplitPersonRow(String personName, String formattedAmount);
+
+  /// Screen reader label for suggested settlement edge row.
+  ///
+  /// In en, this message translates to:
+  /// **'{fromName} pays {toName}, {formattedAmount}'**
+  String semanticsSettlementEdge(
+    String fromName,
+    String toName,
+    String formattedAmount,
+  );
+
+  /// Screen reader label for a recorded settlement transfer row.
+  ///
+  /// In en, this message translates to:
+  /// **'{fromName} to {toName}, {formattedAmount}'**
+  String semanticsRecordedSettlement(
+    String fromName,
+    String toName,
+    String formattedAmount,
+  );
 }
 
 class _AppLocalizationsDelegate

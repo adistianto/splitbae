@@ -588,4 +588,35 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get billSwipeDeleteHint => 'Geser kiri untuk hapus';
+
+  @override
+  String semanticsDraftBillLine(String itemName, String formattedAmount) {
+    return '$itemName, $formattedAmount';
+  }
+
+  @override
+  String get semanticsDraftLineHint => 'Ketuk dua kali untuk mengubah.';
+
+  @override
+  String semanticsSplitPersonRow(String personName, String formattedAmount) {
+    return '$personName, $formattedAmount';
+  }
+
+  @override
+  String semanticsSettlementEdge(
+    String fromName,
+    String toName,
+    String formattedAmount,
+  ) {
+    return '$fromName membayar $toName, $formattedAmount';
+  }
+
+  @override
+  String semanticsRecordedSettlement(
+    String fromName,
+    String toName,
+    String formattedAmount,
+  ) {
+    return '$fromName ke $toName, $formattedAmount';
+  }
 }

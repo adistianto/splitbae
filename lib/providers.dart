@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:splitbae/core/data/draft_payment_repository.dart';
 import 'package:splitbae/core/data/bill_posting_repository.dart';
@@ -20,16 +18,21 @@ import 'package:splitbae/src/rust/api/simple.dart'
         calculateSplitAssigned;
 import 'package:splitbae/src/rust/api/settlement.dart' show SettlementEdge;
 
-/// [draftTransactionPaymentsProvider] / [postedBillSummariesProvider] watch
-/// [itemsProvider] (and sometimes [participantsProvider]). Invalidating those
-/// futures from inside the same notifier graph triggers [CircularDependencyError]
-/// in debug; schedule for the next microtask instead.
-void _scheduleInvalidateDraftPayments(Ref ref) {
-  Future.microtask(() => ref.invalidate(draftTransactionPaymentsProvider));
+/// Bumped after [DraftPaymentRepository.syncDraftPaymentsWithBill] changes
+/// `transaction_payments` without necessarily updating [itemsProvider] /
+/// [participantsProvider] state. Do not `invalidate` [draftTransactionPaymentsProvider]
+/// from those notifiers — it watches them and Riverpod throws [CircularDependencyError].
+final draftPaymentsDbRevisionProvider = StateProvider<int>((ref) => 0);
+
+/// Bumped when the posted-bills feed must refresh but [itemsProvider] may be unchanged.
+final postedBillsFeedRevisionProvider = StateProvider<int>((ref) => 0);
+
+void _bumpDraftPaymentsDbRevision(Ref ref) {
+  ref.read(draftPaymentsDbRevisionProvider.notifier).state++;
 }
 
-void _scheduleInvalidatePostedBills(Ref ref) {
-  Future.microtask(() => ref.invalidate(postedBillSummariesProvider));
+void _bumpPostedBillsFeedRevision(Ref ref) {
+  ref.read(postedBillsFeedRevisionProvider.notifier).state++;
 }
 
 class ItemsNotifier extends StateNotifier<List<LedgerLineItem>> {
@@ -44,7 +47,7 @@ class ItemsNotifier extends StateNotifier<List<LedgerLineItem>> {
     state = await repo.listLedgerLines(kDefaultLedgerId);
     await DraftPaymentRepository(_ref.read(appDatabaseProvider))
         .syncDraftPaymentsWithBill(kDefaultLedgerId);
-    _scheduleInvalidateDraftPayments(_ref);
+    _bumpDraftPaymentsDbRevision(_ref);
   }
 
   /// Returns the new line id (for assignment rows after insert).
@@ -115,14 +118,14 @@ class ItemsNotifier extends StateNotifier<List<LedgerLineItem>> {
           receiptSourcePath: receiptSourcePath,
         );
     await _load();
-    _scheduleInvalidatePostedBills(_ref);
+    _bumpPostedBillsFeedRevision(_ref);
   }
 
   Future<void> deletePostedBill(String transactionId) async {
     await _ref
         .read(billPostingRepositoryProvider)
         .deletePostedTransaction(transactionId);
-    _scheduleInvalidatePostedBills(_ref);
+    _bumpPostedBillsFeedRevision(_ref);
     _ref.invalidate(transactionDetailProvider(transactionId));
   }
 }
@@ -144,7 +147,7 @@ class ParticipantsNotifier extends StateNotifier<List<ParticipantEntry>> {
     state = await repo.listParticipants(kDefaultLedgerId);
     await DraftPaymentRepository(_ref.read(appDatabaseProvider))
         .syncDraftPaymentsWithBill(kDefaultLedgerId);
-    _scheduleInvalidateDraftPayments(_ref);
+    _bumpDraftPaymentsDbRevision(_ref);
   }
 
   Future<void> addParticipant(String name) async {
@@ -205,6 +208,7 @@ final settlementTransfersListProvider =
 /// Draft bill payment rows (per participant × currency), synced after items/participants load.
 final draftTransactionPaymentsProvider =
     FutureProvider.autoDispose<List<TransactionPayment>>((ref) async {
+  ref.watch(draftPaymentsDbRevisionProvider);
   ref.watch(itemsProvider);
   ref.watch(participantsProvider);
   final db = ref.watch(appDatabaseProvider);
@@ -214,6 +218,7 @@ final draftTransactionPaymentsProvider =
 /// Posted bills for the default ledger (feed + detail), newest first.
 final postedBillSummariesProvider =
     FutureProvider.autoDispose<List<PostedBillSummary>>((ref) async {
+  ref.watch(postedBillsFeedRevisionProvider);
   ref.watch(itemsProvider);
   final db = ref.watch(appDatabaseProvider);
   return BillPostingRepository(db).listPostedBillSummaries(kDefaultLedgerId);

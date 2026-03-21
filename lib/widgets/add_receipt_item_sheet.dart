@@ -64,9 +64,7 @@ Widget receiptOcrProbeBanner(
             Expanded(
               child: Text(
                 text,
-                style: CupertinoTheme.of(context).textTheme.textStyle.copyWith(
-                  fontSize: 13,
-                ),
+                style: CupertinoTheme.of(context).textTheme.textStyle,
               ),
             ),
           ],

@@ -28,6 +28,13 @@ ThemeData splitBaeMaterialTheme({required ColorScheme colorScheme}) {
     scheme: cs,
   );
 
+  final typo = Typography.material2021(
+    platform: apple ? TargetPlatform.iOS : TargetPlatform.android,
+  );
+  final navLabelStyle = (cs.brightness == Brightness.dark ? typo.white : typo.black)
+      .labelMedium
+      ?.copyWith(fontWeight: FontWeight.w600);
+
   return ThemeData(
     useMaterial3: true,
     colorScheme: cs,
@@ -37,9 +44,7 @@ ThemeData splitBaeMaterialTheme({required ColorScheme colorScheme}) {
     materialTapTargetSize: MaterialTapTargetSize.padded,
     navigationBarTheme: NavigationBarThemeData(
       indicatorColor: cs.primary.withValues(alpha: 0.15),
-      labelTextStyle: WidgetStateProperty.all(
-        const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
-      ),
+      labelTextStyle: WidgetStateProperty.all(navLabelStyle),
     ),
     typography: Typography.material2021(
       platform: apple ? TargetPlatform.iOS : TargetPlatform.android,

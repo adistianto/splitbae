@@ -747,5 +747,43 @@
   "billSwipeDeleteHint": "Swipe left to delete",
   "@billSwipeDeleteHint": {
     "description": "Accessibility hint when bill row can be dismissed."
+  },
+  "semanticsDraftBillLine": "{itemName}, {formattedAmount}",
+  "@semanticsDraftBillLine": {
+    "description": "Screen reader label for a draft receipt line (item + formatted amount).",
+    "placeholders": {
+      "itemName": {"type": "String"},
+      "formattedAmount": {"type": "String"}
+    }
+  },
+  "semanticsDraftLineHint": "Double tap to edit.",
+  "@semanticsDraftLineHint": {
+    "description": "Accessibility hint for draft line row (opens editor)."
+  },
+  "semanticsSplitPersonRow": "{personName}, {formattedAmount}",
+  "@semanticsSplitPersonRow": {
+    "description": "Screen reader label for per-person split owed row.",
+    "placeholders": {
+      "personName": {"type": "String"},
+      "formattedAmount": {"type": "String"}
+    }
+  },
+  "semanticsSettlementEdge": "{fromName} pays {toName}, {formattedAmount}",
+  "@semanticsSettlementEdge": {
+    "description": "Screen reader label for suggested settlement edge row.",
+    "placeholders": {
+      "fromName": {"type": "String"},
+      "toName": {"type": "String"},
+      "formattedAmount": {"type": "String"}
+    }
+  },
+  "semanticsRecordedSettlement": "{fromName} to {toName}, {formattedAmount}",
+  "@semanticsRecordedSettlement": {
+    "description": "Screen reader label for a recorded settlement transfer row.",
+    "placeholders": {
+      "fromName": {"type": "String"},
+      "toName": {"type": "String"},
+      "formattedAmount": {"type": "String"}
+    }
   }
 }

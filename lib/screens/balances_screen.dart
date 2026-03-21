@@ -49,8 +49,8 @@ class _BalancesScreenState extends ConsumerState<BalancesScreen> {
             child: Text(
               l10n.settlementPayerModelHint,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
           ),
         Padding(
@@ -58,21 +58,24 @@ class _BalancesScreenState extends ConsumerState<BalancesScreen> {
           child: Text(
             l10n.settleUpSectionTitle,
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  letterSpacing: 0.6,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+              letterSpacing: 0.6,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
         suggestedAsync.when(
           data: (edges) {
             if (edges.isEmpty) {
               return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 child: Text(
                   l10n.allSettledUp,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
               );
             }
@@ -84,10 +87,7 @@ class _BalancesScreenState extends ConsumerState<BalancesScreen> {
                 final toName =
                     nameById[edge.toParticipantId] ?? edge.toParticipantId;
                 final minor = int.parse(edge.amountMinor.toString());
-                final amount = minorUnitsToAmount(
-                  minor,
-                  edge.currencyCode,
-                );
+                final amount = minorUnitsToAmount(minor, edge.currencyCode);
                 final amountLabel = formatCurrencyAmount(
                   amount: amount,
                   currencyCode: edge.currencyCode,
@@ -104,7 +104,8 @@ class _BalancesScreenState extends ConsumerState<BalancesScreen> {
                   locale: locale,
                   expanded: _expandedSettlementKey == key,
                   onExpand: () => setState(() => _expandedSettlementKey = key),
-                  onCollapse: () => setState(() => _expandedSettlementKey = null),
+                  onCollapse: () =>
+                      setState(() => _expandedSettlementKey = null),
                 );
               }).toList(),
             );
@@ -132,12 +133,15 @@ class _BalancesScreenState extends ConsumerState<BalancesScreen> {
           data: (rows) {
             if (rows.isEmpty) {
               return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 child: Text(
                   '—',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
               );
             }
@@ -145,8 +149,7 @@ class _BalancesScreenState extends ConsumerState<BalancesScreen> {
               children: rows.map((r) {
                 final fromName =
                     nameById[r.fromParticipantId] ?? r.fromParticipantId;
-                final toName =
-                    nameById[r.toParticipantId] ?? r.toParticipantId;
+                final toName = nameById[r.toParticipantId] ?? r.toParticipantId;
                 final amount = minorUnitsToAmount(
                   r.amountMinor,
                   r.currencyCode,
@@ -156,20 +159,25 @@ class _BalancesScreenState extends ConsumerState<BalancesScreen> {
                   currencyCode: r.currencyCode,
                   locale: locale,
                 );
-                return ListTile(
-                  dense: true,
-                  title: Text('$fromName → $toName'),
-                  subtitle: Text(r.currencyCode),
-                  trailing: Text(amountLabel),
+                return Semantics(
+                  label: l10n.semanticsRecordedSettlement(
+                    fromName,
+                    toName,
+                    amountLabel,
+                  ),
+                  child: ListTile(
+                    dense: true,
+                    title: Text('$fromName → $toName'),
+                    subtitle: Text(r.currencyCode),
+                    trailing: Text(amountLabel),
+                  ),
                 );
               }).toList(),
             );
           },
           loading: () => const SizedBox.shrink(),
-          error: (e, _) => Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text('$e'),
-          ),
+          error: (e, _) =>
+              Padding(padding: const EdgeInsets.all(16), child: Text('$e')),
         ),
       ],
     );
@@ -179,9 +187,7 @@ class _BalancesScreenState extends ConsumerState<BalancesScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.balancesTitle),
-      ),
+      appBar: AppBar(title: Text(l10n.balancesTitle)),
       body: SingleChildScrollView(child: content),
     );
   }
@@ -214,7 +220,8 @@ class _SettlementEdgeCard extends ConsumerStatefulWidget {
   final VoidCallback onCollapse;
 
   @override
-  ConsumerState<_SettlementEdgeCard> createState() => _SettlementEdgeCardState();
+  ConsumerState<_SettlementEdgeCard> createState() =>
+      _SettlementEdgeCardState();
 }
 
 class _SettlementEdgeCardState extends ConsumerState<_SettlementEdgeCard> {
@@ -269,7 +276,9 @@ class _SettlementEdgeCardState extends ConsumerState<_SettlementEdgeCard> {
     );
     if (ok != true || !mounted) return;
     HapticFeedback.mediumImpact();
-    await ref.read(settlementRepositoryProvider).recordTransfer(
+    await ref
+        .read(settlementRepositoryProvider)
+        .recordTransfer(
           ledgerId: kDefaultLedgerId,
           fromParticipantId: widget.edge.fromParticipantId,
           toParticipantId: widget.edge.toParticipantId,
@@ -295,7 +304,9 @@ class _SettlementEdgeCardState extends ConsumerState<_SettlementEdgeCard> {
       return;
     }
     HapticFeedback.mediumImpact();
-    await ref.read(settlementRepositoryProvider).recordTransfer(
+    await ref
+        .read(settlementRepositoryProvider)
+        .recordTransfer(
           ledgerId: kDefaultLedgerId,
           fromParticipantId: widget.edge.fromParticipantId,
           toParticipantId: widget.edge.toParticipantId,
@@ -323,7 +334,9 @@ class _SettlementEdgeCardState extends ConsumerState<_SettlementEdgeCard> {
             foregroundColor: sem.onBalancePayContainer,
             child: Text(
               splitBaeDisplayInitials(widget.fromName),
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+              style: theme.textTheme.labelMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
           const SizedBox(width: 12),
@@ -382,7 +395,9 @@ class _SettlementEdgeCardState extends ConsumerState<_SettlementEdgeCard> {
             foregroundColor: sem.onBalanceReceiveContainer,
             child: Text(
               splitBaeDisplayInitials(widget.toName),
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+              style: theme.textTheme.labelMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],
@@ -413,8 +428,56 @@ class _SettlementEdgeCardState extends ConsumerState<_SettlementEdgeCard> {
       );
     }
 
+    final settlementLabel = l10n.semanticsSettlementEdge(
+      widget.fromName,
+      widget.toName,
+      widget.amountLabel,
+    );
+
     if (!widget.expanded) {
-      return Card(
+      return Semantics(
+        label: settlementLabel,
+        expanded: false,
+        button: true,
+        child: Card(
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          clipBehavior: Clip.antiAlias,
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                participantRow(),
+                const SizedBox(height: 12),
+                Text(
+                  widget.currencyCode,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                Text(
+                  widget.amountLabel,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                FilledButton.tonal(
+                  onPressed: widget.onExpand,
+                  child: Text(l10n.markAsPaid),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Semantics(
+      label: settlementLabel,
+      expanded: true,
+      child: Card(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         clipBehavior: Clip.antiAlias,
         child: Padding(
@@ -424,164 +487,131 @@ class _SettlementEdgeCardState extends ConsumerState<_SettlementEdgeCard> {
             children: [
               participantRow(),
               const SizedBox(height: 12),
-              Text(
-                widget.currencyCode,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+              amountRow(),
+              if (!_partialMode) ...[
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: () => setState(() {
+                      _partialMode = true;
+                      _partialError = null;
+                      _partialCtrl.clear();
+                    }),
+                    icon: const Icon(Icons.edit_outlined, size: 18),
+                    label: Text(l10n.settleUpPartialPayment),
+                  ),
                 ),
-              ),
-              Text(
-                widget.amountLabel,
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: theme.colorScheme.primary,
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: widget.onCollapse,
+                        child: Text(l10n.cancel),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: FilledButton.icon(
+                        onPressed: _recordFull,
+                        icon: const Icon(Icons.check, size: 20),
+                        label: Text(l10n.settleUpPayFull),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 12),
-              FilledButton.tonal(
-                onPressed: widget.onExpand,
-                child: Text(l10n.markAsPaid),
-              ),
+              ] else ...[
+                const SizedBox(height: 8),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    TextButton.icon(
+                      onPressed: _useFullAmount,
+                      style: TextButton.styleFrom(
+                        foregroundColor: theme.colorScheme.primary,
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                      ),
+                      icon: const Icon(Icons.edit_outlined, size: 18),
+                      label: Text(l10n.settleUpUseFullAmount),
+                    ),
+                    const Spacer(),
+                    Text(
+                      l10n.settleUpAmountOfTotal(widget.amountLabel),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _partialCtrl,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                    signed: false,
+                  ),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[\d.,]')),
+                  ],
+                  style: theme.textTheme.titleMedium,
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: theme.colorScheme.surfaceContainerHighest,
+                    hintText: l10n.settleUpPartialHint,
+                    errorText: _partialError,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 18,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                        color: theme.colorScheme.outlineVariant,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                        color: theme.colorScheme.primary,
+                        width: 2,
+                      ),
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: theme.colorScheme.error),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: widget.onCollapse,
+                        child: Text(l10n.cancel),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: FilledButton.icon(
+                        onPressed: _recordPartial,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: theme.colorScheme.primary,
+                          foregroundColor: theme.colorScheme.onPrimary,
+                        ),
+                        icon: const Icon(Icons.check, size: 20),
+                        label: Text(l10n.settleUpPayPartial),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ],
           ),
-        ),
-      );
-    }
-
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            participantRow(),
-            const SizedBox(height: 12),
-            amountRow(),
-            if (!_partialMode) ...[
-              const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton.icon(
-                  onPressed: () => setState(() {
-                    _partialMode = true;
-                    _partialError = null;
-                    _partialCtrl.clear();
-                  }),
-                  icon: const Icon(Icons.edit_outlined, size: 18),
-                  label: Text(l10n.settleUpPartialPayment),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: widget.onCollapse,
-                      child: Text(l10n.cancel),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: FilledButton.icon(
-                      onPressed: _recordFull,
-                      icon: const Icon(Icons.check, size: 20),
-                      label: Text(l10n.settleUpPayFull),
-                    ),
-                  ),
-                ],
-              ),
-            ] else ...[
-              const SizedBox(height: 8),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  TextButton.icon(
-                    onPressed: _useFullAmount,
-                    style: TextButton.styleFrom(
-                      foregroundColor: theme.colorScheme.primary,
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                    ),
-                    icon: const Icon(Icons.edit_outlined, size: 18),
-                    label: Text(l10n.settleUpUseFullAmount),
-                  ),
-                  const Spacer(),
-                  Text(
-                    l10n.settleUpAmountOfTotal(widget.amountLabel),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _partialCtrl,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                  signed: false,
-                ),
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[\d.,]')),
-                ],
-                style: theme.textTheme.titleMedium,
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: theme.colorScheme.surfaceContainerHighest,
-                  hintText: l10n.settleUpPartialHint,
-                  errorText: _partialError,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 18,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: theme.colorScheme.outlineVariant,
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: theme.colorScheme.primary,
-                      width: 2,
-                    ),
-                  ),
-                  errorBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: theme.colorScheme.error),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: widget.onCollapse,
-                      child: Text(l10n.cancel),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: FilledButton.icon(
-                      onPressed: _recordPartial,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: theme.colorScheme.primary,
-                        foregroundColor: theme.colorScheme.onPrimary,
-                      ),
-                      icon: const Icon(Icons.check, size: 20),
-                      label: Text(l10n.settleUpPayPartial),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ],
         ),
       ),
     );
@@ -590,16 +620,12 @@ class _SettlementEdgeCardState extends ConsumerState<_SettlementEdgeCard> {
 
 void openBalancesScreen(BuildContext context) {
   if (hostPlatformIsApple()) {
-    Navigator.of(context).push(
-      CupertinoPageRoute<void>(
-        builder: (_) => const BalancesScreen(),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(CupertinoPageRoute<void>(builder: (_) => const BalancesScreen()));
   } else {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => const BalancesScreen(),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => const BalancesScreen()));
   }
 }

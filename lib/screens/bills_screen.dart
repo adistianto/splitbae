@@ -421,7 +421,6 @@ class _HeroStat extends StatelessWidget {
             label,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: onPrimary.withValues(alpha: 0.75),
-                  fontSize: 10,
                   letterSpacing: 0.5,
                 ),
           ),

@@ -183,7 +183,7 @@ class _WhoPaidSheetState extends ConsumerState<WhoPaidSheet> {
 
     await DraftPaymentRepository(ref.read(appDatabaseProvider))
         .replaceDraftPayments(ledgerId: kDefaultLedgerId, rows: rows);
-    ref.invalidate(draftTransactionPaymentsProvider);
+    ref.read(draftPaymentsDbRevisionProvider.notifier).state++;
     if (!mounted) return;
     Navigator.of(context).pop();
   }
@@ -192,7 +192,7 @@ class _WhoPaidSheetState extends ConsumerState<WhoPaidSheet> {
     await ref.read(draftPaymentRepositoryProvider).resetToFirstPayerFull(
           kDefaultLedgerId,
         );
-    ref.invalidate(draftTransactionPaymentsProvider);
+    ref.read(draftPaymentsDbRevisionProvider.notifier).state++;
     for (final c in _controllers.values) {
       c.dispose();
     }

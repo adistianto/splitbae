@@ -100,9 +100,10 @@ class _PostBillSheetBodyState extends ConsumerState<_PostBillSheetBody> {
             onSubmitted: (_) => _submit(l10n),
           ),
           const SizedBox(height: 20),
-          FilledButton(
+          FilledButton.icon(
+            icon: const Icon(Icons.check_circle_outline),
             onPressed: () => _submit(l10n),
-            child: Text(l10n.postBillAction),
+            label: Text(l10n.postBillAction),
           ),
         ],
       ),

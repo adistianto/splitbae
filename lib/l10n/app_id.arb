@@ -174,5 +174,10 @@
   "billCardDelete": "Hapus",
   "billDeleteConfirmTitle": "Hapus tagihan ini?",
   "billDeleteConfirmBody": "Tagihan dan barisnya akan dihapus di perangkat ini.",
-  "billSwipeDeleteHint": "Geser kiri untuk hapus"
+  "billSwipeDeleteHint": "Geser kiri untuk hapus",
+  "semanticsDraftBillLine": "{itemName}, {formattedAmount}",
+  "semanticsDraftLineHint": "Ketuk dua kali untuk mengubah.",
+  "semanticsSplitPersonRow": "{personName}, {formattedAmount}",
+  "semanticsSettlementEdge": "{fromName} membayar {toName}, {formattedAmount}",
+  "semanticsRecordedSettlement": "{fromName} ke {toName}, {formattedAmount}"
 }

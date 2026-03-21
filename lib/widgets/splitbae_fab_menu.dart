@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:splitbae/core/ui/splitbae_motion.dart';
 import 'package:splitbae/l10n/app_localizations.dart';
 
 /// v0-style speed dial: New Bill, Scan Bill, Create Report (→ Balances).
@@ -89,24 +90,39 @@ class _SplitBaeFabMenuState extends State<SplitBaeFabMenu> {
                   ),
                   const SizedBox(height: 16),
                 ],
-                Material(
-                  elevation: 6,
-                  shadowColor: cs.primary.withValues(alpha: 0.35),
-                  borderRadius: BorderRadius.circular(_open ? 28 : 20),
-                  color: _open ? cs.onSurface : cs.primary,
-                  child: InkWell(
-                    onTap: () {
-                      HapticFeedback.mediumImpact();
-                      setState(() => _open = !_open);
-                    },
+                AnimatedContainer(
+                  duration: splitBaeAnimationDuration(
+                    context,
+                    const Duration(milliseconds: 200),
+                  ),
+                  curve: splitBaeAnimationCurve(context),
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: _open ? cs.onSurface : cs.primary,
                     borderRadius: BorderRadius.circular(_open ? 28 : 20),
-                    child: SizedBox(
-                      width: 64,
-                      height: 64,
-                      child: Icon(
-                        _open ? Icons.close : Icons.add,
-                        size: 32,
-                        color: _open ? cs.surface : cs.onPrimary,
+                    boxShadow: [
+                      BoxShadow(
+                        color: cs.primary.withValues(alpha: 0.35),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        HapticFeedback.mediumImpact();
+                        setState(() => _open = !_open);
+                      },
+                      borderRadius: BorderRadius.circular(_open ? 28 : 20),
+                      child: Center(
+                        child: Icon(
+                          _open ? Icons.close : Icons.add,
+                          size: 32,
+                          color: _open ? cs.surface : cs.onPrimary,
+                        ),
                       ),
                     ),
                   ),

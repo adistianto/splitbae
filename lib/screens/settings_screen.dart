@@ -651,7 +651,6 @@ class _AppleLiquidSettingsBody extends StatelessWidget {
           child: Text(
             text,
             style: CupertinoTheme.of(context).textTheme.navTitleTextStyle.copyWith(
-              fontSize: 15,
               color: CupertinoColors.secondaryLabel.resolveFrom(context),
             ),
           ),
@@ -711,7 +710,6 @@ class _AppleLiquidSettingsBody extends StatelessWidget {
             child: Text(
               l10n.settingsAppearanceSubtitle,
               style: CupertinoTheme.of(context).textTheme.textStyle.copyWith(
-                    fontSize: 13,
                     color: CupertinoColors.secondaryLabel.resolveFrom(context),
                   ),
             ),

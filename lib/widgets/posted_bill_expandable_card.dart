@@ -8,6 +8,7 @@ import 'package:share_plus/share_plus.dart' show ShareParams, SharePlus;
 import 'package:splitbae/core/data/amount_minor.dart';
 import 'package:splitbae/core/domain/posted_bill_summary.dart';
 import 'package:splitbae/core/theme/splitbae_semantic_colors.dart';
+import 'package:splitbae/core/ui/splitbae_motion.dart';
 import 'package:splitbae/core/ui/category_icons.dart';
 import 'package:splitbae/l10n/app_localizations.dart';
 import 'package:splitbae/money_format.dart';
@@ -202,7 +203,11 @@ class _PostedBillExpandableCardState extends ConsumerState<PostedBillExpandableC
                   const SizedBox(width: 8),
                   AnimatedRotation(
                     turns: _expanded ? 0.5 : 0,
-                    duration: const Duration(milliseconds: 200),
+                    duration: splitBaeAnimationDuration(
+                      context,
+                      const Duration(milliseconds: 200),
+                    ),
+                    curve: splitBaeAnimationCurve(context),
                     child: CircleAvatar(
                       radius: 18,
                       backgroundColor: _expanded
@@ -242,11 +247,12 @@ class _PostedBillExpandableCardState extends ConsumerState<PostedBillExpandableC
                 ),
                 TextButton.icon(
                   onPressed: () async {
-                    HapticFeedback.selectionClick();
                     final ok = await _confirmDelete(context, l10n);
-                    if (ok == true && context.mounted) {
+                    if (ok != true || !context.mounted) return;
+                    try {
                       await ref.read(itemsProvider.notifier).deletePostedBill(id);
-                    }
+                      HapticFeedback.mediumImpact();
+                    } catch (_) {}
                   },
                   icon: Icon(
                     Icons.delete_outline,
@@ -329,6 +335,9 @@ class _PostedBillExpandableCardState extends ConsumerState<PostedBillExpandableC
                       height: 320,
                       child: TabBarView(
                         controller: _tabController,
+                        physics: splitBaeAnimationsEnabled(context)
+                            ? null
+                            : const NeverScrollableScrollPhysics(),
                         children: [
                           TransactionDetailItemsBody(detail: detail),
                           TransactionDetailPersonsBody(transactionId: id),
@@ -354,6 +363,8 @@ class _PostedBillExpandableCardState extends ConsumerState<PostedBillExpandableC
     );
 
     return Semantics(
+      label: '$title, $amountLabel, $date',
+      expanded: _expanded,
       hint: l10n.billSwipeDeleteHint,
       child: Dismissible(
         key: ValueKey(id),
@@ -372,6 +383,7 @@ class _PostedBillExpandableCardState extends ConsumerState<PostedBillExpandableC
           if (ok != true) return false;
           try {
             await ref.read(itemsProvider.notifier).deletePostedBill(id);
+            HapticFeedback.mediumImpact();
             return true;
           } catch (_) {
             return false;

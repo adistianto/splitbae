@@ -29,6 +29,9 @@ UI contributions must preserve the project’s “Native OCR / Native Feel” in
 - Use adaptive primitives for parity across OSes (for example `showAdaptiveConfirmDialog`, `SwitchListTile.adaptive`, and theme-relative `TextStyle`s).
 - When rendering platform-specific shells (Material vs Cupertino), follow the existing wrappers (`hostPlatformIsApple()` + Cupertino narrow shell, Material rail on wide layouts).
 - Do not add a cloud OCR / bundled LLM “upgrade” for the UI. OCR is native via `ReceiptOcrChannel` (native `MethodChannel` on Android and iOS); Flutter orchestrates scan-to-edit and keeps manual entry available.
+- **Motion**: custom implicit animations (durations/curves) should respect reduce motion via `splitBaeAnimationsEnabled`, `splitBaeAnimationDuration`, and `splitBaeAnimationCurve` in `lib/core/ui/splitbae_motion.dart`.
+- **Typography**: avoid hard-coded `fontSize` in new UI; use `Theme.of(context).textTheme` / `CupertinoTheme` text styles so Dynamic Type and platform defaults apply.
+- **Semantics**: list and card rows that bundle multiple visual labels should expose a single localized `Semantics` label (see `semanticsDraftBillLine`, `semanticsSettlementEdge`, etc. in `lib/l10n/app_en.arb`) rather than relying only on nested text.
 
 ## Trunk-based workflow
 
