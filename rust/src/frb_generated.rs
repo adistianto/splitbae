@@ -37,7 +37,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.11.1";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 1223585537;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -1293851805;
 
 // Section: executor
 
@@ -113,14 +113,14 @@ fn wire__crate__api__simple__amount_to_minor_units_impl(
         },
     )
 }
-fn wire__crate__api__simple__calculate_split_impl(
+fn wire__crate__api__simple__calculate_split_assigned_impl(
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
     data_len_: i32,
 ) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
         flutter_rust_bridge::for_generated::TaskInfo {
-            debug_name: "calculate_split",
+            debug_name: "calculate_split_assigned",
             port: None,
             mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
         },
@@ -134,12 +134,14 @@ fn wire__crate__api__simple__calculate_split_impl(
             };
             let mut deserializer =
                 flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            let api_items = <Vec<crate::api::simple::ReceiptItem>>::sse_decode(&mut deserializer);
-            let api_participants = <Vec<String>>::sse_decode(&mut deserializer);
+            let api_lines =
+                <Vec<crate::api::simple::AssignedReceiptLine>>::sse_decode(&mut deserializer);
+            let api_participants =
+                <Vec<crate::api::simple::ParticipantRef>>::sse_decode(&mut deserializer);
             deserializer.end();
             transform_result_sse::<_, ()>((move || {
-                let output_ok = Result::<_, ()>::Ok(crate::api::simple::calculate_split(
-                    api_items,
+                let output_ok = Result::<_, ()>::Ok(crate::api::simple::calculate_split_assigned(
+                    api_lines,
                     api_participants,
                 ))?;
                 Ok(output_ok)
@@ -256,6 +258,18 @@ impl SseDecode for String {
     }
 }
 
+impl SseDecode for crate::api::simple::AssignedReceiptLine {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_item = <crate::api::simple::ReceiptItem>::sse_decode(deserializer);
+        let mut var_assigneeIds = <Vec<String>>::sse_decode(deserializer);
+        return crate::api::simple::AssignedReceiptLine {
+            item: var_item,
+            assignee_ids: var_assigneeIds,
+        };
+    }
+}
+
 impl SseDecode for f64 {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -282,6 +296,34 @@ impl SseDecode for Vec<String> {
     }
 }
 
+impl SseDecode for Vec<crate::api::simple::AssignedReceiptLine> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = vec![];
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::simple::AssignedReceiptLine>::sse_decode(
+                deserializer,
+            ));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for Vec<crate::api::simple::ParticipantRef> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = vec![];
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::simple::ParticipantRef>::sse_decode(
+                deserializer,
+            ));
+        }
+        return ans_;
+    }
+}
+
 impl SseDecode for Vec<u8> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -289,18 +331,6 @@ impl SseDecode for Vec<u8> {
         let mut ans_ = vec![];
         for idx_ in 0..len_ {
             ans_.push(<u8>::sse_decode(deserializer));
-        }
-        return ans_;
-    }
-}
-
-impl SseDecode for Vec<crate::api::simple::ReceiptItem> {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
-        let mut len_ = <i32>::sse_decode(deserializer);
-        let mut ans_ = vec![];
-        for idx_ in 0..len_ {
-            ans_.push(<crate::api::simple::ReceiptItem>::sse_decode(deserializer));
         }
         return ans_;
     }
@@ -315,6 +345,18 @@ impl SseDecode for Vec<crate::api::simple::SplitResult> {
             ans_.push(<crate::api::simple::SplitResult>::sse_decode(deserializer));
         }
         return ans_;
+    }
+}
+
+impl SseDecode for crate::api::simple::ParticipantRef {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_id = <String>::sse_decode(deserializer);
+        let mut var_displayName = <String>::sse_decode(deserializer);
+        return crate::api::simple::ParticipantRef {
+            id: var_id,
+            display_name: var_displayName,
+        };
     }
 }
 
@@ -396,7 +438,7 @@ fn pde_ffi_dispatcher_sync_impl(
     match func_id {
         1 => wire__crate__api__simple__amount_to_input_text_impl(ptr, rust_vec_len, data_len),
         2 => wire__crate__api__simple__amount_to_minor_units_impl(ptr, rust_vec_len, data_len),
-        3 => wire__crate__api__simple__calculate_split_impl(ptr, rust_vec_len, data_len),
+        3 => wire__crate__api__simple__calculate_split_assigned_impl(ptr, rust_vec_len, data_len),
         4 => wire__crate__api__simple__greet_impl(ptr, rust_vec_len, data_len),
         6 => wire__crate__api__simple__minor_units_to_amount_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
@@ -405,6 +447,48 @@ fn pde_ffi_dispatcher_sync_impl(
 
 // Section: rust2dart
 
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::simple::AssignedReceiptLine {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.item.into_into_dart().into_dart(),
+            self.assignee_ids.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::simple::AssignedReceiptLine
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::simple::AssignedReceiptLine>
+    for crate::api::simple::AssignedReceiptLine
+{
+    fn into_into_dart(self) -> crate::api::simple::AssignedReceiptLine {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::simple::ParticipantRef {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.id.into_into_dart().into_dart(),
+            self.display_name.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::simple::ParticipantRef
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::simple::ParticipantRef>
+    for crate::api::simple::ParticipantRef
+{
+    fn into_into_dart(self) -> crate::api::simple::ParticipantRef {
+        self
+    }
+}
 // Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for crate::api::simple::ReceiptItem {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
@@ -457,6 +541,14 @@ impl SseEncode for String {
     }
 }
 
+impl SseEncode for crate::api::simple::AssignedReceiptLine {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <crate::api::simple::ReceiptItem>::sse_encode(self.item, serializer);
+        <Vec<String>>::sse_encode(self.assignee_ids, serializer);
+    }
+}
+
 impl SseEncode for f64 {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -481,22 +573,32 @@ impl SseEncode for Vec<String> {
     }
 }
 
+impl SseEncode for Vec<crate::api::simple::AssignedReceiptLine> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::simple::AssignedReceiptLine>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<crate::api::simple::ParticipantRef> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::simple::ParticipantRef>::sse_encode(item, serializer);
+        }
+    }
+}
+
 impl SseEncode for Vec<u8> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <i32>::sse_encode(self.len() as _, serializer);
         for item in self {
             <u8>::sse_encode(item, serializer);
-        }
-    }
-}
-
-impl SseEncode for Vec<crate::api::simple::ReceiptItem> {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
-        <i32>::sse_encode(self.len() as _, serializer);
-        for item in self {
-            <crate::api::simple::ReceiptItem>::sse_encode(item, serializer);
         }
     }
 }
@@ -508,6 +610,14 @@ impl SseEncode for Vec<crate::api::simple::SplitResult> {
         for item in self {
             <crate::api::simple::SplitResult>::sse_encode(item, serializer);
         }
+    }
+}
+
+impl SseEncode for crate::api::simple::ParticipantRef {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.id, serializer);
+        <String>::sse_encode(self.display_name, serializer);
     }
 }
 

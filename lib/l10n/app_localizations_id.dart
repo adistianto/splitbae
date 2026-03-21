@@ -127,7 +127,15 @@ class AppLocalizationsId extends AppLocalizations {
   String get errorPriceInvalid => 'Masukkan nominal yang valid (positif).';
 
   @override
-  String get splitSubtitle => 'Per orang, per mata uang (tanpa konversi kurs).';
+  String get splitSubtitle =>
+      'Total mengikuti siapa yang ditugaskan ke tiap baris; per orang, per mata uang (tanpa konversi kurs).';
+
+  @override
+  String get itemAssigneesLabel => 'Bagi dengan';
+
+  @override
+  String get itemAssigneesNeedPeople =>
+      'Tambah orang dulu untuk membagi bagian.';
 
   @override
   String get perPersonTitle => 'Per orang';

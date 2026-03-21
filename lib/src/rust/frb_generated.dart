@@ -66,7 +66,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.11.1';
 
   @override
-  int get rustContentHash => 1223585537;
+  int get rustContentHash => -1293851805;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -87,9 +87,9 @@ abstract class RustLibApi extends BaseApi {
     required String currencyCode,
   });
 
-  List<SplitResult> crateApiSimpleCalculateSplit({
-    required List<ReceiptItem> items,
-    required List<String> participants,
+  List<SplitResult> crateApiSimpleCalculateSplitAssigned({
+    required List<AssignedReceiptLine> lines,
+    required List<ParticipantRef> participants,
   });
 
   String crateApiSimpleGreet({required String name});
@@ -171,33 +171,33 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  List<SplitResult> crateApiSimpleCalculateSplit({
-    required List<ReceiptItem> items,
-    required List<String> participants,
+  List<SplitResult> crateApiSimpleCalculateSplitAssigned({
+    required List<AssignedReceiptLine> lines,
+    required List<ParticipantRef> participants,
   }) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_list_receipt_item(items, serializer);
-          sse_encode_list_String(participants, serializer);
+          sse_encode_list_assigned_receipt_line(lines, serializer);
+          sse_encode_list_participant_ref(participants, serializer);
           return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 3)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_list_split_result,
           decodeErrorData: null,
         ),
-        constMeta: kCrateApiSimpleCalculateSplitConstMeta,
-        argValues: [items, participants],
+        constMeta: kCrateApiSimpleCalculateSplitAssignedConstMeta,
+        argValues: [lines, participants],
         apiImpl: this,
       ),
     );
   }
 
-  TaskConstMeta get kCrateApiSimpleCalculateSplitConstMeta =>
+  TaskConstMeta get kCrateApiSimpleCalculateSplitAssignedConstMeta =>
       const TaskConstMeta(
-        debugName: "calculate_split",
-        argNames: ["items", "participants"],
+        debugName: "calculate_split_assigned",
+        argNames: ["lines", "participants"],
       );
 
   @override
@@ -287,6 +287,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  AssignedReceiptLine dco_decode_assigned_receipt_line(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return AssignedReceiptLine(
+      item: dco_decode_receipt_item(arr[0]),
+      assigneeIds: dco_decode_list_String(arr[1]),
+    );
+  }
+
+  @protected
   double dco_decode_f_64(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as double;
@@ -305,21 +317,41 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<AssignedReceiptLine> dco_decode_list_assigned_receipt_line(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>)
+        .map(dco_decode_assigned_receipt_line)
+        .toList();
+  }
+
+  @protected
+  List<ParticipantRef> dco_decode_list_participant_ref(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_participant_ref).toList();
+  }
+
+  @protected
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as Uint8List;
   }
 
   @protected
-  List<ReceiptItem> dco_decode_list_receipt_item(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return (raw as List<dynamic>).map(dco_decode_receipt_item).toList();
-  }
-
-  @protected
   List<SplitResult> dco_decode_list_split_result(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_split_result).toList();
+  }
+
+  @protected
+  ParticipantRef dco_decode_participant_ref(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return ParticipantRef(
+      id: dco_decode_String(arr[0]),
+      displayName: dco_decode_String(arr[1]),
+    );
   }
 
   @protected
@@ -368,6 +400,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  AssignedReceiptLine sse_decode_assigned_receipt_line(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_item = sse_decode_receipt_item(deserializer);
+    var var_assigneeIds = sse_decode_list_String(deserializer);
+    return AssignedReceiptLine(item: var_item, assigneeIds: var_assigneeIds);
+  }
+
+  @protected
   double sse_decode_f_64(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return deserializer.buffer.getFloat64();
@@ -392,22 +434,38 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<AssignedReceiptLine> sse_decode_list_assigned_receipt_line(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <AssignedReceiptLine>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_assigned_receipt_line(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<ParticipantRef> sse_decode_list_participant_ref(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <ParticipantRef>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_participant_ref(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var len_ = sse_decode_i_32(deserializer);
     return deserializer.buffer.getUint8List(len_);
-  }
-
-  @protected
-  List<ReceiptItem> sse_decode_list_receipt_item(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    var len_ = sse_decode_i_32(deserializer);
-    var ans_ = <ReceiptItem>[];
-    for (var idx_ = 0; idx_ < len_; ++idx_) {
-      ans_.add(sse_decode_receipt_item(deserializer));
-    }
-    return ans_;
   }
 
   @protected
@@ -420,6 +478,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       ans_.add(sse_decode_split_result(deserializer));
     }
     return ans_;
+  }
+
+  @protected
+  ParticipantRef sse_decode_participant_ref(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_id = sse_decode_String(deserializer);
+    var var_displayName = sse_decode_String(deserializer);
+    return ParticipantRef(id: var_id, displayName: var_displayName);
   }
 
   @protected
@@ -478,6 +544,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_assigned_receipt_line(
+    AssignedReceiptLine self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_receipt_item(self.item, serializer);
+    sse_encode_list_String(self.assigneeIds, serializer);
+  }
+
+  @protected
   void sse_encode_f_64(double self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     serializer.buffer.putFloat64(self);
@@ -499,6 +575,30 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_assigned_receipt_line(
+    List<AssignedReceiptLine> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_assigned_receipt_line(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_participant_ref(
+    List<ParticipantRef> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_participant_ref(item, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_list_prim_u_8_strict(
     Uint8List self,
     SseSerializer serializer,
@@ -506,18 +606,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
     serializer.buffer.putUint8List(self);
-  }
-
-  @protected
-  void sse_encode_list_receipt_item(
-    List<ReceiptItem> self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_i_32(self.length, serializer);
-    for (final item in self) {
-      sse_encode_receipt_item(item, serializer);
-    }
   }
 
   @protected
@@ -530,6 +618,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     for (final item in self) {
       sse_encode_split_result(item, serializer);
     }
+  }
+
+  @protected
+  void sse_encode_participant_ref(
+    ParticipantRef self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.id, serializer);
+    sse_encode_String(self.displayName, serializer);
   }
 
   @protected

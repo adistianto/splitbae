@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:splitbae/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:splitbae/core/domain/ledger_line_item.dart';
+import 'package:splitbae/core/domain/participant_entry.dart';
 import 'package:splitbae/core/widgets/adaptive_app_bar.dart';
 import 'package:splitbae/money_format.dart';
 import 'package:splitbae/providers.dart';
 import 'package:splitbae/src/rust/api/simple.dart';
 import 'package:splitbae/widgets/add_receipt_item_sheet.dart';
+import 'package:splitbae/widgets/item_assignee_chips.dart';
 
 typedef ConfirmDeleteLine =
     Future<void> Function(
@@ -33,6 +35,7 @@ class SplitHomeContent extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     List<LedgerLineItem> items,
+    List<ParticipantEntry> participants,
     Locale locale,
   ) {
     final l10n = AppLocalizations.of(context)!;
@@ -50,45 +53,67 @@ class SplitHomeContent extends ConsumerWidget {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
-            child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 4,
-              ),
-              title: Text(
-                line.receiptItem.name,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-              ),
-              subtitle: Text(
-                line.receiptItem.currencyCode,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    formatCurrencyAmount(
-                      amount: line.receiptItem.price,
-                      currencyCode: line.receiptItem.currencyCode,
-                      locale: locale,
-                    ),
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                ListTile(
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
                   ),
-                  splitBaeAdaptiveToolbarIcon(
-                    context: context,
-                    tooltip: l10n.deleteAction,
-                    icon: Icons.delete_outline,
-                    onPressed: () => onConfirmDeleteLine(context, ref, line),
+                  title: Text(
+                    line.receiptItem.name,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
                   ),
-                ],
-              ),
-              onTap: () =>
-                  showAddReceiptItemSheet(context, ref, existingLine: line),
+                  subtitle: Text(
+                    line.receiptItem.currencyCode,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        formatCurrencyAmount(
+                          amount: line.receiptItem.price,
+                          currencyCode: line.receiptItem.currencyCode,
+                          locale: locale,
+                        ),
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                      ),
+                      splitBaeAdaptiveToolbarIcon(
+                        context: context,
+                        tooltip: l10n.deleteAction,
+                        icon: Icons.delete_outline,
+                        onPressed: () => onConfirmDeleteLine(context, ref, line),
+                      ),
+                    ],
+                  ),
+                  onTap: () =>
+                      showAddReceiptItemSheet(context, ref, existingLine: line),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                  child: ItemAssigneeChips(
+                    participants: participants,
+                    assigneeIds: line.assignedParticipantIds.toSet(),
+                    dense: true,
+                    onAssigneesChanged: (ids) {
+                      ref.read(itemsProvider.notifier).setLineAssignments(
+                            lineId: line.id,
+                            selectedParticipantIds: ids,
+                          );
+                    },
+                  ),
+                ),
+              ],
             ),
           ),
         )
@@ -191,7 +216,7 @@ class SplitHomeContent extends ConsumerWidget {
       ),
     );
 
-    final lineCards = _lineCards(context, ref, items, locale);
+    final lineCards = _lineCards(context, ref, items, participants, locale);
 
     final perPersonHeader = Padding(
       padding: EdgeInsets.fromLTRB(horizontalPadding, 20, horizontalPadding, 8),

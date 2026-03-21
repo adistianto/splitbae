@@ -10,6 +10,7 @@ class BackupPayloadV1 {
     required this.ledgers,
     required this.participants,
     required this.receiptLines,
+    this.receiptLineAssignments = const [],
   });
 
   static const String formatId = 'splitbae_backup';
@@ -19,6 +20,7 @@ class BackupPayloadV1 {
   final List<Ledger> ledgers;
   final List<Participant> participants;
   final List<ReceiptLine> receiptLines;
+  final List<ReceiptLineAssignment> receiptLineAssignments;
 
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
@@ -28,6 +30,8 @@ class BackupPayloadV1 {
       'ledgers': ledgers.map((e) => e.toJson()).toList(),
       'participants': participants.map((e) => e.toJson()).toList(),
       'receiptLines': receiptLines.map((e) => e.toJson()).toList(),
+      'receiptLineAssignments':
+          receiptLineAssignments.map((e) => e.toJson()).toList(),
     };
   }
 
@@ -65,7 +69,18 @@ class BackupPayloadV1 {
       receiptLines: linesJson
           .map((e) => ReceiptLine.fromJson(Map<String, dynamic>.from(e as Map)))
           .toList(),
+      receiptLineAssignments: _parseAssignments(json['receiptLineAssignments']),
     );
+  }
+
+  static List<ReceiptLineAssignment> _parseAssignments(Object? raw) {
+    if (raw is! List) return const [];
+    return raw
+        .map(
+          (e) =>
+              ReceiptLineAssignment.fromJson(Map<String, dynamic>.from(e as Map)),
+        )
+        .toList();
   }
 
   static BackupPayloadV1 fromJsonString(String raw) {

@@ -1179,12 +1179,248 @@ class ReceiptLinesCompanion extends UpdateCompanion<ReceiptLine> {
   }
 }
 
+class $ReceiptLineAssignmentsTable extends ReceiptLineAssignments
+    with TableInfo<$ReceiptLineAssignmentsTable, ReceiptLineAssignment> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ReceiptLineAssignmentsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _lineIdMeta = const VerificationMeta('lineId');
+  @override
+  late final GeneratedColumn<String> lineId = GeneratedColumn<String>(
+    'line_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES receipt_lines (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _participantIdMeta = const VerificationMeta(
+    'participantId',
+  );
+  @override
+  late final GeneratedColumn<String> participantId = GeneratedColumn<String>(
+    'participant_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES participants (id) ON DELETE CASCADE',
+    ),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [lineId, participantId];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'receipt_line_assignments';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ReceiptLineAssignment> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('line_id')) {
+      context.handle(
+        _lineIdMeta,
+        lineId.isAcceptableOrUnknown(data['line_id']!, _lineIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_lineIdMeta);
+    }
+    if (data.containsKey('participant_id')) {
+      context.handle(
+        _participantIdMeta,
+        participantId.isAcceptableOrUnknown(
+          data['participant_id']!,
+          _participantIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_participantIdMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {lineId, participantId};
+  @override
+  ReceiptLineAssignment map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ReceiptLineAssignment(
+      lineId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}line_id'],
+      )!,
+      participantId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}participant_id'],
+      )!,
+    );
+  }
+
+  @override
+  $ReceiptLineAssignmentsTable createAlias(String alias) {
+    return $ReceiptLineAssignmentsTable(attachedDatabase, alias);
+  }
+}
+
+class ReceiptLineAssignment extends DataClass
+    implements Insertable<ReceiptLineAssignment> {
+  final String lineId;
+  final String participantId;
+  const ReceiptLineAssignment({
+    required this.lineId,
+    required this.participantId,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['line_id'] = Variable<String>(lineId);
+    map['participant_id'] = Variable<String>(participantId);
+    return map;
+  }
+
+  ReceiptLineAssignmentsCompanion toCompanion(bool nullToAbsent) {
+    return ReceiptLineAssignmentsCompanion(
+      lineId: Value(lineId),
+      participantId: Value(participantId),
+    );
+  }
+
+  factory ReceiptLineAssignment.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ReceiptLineAssignment(
+      lineId: serializer.fromJson<String>(json['lineId']),
+      participantId: serializer.fromJson<String>(json['participantId']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'lineId': serializer.toJson<String>(lineId),
+      'participantId': serializer.toJson<String>(participantId),
+    };
+  }
+
+  ReceiptLineAssignment copyWith({String? lineId, String? participantId}) =>
+      ReceiptLineAssignment(
+        lineId: lineId ?? this.lineId,
+        participantId: participantId ?? this.participantId,
+      );
+  ReceiptLineAssignment copyWithCompanion(
+    ReceiptLineAssignmentsCompanion data,
+  ) {
+    return ReceiptLineAssignment(
+      lineId: data.lineId.present ? data.lineId.value : this.lineId,
+      participantId: data.participantId.present
+          ? data.participantId.value
+          : this.participantId,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ReceiptLineAssignment(')
+          ..write('lineId: $lineId, ')
+          ..write('participantId: $participantId')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(lineId, participantId);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ReceiptLineAssignment &&
+          other.lineId == this.lineId &&
+          other.participantId == this.participantId);
+}
+
+class ReceiptLineAssignmentsCompanion
+    extends UpdateCompanion<ReceiptLineAssignment> {
+  final Value<String> lineId;
+  final Value<String> participantId;
+  final Value<int> rowid;
+  const ReceiptLineAssignmentsCompanion({
+    this.lineId = const Value.absent(),
+    this.participantId = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ReceiptLineAssignmentsCompanion.insert({
+    required String lineId,
+    required String participantId,
+    this.rowid = const Value.absent(),
+  }) : lineId = Value(lineId),
+       participantId = Value(participantId);
+  static Insertable<ReceiptLineAssignment> custom({
+    Expression<String>? lineId,
+    Expression<String>? participantId,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (lineId != null) 'line_id': lineId,
+      if (participantId != null) 'participant_id': participantId,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ReceiptLineAssignmentsCompanion copyWith({
+    Value<String>? lineId,
+    Value<String>? participantId,
+    Value<int>? rowid,
+  }) {
+    return ReceiptLineAssignmentsCompanion(
+      lineId: lineId ?? this.lineId,
+      participantId: participantId ?? this.participantId,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (lineId.present) {
+      map['line_id'] = Variable<String>(lineId.value);
+    }
+    if (participantId.present) {
+      map['participant_id'] = Variable<String>(participantId.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ReceiptLineAssignmentsCompanion(')
+          ..write('lineId: $lineId, ')
+          ..write('participantId: $participantId, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $LedgersTable ledgers = $LedgersTable(this);
   late final $ParticipantsTable participants = $ParticipantsTable(this);
   late final $ReceiptLinesTable receiptLines = $ReceiptLinesTable(this);
+  late final $ReceiptLineAssignmentsTable receiptLineAssignments =
+      $ReceiptLineAssignmentsTable(this);
   late final Index idxParticipantsLedgerId = Index(
     'idx_participants_ledger_id',
     'CREATE INDEX idx_participants_ledger_id ON participants (ledger_id)',
@@ -1192,6 +1428,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final Index idxReceiptLinesLedgerCreated = Index(
     'idx_receipt_lines_ledger_created',
     'CREATE INDEX idx_receipt_lines_ledger_created ON receipt_lines (ledger_id, created_at_ms)',
+  );
+  late final Index idxReceiptLineAssignmentsLineId = Index(
+    'idx_receipt_line_assignments_line_id',
+    'CREATE INDEX idx_receipt_line_assignments_line_id ON receipt_line_assignments (line_id)',
   );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
@@ -1201,8 +1441,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     ledgers,
     participants,
     receiptLines,
+    receiptLineAssignments,
     idxParticipantsLedgerId,
     idxReceiptLinesLedgerCreated,
+    idxReceiptLineAssignmentsLineId,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -1219,6 +1461,24 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('receipt_lines', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'receipt_lines',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [
+        TableUpdate('receipt_line_assignments', kind: UpdateKind.delete),
+      ],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'participants',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [
+        TableUpdate('receipt_line_assignments', kind: UpdateKind.delete),
+      ],
     ),
   ]);
 }
@@ -1645,6 +1905,34 @@ final class $$ParticipantsTableReferences
       manager.$state.copyWith(prefetchedData: [item]),
     );
   }
+
+  static MultiTypedResultKey<
+    $ReceiptLineAssignmentsTable,
+    List<ReceiptLineAssignment>
+  >
+  _receiptLineAssignmentsRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.receiptLineAssignments,
+        aliasName: $_aliasNameGenerator(
+          db.participants.id,
+          db.receiptLineAssignments.participantId,
+        ),
+      );
+
+  $$ReceiptLineAssignmentsTableProcessedTableManager
+  get receiptLineAssignmentsRefs {
+    final manager = $$ReceiptLineAssignmentsTableTableManager(
+      $_db,
+      $_db.receiptLineAssignments,
+    ).filter((f) => f.participantId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _receiptLineAssignmentsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
 }
 
 class $$ParticipantsTableFilterComposer
@@ -1697,6 +1985,32 @@ class $$ParticipantsTableFilterComposer
           ),
     );
     return composer;
+  }
+
+  Expression<bool> receiptLineAssignmentsRefs(
+    Expression<bool> Function($$ReceiptLineAssignmentsTableFilterComposer f) f,
+  ) {
+    final $$ReceiptLineAssignmentsTableFilterComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.receiptLineAssignments,
+          getReferencedColumn: (t) => t.participantId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$ReceiptLineAssignmentsTableFilterComposer(
+                $db: $db,
+                $table: $db.receiptLineAssignments,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
   }
 }
 
@@ -1800,6 +2114,32 @@ class $$ParticipantsTableAnnotationComposer
     );
     return composer;
   }
+
+  Expression<T> receiptLineAssignmentsRefs<T extends Object>(
+    Expression<T> Function($$ReceiptLineAssignmentsTableAnnotationComposer a) f,
+  ) {
+    final $$ReceiptLineAssignmentsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.receiptLineAssignments,
+          getReferencedColumn: (t) => t.participantId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$ReceiptLineAssignmentsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.receiptLineAssignments,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
 }
 
 class $$ParticipantsTableTableManager
@@ -1815,7 +2155,10 @@ class $$ParticipantsTableTableManager
           $$ParticipantsTableUpdateCompanionBuilder,
           (Participant, $$ParticipantsTableReferences),
           Participant,
-          PrefetchHooks Function({bool ledgerId})
+          PrefetchHooks Function({
+            bool ledgerId,
+            bool receiptLineAssignmentsRefs,
+          })
         > {
   $$ParticipantsTableTableManager(_$AppDatabase db, $ParticipantsTable table)
     : super(
@@ -1868,47 +2211,74 @@ class $$ParticipantsTableTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({ledgerId = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [],
-              addJoins:
-                  <
-                    T extends TableManagerState<
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic
-                    >
-                  >(state) {
-                    if (ledgerId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.ledgerId,
-                                referencedTable: $$ParticipantsTableReferences
-                                    ._ledgerIdTable(db),
-                                referencedColumn: $$ParticipantsTableReferences
-                                    ._ledgerIdTable(db)
-                                    .id,
-                              )
-                              as T;
-                    }
+          prefetchHooksCallback:
+              ({ledgerId = false, receiptLineAssignmentsRefs = false}) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (receiptLineAssignmentsRefs) db.receiptLineAssignments,
+                  ],
+                  addJoins:
+                      <
+                        T extends TableManagerState<
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic
+                        >
+                      >(state) {
+                        if (ledgerId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.ledgerId,
+                                    referencedTable:
+                                        $$ParticipantsTableReferences
+                                            ._ledgerIdTable(db),
+                                    referencedColumn:
+                                        $$ParticipantsTableReferences
+                                            ._ledgerIdTable(db)
+                                            .id,
+                                  )
+                                  as T;
+                        }
 
-                    return state;
+                        return state;
+                      },
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (receiptLineAssignmentsRefs)
+                        await $_getPrefetchedData<
+                          Participant,
+                          $ParticipantsTable,
+                          ReceiptLineAssignment
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ParticipantsTableReferences
+                              ._receiptLineAssignmentsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ParticipantsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).receiptLineAssignmentsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.participantId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
                   },
-              getPrefetchedDataCallback: (items) async {
-                return [];
+                );
               },
-            );
-          },
         ),
       );
 }
@@ -1925,7 +2295,7 @@ typedef $$ParticipantsTableProcessedTableManager =
       $$ParticipantsTableUpdateCompanionBuilder,
       (Participant, $$ParticipantsTableReferences),
       Participant,
-      PrefetchHooks Function({bool ledgerId})
+      PrefetchHooks Function({bool ledgerId, bool receiptLineAssignmentsRefs})
     >;
 typedef $$ReceiptLinesTableCreateCompanionBuilder =
     ReceiptLinesCompanion Function({
@@ -1970,6 +2340,34 @@ final class $$ReceiptLinesTableReferences
     if (item == null) return manager;
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static MultiTypedResultKey<
+    $ReceiptLineAssignmentsTable,
+    List<ReceiptLineAssignment>
+  >
+  _receiptLineAssignmentsRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.receiptLineAssignments,
+        aliasName: $_aliasNameGenerator(
+          db.receiptLines.id,
+          db.receiptLineAssignments.lineId,
+        ),
+      );
+
+  $$ReceiptLineAssignmentsTableProcessedTableManager
+  get receiptLineAssignmentsRefs {
+    final manager = $$ReceiptLineAssignmentsTableTableManager(
+      $_db,
+      $_db.receiptLineAssignments,
+    ).filter((f) => f.lineId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _receiptLineAssignmentsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
     );
   }
 }
@@ -2034,6 +2432,32 @@ class $$ReceiptLinesTableFilterComposer
           ),
     );
     return composer;
+  }
+
+  Expression<bool> receiptLineAssignmentsRefs(
+    Expression<bool> Function($$ReceiptLineAssignmentsTableFilterComposer f) f,
+  ) {
+    final $$ReceiptLineAssignmentsTableFilterComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.receiptLineAssignments,
+          getReferencedColumn: (t) => t.lineId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$ReceiptLineAssignmentsTableFilterComposer(
+                $db: $db,
+                $table: $db.receiptLineAssignments,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
   }
 }
 
@@ -2157,6 +2581,32 @@ class $$ReceiptLinesTableAnnotationComposer
     );
     return composer;
   }
+
+  Expression<T> receiptLineAssignmentsRefs<T extends Object>(
+    Expression<T> Function($$ReceiptLineAssignmentsTableAnnotationComposer a) f,
+  ) {
+    final $$ReceiptLineAssignmentsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.receiptLineAssignments,
+          getReferencedColumn: (t) => t.lineId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$ReceiptLineAssignmentsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.receiptLineAssignments,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
 }
 
 class $$ReceiptLinesTableTableManager
@@ -2172,7 +2622,10 @@ class $$ReceiptLinesTableTableManager
           $$ReceiptLinesTableUpdateCompanionBuilder,
           (ReceiptLine, $$ReceiptLinesTableReferences),
           ReceiptLine,
-          PrefetchHooks Function({bool ledgerId})
+          PrefetchHooks Function({
+            bool ledgerId,
+            bool receiptLineAssignmentsRefs,
+          })
         > {
   $$ReceiptLinesTableTableManager(_$AppDatabase db, $ReceiptLinesTable table)
     : super(
@@ -2233,7 +2686,397 @@ class $$ReceiptLinesTableTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({ledgerId = false}) {
+          prefetchHooksCallback:
+              ({ledgerId = false, receiptLineAssignmentsRefs = false}) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (receiptLineAssignmentsRefs) db.receiptLineAssignments,
+                  ],
+                  addJoins:
+                      <
+                        T extends TableManagerState<
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic
+                        >
+                      >(state) {
+                        if (ledgerId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.ledgerId,
+                                    referencedTable:
+                                        $$ReceiptLinesTableReferences
+                                            ._ledgerIdTable(db),
+                                    referencedColumn:
+                                        $$ReceiptLinesTableReferences
+                                            ._ledgerIdTable(db)
+                                            .id,
+                                  )
+                                  as T;
+                        }
+
+                        return state;
+                      },
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (receiptLineAssignmentsRefs)
+                        await $_getPrefetchedData<
+                          ReceiptLine,
+                          $ReceiptLinesTable,
+                          ReceiptLineAssignment
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ReceiptLinesTableReferences
+                              ._receiptLineAssignmentsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ReceiptLinesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).receiptLineAssignmentsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.lineId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
+              },
+        ),
+      );
+}
+
+typedef $$ReceiptLinesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ReceiptLinesTable,
+      ReceiptLine,
+      $$ReceiptLinesTableFilterComposer,
+      $$ReceiptLinesTableOrderingComposer,
+      $$ReceiptLinesTableAnnotationComposer,
+      $$ReceiptLinesTableCreateCompanionBuilder,
+      $$ReceiptLinesTableUpdateCompanionBuilder,
+      (ReceiptLine, $$ReceiptLinesTableReferences),
+      ReceiptLine,
+      PrefetchHooks Function({bool ledgerId, bool receiptLineAssignmentsRefs})
+    >;
+typedef $$ReceiptLineAssignmentsTableCreateCompanionBuilder =
+    ReceiptLineAssignmentsCompanion Function({
+      required String lineId,
+      required String participantId,
+      Value<int> rowid,
+    });
+typedef $$ReceiptLineAssignmentsTableUpdateCompanionBuilder =
+    ReceiptLineAssignmentsCompanion Function({
+      Value<String> lineId,
+      Value<String> participantId,
+      Value<int> rowid,
+    });
+
+final class $$ReceiptLineAssignmentsTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $ReceiptLineAssignmentsTable,
+          ReceiptLineAssignment
+        > {
+  $$ReceiptLineAssignmentsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $ReceiptLinesTable _lineIdTable(_$AppDatabase db) =>
+      db.receiptLines.createAlias(
+        $_aliasNameGenerator(
+          db.receiptLineAssignments.lineId,
+          db.receiptLines.id,
+        ),
+      );
+
+  $$ReceiptLinesTableProcessedTableManager get lineId {
+    final $_column = $_itemColumn<String>('line_id')!;
+
+    final manager = $$ReceiptLinesTableTableManager(
+      $_db,
+      $_db.receiptLines,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_lineIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $ParticipantsTable _participantIdTable(_$AppDatabase db) =>
+      db.participants.createAlias(
+        $_aliasNameGenerator(
+          db.receiptLineAssignments.participantId,
+          db.participants.id,
+        ),
+      );
+
+  $$ParticipantsTableProcessedTableManager get participantId {
+    final $_column = $_itemColumn<String>('participant_id')!;
+
+    final manager = $$ParticipantsTableTableManager(
+      $_db,
+      $_db.participants,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_participantIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$ReceiptLineAssignmentsTableFilterComposer
+    extends Composer<_$AppDatabase, $ReceiptLineAssignmentsTable> {
+  $$ReceiptLineAssignmentsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  $$ReceiptLinesTableFilterComposer get lineId {
+    final $$ReceiptLinesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.lineId,
+      referencedTable: $db.receiptLines,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ReceiptLinesTableFilterComposer(
+            $db: $db,
+            $table: $db.receiptLines,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$ParticipantsTableFilterComposer get participantId {
+    final $$ParticipantsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.participantId,
+      referencedTable: $db.participants,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ParticipantsTableFilterComposer(
+            $db: $db,
+            $table: $db.participants,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ReceiptLineAssignmentsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ReceiptLineAssignmentsTable> {
+  $$ReceiptLineAssignmentsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  $$ReceiptLinesTableOrderingComposer get lineId {
+    final $$ReceiptLinesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.lineId,
+      referencedTable: $db.receiptLines,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ReceiptLinesTableOrderingComposer(
+            $db: $db,
+            $table: $db.receiptLines,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$ParticipantsTableOrderingComposer get participantId {
+    final $$ParticipantsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.participantId,
+      referencedTable: $db.participants,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ParticipantsTableOrderingComposer(
+            $db: $db,
+            $table: $db.participants,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ReceiptLineAssignmentsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ReceiptLineAssignmentsTable> {
+  $$ReceiptLineAssignmentsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  $$ReceiptLinesTableAnnotationComposer get lineId {
+    final $$ReceiptLinesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.lineId,
+      referencedTable: $db.receiptLines,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ReceiptLinesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.receiptLines,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$ParticipantsTableAnnotationComposer get participantId {
+    final $$ParticipantsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.participantId,
+      referencedTable: $db.participants,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ParticipantsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.participants,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ReceiptLineAssignmentsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ReceiptLineAssignmentsTable,
+          ReceiptLineAssignment,
+          $$ReceiptLineAssignmentsTableFilterComposer,
+          $$ReceiptLineAssignmentsTableOrderingComposer,
+          $$ReceiptLineAssignmentsTableAnnotationComposer,
+          $$ReceiptLineAssignmentsTableCreateCompanionBuilder,
+          $$ReceiptLineAssignmentsTableUpdateCompanionBuilder,
+          (ReceiptLineAssignment, $$ReceiptLineAssignmentsTableReferences),
+          ReceiptLineAssignment,
+          PrefetchHooks Function({bool lineId, bool participantId})
+        > {
+  $$ReceiptLineAssignmentsTableTableManager(
+    _$AppDatabase db,
+    $ReceiptLineAssignmentsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ReceiptLineAssignmentsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$ReceiptLineAssignmentsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$ReceiptLineAssignmentsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> lineId = const Value.absent(),
+                Value<String> participantId = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ReceiptLineAssignmentsCompanion(
+                lineId: lineId,
+                participantId: participantId,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String lineId,
+                required String participantId,
+                Value<int> rowid = const Value.absent(),
+              }) => ReceiptLineAssignmentsCompanion.insert(
+                lineId: lineId,
+                participantId: participantId,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$ReceiptLineAssignmentsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({lineId = false, participantId = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [],
@@ -2253,16 +3096,33 @@ class $$ReceiptLinesTableTableManager
                       dynamic
                     >
                   >(state) {
-                    if (ledgerId) {
+                    if (lineId) {
                       state =
                           state.withJoin(
                                 currentTable: table,
-                                currentColumn: table.ledgerId,
-                                referencedTable: $$ReceiptLinesTableReferences
-                                    ._ledgerIdTable(db),
-                                referencedColumn: $$ReceiptLinesTableReferences
-                                    ._ledgerIdTable(db)
-                                    .id,
+                                currentColumn: table.lineId,
+                                referencedTable:
+                                    $$ReceiptLineAssignmentsTableReferences
+                                        ._lineIdTable(db),
+                                referencedColumn:
+                                    $$ReceiptLineAssignmentsTableReferences
+                                        ._lineIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+                    if (participantId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.participantId,
+                                referencedTable:
+                                    $$ReceiptLineAssignmentsTableReferences
+                                        ._participantIdTable(db),
+                                referencedColumn:
+                                    $$ReceiptLineAssignmentsTableReferences
+                                        ._participantIdTable(db)
+                                        .id,
                               )
                               as T;
                     }
@@ -2278,19 +3138,19 @@ class $$ReceiptLinesTableTableManager
       );
 }
 
-typedef $$ReceiptLinesTableProcessedTableManager =
+typedef $$ReceiptLineAssignmentsTableProcessedTableManager =
     ProcessedTableManager<
       _$AppDatabase,
-      $ReceiptLinesTable,
-      ReceiptLine,
-      $$ReceiptLinesTableFilterComposer,
-      $$ReceiptLinesTableOrderingComposer,
-      $$ReceiptLinesTableAnnotationComposer,
-      $$ReceiptLinesTableCreateCompanionBuilder,
-      $$ReceiptLinesTableUpdateCompanionBuilder,
-      (ReceiptLine, $$ReceiptLinesTableReferences),
-      ReceiptLine,
-      PrefetchHooks Function({bool ledgerId})
+      $ReceiptLineAssignmentsTable,
+      ReceiptLineAssignment,
+      $$ReceiptLineAssignmentsTableFilterComposer,
+      $$ReceiptLineAssignmentsTableOrderingComposer,
+      $$ReceiptLineAssignmentsTableAnnotationComposer,
+      $$ReceiptLineAssignmentsTableCreateCompanionBuilder,
+      $$ReceiptLineAssignmentsTableUpdateCompanionBuilder,
+      (ReceiptLineAssignment, $$ReceiptLineAssignmentsTableReferences),
+      ReceiptLineAssignment,
+      PrefetchHooks Function({bool lineId, bool participantId})
     >;
 
 class $AppDatabaseManager {
@@ -2302,4 +3162,9 @@ class $AppDatabaseManager {
       $$ParticipantsTableTableManager(_db, _db.participants);
   $$ReceiptLinesTableTableManager get receiptLines =>
       $$ReceiptLinesTableTableManager(_db, _db.receiptLines);
+  $$ReceiptLineAssignmentsTableTableManager get receiptLineAssignments =>
+      $$ReceiptLineAssignmentsTableTableManager(
+        _db,
+        _db.receiptLineAssignments,
+      );
 }

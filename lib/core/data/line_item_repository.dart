@@ -17,14 +17,32 @@ class LineItemRepository {
               ..where((t) => t.ledgerId.equals(ledgerId))
               ..orderBy([(t) => OrderingTerm(expression: t.createdAtMs)]))
             .get();
+    if (rows.isEmpty) return [];
+
+    final lineIds = rows.map((r) => r.id).toList();
+    final assigns =
+        await (_db.select(_db.receiptLineAssignments)
+              ..where((a) => a.lineId.isIn(lineIds)))
+            .get();
+
+    final byLine = <String, List<String>>{};
+    for (final a in assigns) {
+      byLine.putIfAbsent(a.lineId, () => []).add(a.participantId);
+    }
+
     return rows
         .map(
-          (row) => LedgerLineItem(id: row.id, receiptItem: _toReceiptItem(row)),
+          (row) => LedgerLineItem(
+            id: row.id,
+            receiptItem: _toReceiptItem(row),
+            assignedParticipantIds: byLine[row.id] ?? const [],
+          ),
         )
         .toList();
   }
 
-  Future<void> addLine({
+  /// Returns the new line id.
+  Future<String> addLine({
     required String ledgerId,
     required String label,
     required double amount,
@@ -32,11 +50,12 @@ class LineItemRepository {
   }) async {
     final now = DateTime.now().millisecondsSinceEpoch;
     final minor = amountToMinorUnits(amount, currencyCode);
+    final id = const Uuid().v4();
     await _db
         .into(_db.receiptLines)
         .insert(
           ReceiptLinesCompanion.insert(
-            id: const Uuid().v4(),
+            id: id,
             ledgerId: ledgerId,
             label: label,
             amountMinor: minor,
@@ -45,6 +64,7 @@ class LineItemRepository {
             updatedAtMs: now,
           ),
         );
+    return id;
   }
 
   Future<void> updateLine({
@@ -67,6 +87,43 @@ class LineItemRepository {
 
   Future<void> deleteLine(String id) async {
     await (_db.delete(_db.receiptLines)..where((t) => t.id.equals(id))).go();
+  }
+
+  /// Persists who shares this line. Empty selection or “everyone” clears rows
+  /// (meaning split with all participants).
+  Future<void> replaceLineAssignments({
+    required String lineId,
+    required Set<String> selectedParticipantIds,
+    required Set<String> allParticipantIds,
+  }) async {
+    final all = allParticipantIds;
+    if (all.isEmpty) {
+      await (_db.delete(_db.receiptLineAssignments)
+            ..where((a) => a.lineId.equals(lineId)))
+          .go();
+      return;
+    }
+
+    final sel = selectedParticipantIds.where(all.contains).toSet();
+    final isEveryone =
+        sel.length == all.length && sel.containsAll(all);
+
+    await _db.transaction(() async {
+      await (_db.delete(_db.receiptLineAssignments)
+            ..where((a) => a.lineId.equals(lineId)))
+          .go();
+      if (isEveryone || sel.isEmpty) {
+        return;
+      }
+      for (final pid in sel) {
+        await _db.into(_db.receiptLineAssignments).insert(
+              ReceiptLineAssignmentsCompanion.insert(
+                lineId: lineId,
+                participantId: pid,
+              ),
+            );
+      }
+    });
   }
 
   ReceiptItem _toReceiptItem(ReceiptLine row) {

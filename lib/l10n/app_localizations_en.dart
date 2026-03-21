@@ -127,7 +127,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get splitSubtitle =>
-      'Per person, grouped by currency (no FX conversion).';
+      'Totals follow who is assigned to each line; one row per person per currency (no FX conversion).';
+
+  @override
+  String get itemAssigneesLabel => 'Split with';
+
+  @override
+  String get itemAssigneesNeedPeople =>
+      'Add people to the split to assign shares.';
 
   @override
   String get perPersonTitle => 'Per person';

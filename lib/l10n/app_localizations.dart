@@ -317,8 +317,20 @@ abstract class AppLocalizations {
   /// Explains the split list: one row per person per currency; no exchange rates.
   ///
   /// In en, this message translates to:
-  /// **'Per person, grouped by currency (no FX conversion).'**
+  /// **'Totals follow who is assigned to each line; one row per person per currency (no FX conversion).'**
   String get splitSubtitle;
+
+  /// Label for chips selecting which people share a line item.
+  ///
+  /// In en, this message translates to:
+  /// **'Split with'**
+  String get itemAssigneesLabel;
+
+  /// Shown when there are no participants yet.
+  ///
+  /// In en, this message translates to:
+  /// **'Add people to the split to assign shares.'**
+  String get itemAssigneesNeedPeople;
 
   /// Section header above the split totals list.
   ///

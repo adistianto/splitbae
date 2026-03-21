@@ -149,9 +149,17 @@
   "@errorPriceInvalid": {
     "description": "Validation: amount is not a positive number."
   },
-  "splitSubtitle": "Per person, grouped by currency (no FX conversion).",
+  "splitSubtitle": "Totals follow who is assigned to each line; one row per person per currency (no FX conversion).",
   "@splitSubtitle": {
     "description": "Explains the split list: one row per person per currency; no exchange rates."
+  },
+  "itemAssigneesLabel": "Split with",
+  "@itemAssigneesLabel": {
+    "description": "Label for chips selecting which people share a line item."
+  },
+  "itemAssigneesNeedPeople": "Add people to the split to assign shares.",
+  "@itemAssigneesNeedPeople": {
+    "description": "Shown when there are no participants yet."
   },
   "perPersonTitle": "Per person",
   "@perPersonTitle": {

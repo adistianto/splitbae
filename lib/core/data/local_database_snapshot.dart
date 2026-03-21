@@ -8,20 +8,25 @@ class LocalDatabaseSnapshot {
     required this.ledgers,
     required this.participants,
     required this.receiptLines,
+    required this.receiptLineAssignments,
   });
 
   final List<Ledger> ledgers;
   final List<Participant> participants;
   final List<ReceiptLine> receiptLines;
+  final List<ReceiptLineAssignment> receiptLineAssignments;
 
   static Future<LocalDatabaseSnapshot> capture(AppDatabase db) async {
     final ledgers = await db.select(db.ledgers).get();
     final participants = await db.select(db.participants).get();
     final receiptLines = await db.select(db.receiptLines).get();
+    final receiptLineAssignments =
+        await db.select(db.receiptLineAssignments).get();
     return LocalDatabaseSnapshot(
       ledgers: ledgers,
       participants: participants,
       receiptLines: receiptLines,
+      receiptLineAssignments: receiptLineAssignments,
     );
   }
 
@@ -37,6 +42,9 @@ class LocalDatabaseSnapshot {
       for (final row in receiptLines) {
         await db.into(db.receiptLines).insert(row);
       }
+      for (final row in receiptLineAssignments) {
+        await db.into(db.receiptLineAssignments).insert(row);
+      }
     });
   }
 
@@ -45,6 +53,7 @@ class LocalDatabaseSnapshot {
       ledgers: p.ledgers,
       participants: p.participants,
       receiptLines: p.receiptLines,
+      receiptLineAssignments: p.receiptLineAssignments,
     );
   }
 
@@ -55,12 +64,14 @@ class LocalDatabaseSnapshot {
       ledgers: ledgers,
       participants: participants,
       receiptLines: receiptLines,
+      receiptLineAssignments: receiptLineAssignments,
     );
   }
 
   /// Deletes all rows (FK-safe order) then [restoreIntoEmpty].
   Future<void> replaceEntireDatabase(AppDatabase db) async {
     await db.transaction(() async {
+      await db.delete(db.receiptLineAssignments).go();
       await db.delete(db.receiptLines).go();
       await db.delete(db.participants).go();
       await db.delete(db.ledgers).go();

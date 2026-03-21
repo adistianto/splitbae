@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 #[flutter_rust_bridge::frb(sync)]
 pub fn greet(name: String) -> String {
     format!("Hello, {name}!")
@@ -27,25 +25,81 @@ pub struct SplitResult {
     pub currency_code: String,
 }
 
-/// Equal split per currency bucket (no FX conversion).
+#[flutter_rust_bridge::frb]
+#[derive(Clone, Debug)]
+pub struct ParticipantRef {
+    pub id: String,
+    pub display_name: String,
+}
+
+#[flutter_rust_bridge::frb]
+#[derive(Clone, Debug)]
+pub struct AssignedReceiptLine {
+    pub item: ReceiptItem,
+    /// Empty = all current participants split this line equally.
+    pub assignee_ids: Vec<String>,
+}
+
+/// Per–line-item assignees: each line is split equally among its assignees (no FX conversion).
+/// Rows are produced for every (participant × currency) present in the bill; amounts may be zero.
 #[flutter_rust_bridge::frb(sync)]
-pub fn calculate_split(items: Vec<ReceiptItem>, participants: Vec<String>) -> Vec<SplitResult> {
-    let n = participants.len();
-    let mut totals_by_ccy: HashMap<String, f64> = HashMap::new();
-    for item in items {
-        *totals_by_ccy
-            .entry(item.currency_code)
-            .or_insert(0.0) += item.price;
+pub fn calculate_split_assigned(
+    lines: Vec<AssignedReceiptLine>,
+    participants: Vec<ParticipantRef>,
+) -> Vec<SplitResult> {
+    use std::collections::{BTreeSet, HashMap, HashSet};
+
+    let mut currencies: BTreeSet<String> = BTreeSet::new();
+    for line in &lines {
+        currencies.insert(line.item.currency_code.clone());
     }
 
+    let mut totals: HashMap<String, HashMap<String, f64>> = HashMap::new();
+    for p in &participants {
+        totals.insert(p.id.clone(), HashMap::new());
+    }
+
+    let id_set: HashSet<String> = participants.iter().map(|p| p.id.clone()).collect();
+
+    for line in lines {
+        let item = line.item;
+        let mut assignee_ids: Vec<String> = if line.assignee_ids.is_empty() {
+            participants.iter().map(|p| p.id.clone()).collect()
+        } else {
+            line.assignee_ids
+                .into_iter()
+                .filter(|id| id_set.contains(id))
+                .collect()
+        };
+
+        if assignee_ids.is_empty() {
+            assignee_ids = participants.iter().map(|p| p.id.clone()).collect();
+        }
+
+        let count = assignee_ids.len().max(1);
+        let share = item.price / count as f64;
+        for pid in assignee_ids {
+            *totals
+                .entry(pid)
+                .or_insert_with(HashMap::new)
+                .entry(item.currency_code.clone())
+                .or_insert(0.0) += share;
+        }
+    }
+
+    let currencies: Vec<String> = currencies.into_iter().collect();
     let mut out: Vec<SplitResult> = Vec::new();
-    for (currency_code, total) in totals_by_ccy {
-        let share = if n == 0 { 0.0 } else { total / n as f64 };
-        for person_name in &participants {
+    for p in &participants {
+        for ccy in &currencies {
+            let amt = totals
+                .get(&p.id)
+                .and_then(|m| m.get(ccy))
+                .copied()
+                .unwrap_or(0.0);
             out.push(SplitResult {
-                person_name: person_name.clone(),
-                total_owed: share,
-                currency_code: currency_code.clone(),
+                person_name: p.display_name.clone(),
+                total_owed: amt,
+                currency_code: ccy.clone(),
             });
         }
     }
@@ -96,6 +150,49 @@ pub fn amount_to_input_text(amount: f64, currency_code: String) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn p(id: &str, name: &str) -> ParticipantRef {
+        ParticipantRef {
+            id: id.into(),
+            display_name: name.into(),
+        }
+    }
+
+    #[test]
+    fn split_assigned_single_item_one_person() {
+        let participants = vec![p("a", "Alice"), p("b", "Bob")];
+        let lines = vec![AssignedReceiptLine {
+            item: ReceiptItem {
+                name: "Burger".into(),
+                price: 100.0,
+                currency_code: "USD".into(),
+            },
+            assignee_ids: vec!["a".into()],
+        }];
+        let out = calculate_split_assigned(lines, participants);
+        let alice = out.iter().find(|r| r.person_name == "Alice").unwrap();
+        let bob = out.iter().find(|r| r.person_name == "Bob").unwrap();
+        assert!((alice.total_owed - 100.0).abs() < 1e-9);
+        assert!((bob.total_owed - 0.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn split_assigned_empty_assignees_means_everyone() {
+        let participants = vec![p("a", "Alice"), p("b", "Bob")];
+        let lines = vec![AssignedReceiptLine {
+            item: ReceiptItem {
+                name: "Pizza".into(),
+                price: 100.0,
+                currency_code: "USD".into(),
+            },
+            assignee_ids: vec![],
+        }];
+        let out = calculate_split_assigned(lines, participants);
+        let alice = out.iter().find(|r| r.person_name == "Alice").unwrap();
+        let bob = out.iter().find(|r| r.person_name == "Bob").unwrap();
+        assert!((alice.total_owed - 50.0).abs() < 1e-9);
+        assert!((bob.total_owed - 50.0).abs() < 1e-9);
+    }
 
     #[test]
     fn minor_usd_round_trip() {

@@ -11,6 +11,7 @@ import 'package:splitbae/core/platform/host_platform.dart';
 import 'package:splitbae/currency_catalog.dart';
 import 'package:splitbae/core/ocr/receipt_ocr_probe_provider.dart';
 import 'package:splitbae/providers.dart';
+import 'package:splitbae/widgets/item_assignee_chips.dart';
 import 'package:splitbae/widgets/receipt_scan_flow.dart';
 
 Widget receiptOcrProbeBanner(
@@ -216,6 +217,7 @@ class _AddItemFormCupertinoState extends ConsumerState<_AddItemFormCupertino> {
   late final TextEditingController _nameCtrl;
   late final TextEditingController _priceCtrl;
   late String _currencyCode;
+  late Set<String> _assigneeIds;
   String? _error;
 
   @override
@@ -230,6 +232,7 @@ class _AddItemFormCupertinoState extends ConsumerState<_AddItemFormCupertino> {
           : '',
     );
     _currencyCode = item?.currencyCode ?? ref.read(defaultCurrencyProvider);
+    _assigneeIds = Set.from(existing?.assignedParticipantIds ?? const []);
   }
 
   @override
@@ -385,6 +388,16 @@ class _AddItemFormCupertinoState extends ConsumerState<_AddItemFormCupertino> {
               borderRadius: BorderRadius.circular(12),
             ),
           ),
+          const SizedBox(height: 16),
+          Material(
+            color: Colors.transparent,
+            child: ItemAssigneeChips(
+              participants: ref.watch(participantsProvider),
+              assigneeIds: _assigneeIds,
+              dense: true,
+              onAssigneesChanged: (ids) => setState(() => _assigneeIds = ids),
+            ),
+          ),
           if (_error != null) ...[
             const SizedBox(height: 10),
             Text(
@@ -461,6 +474,7 @@ class _AddItemFormMaterialState extends ConsumerState<_AddItemFormMaterial> {
   late final TextEditingController _nameCtrl;
   late final TextEditingController _priceCtrl;
   late String _currencyCode;
+  late Set<String> _assigneeIds;
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -475,6 +489,7 @@ class _AddItemFormMaterialState extends ConsumerState<_AddItemFormMaterial> {
           : '',
     );
     _currencyCode = item?.currencyCode ?? ref.read(defaultCurrencyProvider);
+    _assigneeIds = Set.from(existing?.assignedParticipantIds ?? const []);
   }
 
   @override
@@ -522,14 +537,23 @@ class _AddItemFormMaterialState extends ConsumerState<_AddItemFormMaterial> {
     final price = double.parse(raw);
     final notifier = ref.read(itemsProvider.notifier);
     if (widget.existingLine != null) {
+      final id = widget.existingLine!.id;
       await notifier.updateItem(
-        id: widget.existingLine!.id,
+        id: id,
         name: name,
         price: price,
         currencyCode: _currencyCode,
       );
+      await notifier.setLineAssignments(
+        lineId: id,
+        selectedParticipantIds: _assigneeIds,
+      );
     } else {
-      await notifier.addItem(name, price, _currencyCode);
+      final id = await notifier.addItem(name, price, _currencyCode);
+      await notifier.setLineAssignments(
+        lineId: id,
+        selectedParticipantIds: _assigneeIds,
+      );
     }
     if (!context.mounted) return;
     Navigator.of(context).pop();
@@ -632,6 +656,13 @@ class _AddItemFormMaterialState extends ConsumerState<_AddItemFormMaterial> {
                 }
                 return null;
               },
+            ),
+            const SizedBox(height: 16),
+            ItemAssigneeChips(
+              participants: ref.watch(participantsProvider),
+              assigneeIds: _assigneeIds,
+              dense: true,
+              onAssigneesChanged: (ids) => setState(() => _assigneeIds = ids),
             ),
             const SizedBox(height: 28),
             Row(

@@ -34,6 +34,9 @@ void main() {
           updatedAtMs: 5,
         ),
       ],
+      receiptLineAssignments: const [
+        ReceiptLineAssignment(lineId: 'r1', participantId: 'p1'),
+      ],
     );
 
     final decoded = BackupPayloadV1.fromJsonString(payload.toJsonString());
@@ -42,5 +45,8 @@ void main() {
     expect(decoded.ledgers.single.id, 'l1');
     expect(decoded.participants.single.displayName, 'Ada');
     expect(decoded.receiptLines.single.amountMinor, 5000);
+    expect(decoded.receiptLineAssignments, hasLength(1));
+    expect(decoded.receiptLineAssignments.single.lineId, 'r1');
+    expect(decoded.receiptLineAssignments.single.participantId, 'p1');
   });
 }

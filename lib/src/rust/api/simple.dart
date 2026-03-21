@@ -6,17 +6,18 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `fmt`, `fmt`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`, `fmt`
 
 String greet({required String name}) =>
     RustLib.instance.api.crateApiSimpleGreet(name: name);
 
-/// Equal split per currency bucket (no FX conversion).
-List<SplitResult> calculateSplit({
-  required List<ReceiptItem> items,
-  required List<String> participants,
-}) => RustLib.instance.api.crateApiSimpleCalculateSplit(
-  items: items,
+/// Per–line-item assignees: each line is split equally among its assignees (no FX conversion).
+/// Rows are produced for every (participant × currency) present in the bill; amounts may be zero.
+List<SplitResult> calculateSplitAssigned({
+  required List<AssignedReceiptLine> lines,
+  required List<ParticipantRef> participants,
+}) => RustLib.instance.api.crateApiSimpleCalculateSplitAssigned(
+  lines: lines,
   participants: participants,
 );
 
@@ -46,6 +47,44 @@ String amountToInputText({
   amount: amount,
   currencyCode: currencyCode,
 );
+
+class AssignedReceiptLine {
+  final ReceiptItem item;
+
+  /// Empty = all current participants split this line equally.
+  final List<String> assigneeIds;
+
+  const AssignedReceiptLine({required this.item, required this.assigneeIds});
+
+  @override
+  int get hashCode => item.hashCode ^ assigneeIds.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AssignedReceiptLine &&
+          runtimeType == other.runtimeType &&
+          item == other.item &&
+          assigneeIds == other.assigneeIds;
+}
+
+class ParticipantRef {
+  final String id;
+  final String displayName;
+
+  const ParticipantRef({required this.id, required this.displayName});
+
+  @override
+  int get hashCode => id.hashCode ^ displayName.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ParticipantRef &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          displayName == other.displayName;
+}
 
 class ReceiptItem {
   final String name;

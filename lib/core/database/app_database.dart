@@ -45,12 +45,30 @@ class ReceiptLines extends Table {
   Set<Column<Object>> get primaryKey => {id};
 }
 
-@DriftDatabase(tables: [Ledgers, Participants, ReceiptLines])
+/// Which participants share a receipt line (equal split of that line’s amount).
+/// **No rows** for a line means “everyone” (same as all participants).
+@TableIndex(
+  name: 'idx_receipt_line_assignments_line_id',
+  columns: {#lineId},
+)
+class ReceiptLineAssignments extends Table {
+  TextColumn get lineId =>
+      text().references(ReceiptLines, #id, onDelete: KeyAction.cascade)();
+  TextColumn get participantId =>
+      text().references(Participants, #id, onDelete: KeyAction.cascade)();
+
+  @override
+  Set<Column<Object>> get primaryKey => {lineId, participantId};
+}
+
+@DriftDatabase(
+  tables: [Ledgers, Participants, ReceiptLines, ReceiptLineAssignments],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -61,6 +79,10 @@ class AppDatabase extends _$AppDatabase {
       if (from < 2) {
         await m.createIndex(idxParticipantsLedgerId);
         await m.createIndex(idxReceiptLinesLedgerCreated);
+      }
+      if (from < 3) {
+        await m.createTable(receiptLineAssignments);
+        await m.createIndex(idxReceiptLineAssignmentsLineId);
       }
     },
   );

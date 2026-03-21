@@ -3,7 +3,12 @@ import 'package:splitbae/core/domain/ledger_line_item.dart';
 import 'package:splitbae/core/domain/participant_entry.dart';
 import 'package:splitbae/core/domain/ledger_ids.dart';
 import 'package:splitbae/core/providers/database_providers.dart';
-import 'package:splitbae/src/rust/api/simple.dart';
+import 'package:splitbae/src/rust/api/simple.dart'
+    show
+        AssignedReceiptLine,
+        ParticipantRef,
+        SplitResult,
+        calculateSplitAssigned;
 
 class ItemsNotifier extends StateNotifier<List<LedgerLineItem>> {
   ItemsNotifier(this._ref) : super(const []) {
@@ -17,15 +22,17 @@ class ItemsNotifier extends StateNotifier<List<LedgerLineItem>> {
     state = await repo.listLedgerLines(kDefaultLedgerId);
   }
 
-  Future<void> addItem(String name, double price, String currencyCode) async {
+  /// Returns the new line id (for assignment rows after insert).
+  Future<String> addItem(String name, double price, String currencyCode) async {
     final repo = _ref.read(lineItemRepositoryProvider);
-    await repo.addLine(
+    final id = await repo.addLine(
       ledgerId: kDefaultLedgerId,
       label: name,
       amount: price,
       currencyCode: currencyCode,
     );
     await _load();
+    return id;
   }
 
   Future<void> updateItem({
@@ -46,6 +53,20 @@ class ItemsNotifier extends StateNotifier<List<LedgerLineItem>> {
 
   Future<void> deleteItem(String id) async {
     await _ref.read(lineItemRepositoryProvider).deleteLine(id);
+    await _load();
+  }
+
+  Future<void> setLineAssignments({
+    required String lineId,
+    required Set<String> selectedParticipantIds,
+  }) async {
+    final participants = _ref.read(participantsProvider);
+    final repo = _ref.read(lineItemRepositoryProvider);
+    await repo.replaceLineAssignments(
+      lineId: lineId,
+      selectedParticipantIds: selectedParticipantIds,
+      allParticipantIds: participants.map((e) => e.id).toSet(),
+    );
     await _load();
   }
 
@@ -101,8 +122,19 @@ final participantsProvider =
 final splitProvider = FutureProvider<List<SplitResult>>((ref) async {
   final participants = ref.watch(participantsProvider);
   final items = ref.watch(itemsProvider);
-  return calculateSplit(
-    items: items.map((e) => e.receiptItem).toList(),
-    participants: participants.map((e) => e.displayName).toList(),
+  return calculateSplitAssigned(
+    lines: items
+        .map(
+          (e) => AssignedReceiptLine(
+            item: e.receiptItem,
+            assigneeIds: e.assignedParticipantIds,
+          ),
+        )
+        .toList(),
+    participants: participants
+        .map(
+          (e) => ParticipantRef(id: e.id, displayName: e.displayName),
+        )
+        .toList(),
   );
 });
