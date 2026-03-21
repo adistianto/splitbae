@@ -2,9 +2,11 @@ import 'package:drift/drift.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:uuid/uuid.dart';
 
+import 'currency_recording.dart';
 import 'receipt_image_store.dart';
 import '../database/app_database.dart';
 import '../domain/ledger_ids.dart';
+import '../domain/ledger_line_item.dart';
 import '../domain/posted_bill_summary.dart';
 import 'amount_minor.dart';
 import 'draft_payment_repository.dart';
@@ -139,7 +141,10 @@ class BillPostingRepository {
       payments: paymentsForValidate,
     );
 
-    final primaryCcy = _primaryCurrency(totals);
+    final primaryCcy = pickDominantCurrencyCode(
+      totals,
+      fallbackWhenEmpty: _fallbackCurrencyFromLines(lines),
+    );
     final now = DateTime.now().millisecondsSinceEpoch;
     final postedId = const Uuid().v4();
     final atMs = createdAtMs ?? now;
@@ -184,17 +189,9 @@ class BillPostingRepository {
     });
   }
 
-  String _primaryCurrency(Map<String, int> totals) {
-    if (totals.isEmpty) return 'IDR';
-    var best = '';
-    var bestAmt = -1;
-    for (final e in totals.entries) {
-      if (e.value > bestAmt) {
-        bestAmt = e.value;
-        best = e.key;
-      }
-    }
-    return best.isNotEmpty ? best : 'IDR';
+  String _fallbackCurrencyFromLines(List<LedgerLineItem> lines) {
+    if (lines.isEmpty) return 'IDR';
+    return lines.first.receiptItem.currencyCode;
   }
 
   /// Removes a posted transaction and dependent rows; deletes receipt file if any.

@@ -41,6 +41,8 @@ class Transactions extends Table {
   /// v0 category id: food, transport, accommodation, …, settlement, other.
   TextColumn get category => text().withDefault(const Constant('other'))();
   IntColumn get taxAmountMinor => integer().withDefault(const Constant(0))();
+  /// ISO 4217 **recording currency** for this bill (immutable for posted rows).
+  /// Independent of the app “default currency” setting; lines store their own code too.
   TextColumn get currencyCode => text().withDefault(const Constant('IDR'))();
   /// `normal` | `settlement` — extensible for future kinds without migration churn.
   TextColumn get kind => text().withDefault(const Constant('normal'))();
@@ -122,6 +124,9 @@ class ReceiptLines extends Table {
       )();
   TextColumn get label => text()();
   IntColumn get amountMinor => integer()();
+  /// Parsed or user-edited quantity for this line (line amount is still the full row total).
+  IntColumn get quantity => integer().withDefault(const Constant(1))();
+  /// ISO 4217 for this line; **recording currency** when the line was added (not rewritten when settings change).
   TextColumn get currencyCode => text()();
   IntColumn get createdAtMs => integer()();
   IntColumn get updatedAtMs => integer()();
@@ -162,7 +167,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -221,6 +226,9 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 6) {
         await m.addColumn(transactions, transactions.receiptImagePath);
+      }
+      if (from < 7) {
+        await m.addColumn(receiptLines, receiptLines.quantity);
       }
     },
   );

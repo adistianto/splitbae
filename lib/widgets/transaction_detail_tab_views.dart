@@ -71,6 +71,11 @@ class TransactionLineBreakdownCard extends StatelessWidget {
       currencyCode: line.receiptItem.currencyCode,
       locale: locale,
     );
+    final unitStr = formatCurrencyAmount(
+      amount: line.unitPrice,
+      currencyCode: line.receiptItem.currencyCode,
+      locale: locale,
+    );
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -102,6 +107,15 @@ class TransactionLineBreakdownCard extends StatelessWidget {
                       ),
                 ),
               ],
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                '${l10n.itemQuantityLabel}: ${line.quantity} · $unitStr',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+              ),
             ),
             const SizedBox(height: 8),
             for (final s in splits)

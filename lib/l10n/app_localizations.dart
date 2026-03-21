@@ -212,17 +212,23 @@ abstract class AppLocalizations {
   /// **'Bahasa Indonesia'**
   String get languageIndonesian;
 
-  /// Settings row: default ISO currency for new line items.
+  /// Settings row: default ISO currency for new draft bills (empty draft).
   ///
   /// In en, this message translates to:
-  /// **'Default currency for new items'**
+  /// **'Default currency for new bills'**
   String get settingsDefaultCurrency;
 
-  /// Clarifies that per-line currency can differ from the default.
+  /// Clarifies when the default applies.
   ///
   /// In en, this message translates to:
-  /// **'You can still pick another currency per item.'**
+  /// **'Used when you start a new bill with no lines yet.'**
   String get settingsDefaultCurrencySubtitle;
+
+  /// Explains that historical bills do not change when the default currency setting changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Posted transactions keep the currency they were saved in. Changing this only affects new lines and the empty draft.'**
+  String get settingsDefaultCurrencyRecordingNote;
 
   /// Title of the modal or sheet for creating a receipt line.
   ///
@@ -230,17 +236,77 @@ abstract class AppLocalizations {
   /// **'Add item'**
   String get addItemTitle;
 
-  /// Explains that the amount uses the selected currency.
+  /// Explains bill-level currency for line amounts.
   ///
   /// In en, this message translates to:
-  /// **'Amount is in the currency you select below.'**
+  /// **'Amounts use this bill’s currency (set by default for an empty bill; change default in Settings).'**
   String get addItemSubtitle;
+
+  /// Read-only label for the ISO currency of the current draft or posted bill.
+  ///
+  /// In en, this message translates to:
+  /// **'Bill currency'**
+  String get billCurrencyLabel;
 
   /// Starts camera/gallery OCR to fill item name and amount.
   ///
   /// In en, this message translates to:
   /// **'Scan receipt'**
   String get scanReceiptButton;
+
+  /// Full-screen scan flow title (v0 parity).
+  ///
+  /// In en, this message translates to:
+  /// **'Scan receipt'**
+  String get scanReceiptScreenTitle;
+
+  /// Subtitle under the scan screen title.
+  ///
+  /// In en, this message translates to:
+  /// **'Capture to add expenses quickly'**
+  String get scanReceiptScreenSubtitle;
+
+  /// Small label on the gradient hero card during scan.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick add'**
+  String get scanReceiptHeroQuickAdd;
+
+  /// Hero card line before any OCR result.
+  ///
+  /// In en, this message translates to:
+  /// **'Point camera at receipt'**
+  String get scanReceiptHeroPointCamera;
+
+  /// Hero card line after OCR found line items.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 item detected} other{{count} items detected}}'**
+  String scanReceiptHeroItemsDetected(int count);
+
+  /// Helper under the large Take photo control.
+  ///
+  /// In en, this message translates to:
+  /// **'Snap a picture of your receipt'**
+  String get scanReceiptTakePhotoSubtitle;
+
+  /// Shown while OCR runs on the captured image.
+  ///
+  /// In en, this message translates to:
+  /// **'Extracting items…'**
+  String get scanReceiptExtractingTitle;
+
+  /// Secondary line under extracting title.
+  ///
+  /// In en, this message translates to:
+  /// **'This may take a moment'**
+  String get scanReceiptExtractingSubtitle;
+
+  /// Primary action after OCR when opening the draft split flow (FAB).
+  ///
+  /// In en, this message translates to:
+  /// **'Continue to Split'**
+  String get scanReceiptContinueToSplit;
 
   /// Image source option for receipt scan.
   ///
@@ -326,6 +392,22 @@ abstract class AppLocalizations {
   /// **'Pick a line to use'**
   String get scanReceiptPickLine;
 
+  /// Line picker subtitle when quantity and line total were parsed.
+  ///
+  /// In en, this message translates to:
+  /// **'×{quantity} · {unitPrice} each'**
+  String scanReceiptLineQtyUnitPrice(int quantity, String unitPrice);
+
+  /// OCR line picker: quantity, unit price, and line total when a qty column was parsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Qty {quantity} · {unitPrice} each · line {lineTotal}'**
+  String scanReceiptOcrLineDetail(
+    int quantity,
+    String unitPrice,
+    String lineTotal,
+  );
+
   /// Primary action to import every parsed OCR line into the draft bill.
   ///
   /// In en, this message translates to:
@@ -344,10 +426,10 @@ abstract class AppLocalizations {
   /// **'No lines with an amount were found. Try a clearer photo or enter the item manually.'**
   String get scanReceiptNoLines;
 
-  /// Legacy copy; prefer scanReceiptNoNativeOcr when explaining desktop/web.
+  /// Legacy banner when scan is unavailable on the current platform.
   ///
   /// In en, this message translates to:
-  /// **'Receipt scanning is only available in the Android and iOS apps.'**
+  /// **'Receipt scanning needs on-device OCR (Android, iOS, macOS, or Windows in this app).'**
   String get scanReceiptUnavailable;
 
   /// Desktop/web: open a file dialog to pick a receipt image.
@@ -356,16 +438,16 @@ abstract class AppLocalizations {
   /// **'Choose image file'**
   String get scanReceiptChooseImageFile;
 
-  /// Short hint above camera/file/manual options when native OCR is unavailable.
+  /// Hint when native OCR is unavailable (e.g. web, Linux); camera/file/manual still offered.
   ///
   /// In en, this message translates to:
-  /// **'On-device OCR runs on Android and iOS only—not on desktop or web in this app.'**
+  /// **'On-device OCR isn’t available on web or Linux in this build. You can still pick a photo or enter lines manually.'**
   String get scanReceiptNonMobileScanHint;
 
-  /// After user picks an image on a platform without native OCR.
+  /// Snack bar when OCR can’t run (e.g. web with no file path, or Linux).
   ///
   /// In en, this message translates to:
-  /// **'On-device text recognition is only implemented for Android and iOS (not on desktop or web in this app). Enter the line below, or use the phone app to scan.'**
+  /// **'On-device receipt OCR isn’t available on this platform. Enter the line manually.'**
   String get scanReceiptNoNativeOcr;
 
   /// Generic OCR failure snack bar.
@@ -403,6 +485,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'15000'**
   String get priceHint;
+
+  /// Short label for line quantity on add-item and split bill cards.
+  ///
+  /// In en, this message translates to:
+  /// **'Qty'**
+  String get itemQuantityLabel;
+
+  /// Placeholder for quantity field (integer).
+  ///
+  /// In en, this message translates to:
+  /// **'1'**
+  String get itemQuantityHint;
+
+  /// Validation when quantity is missing or below 1.
+  ///
+  /// In en, this message translates to:
+  /// **'Use a whole number of at least 1.'**
+  String get errorQuantityInvalid;
+
+  /// Column header for quantity on draft split line cards.
+  ///
+  /// In en, this message translates to:
+  /// **'Qty'**
+  String get draftBillLineQtyColumn;
+
+  /// Column header for unit price (line total ÷ qty).
+  ///
+  /// In en, this message translates to:
+  /// **'Unit'**
+  String get draftBillLineUnitColumn;
+
+  /// Column header for line total amount.
+  ///
+  /// In en, this message translates to:
+  /// **'Line'**
+  String get draftBillLineLineTotalColumn;
 
   /// Label for ISO currency selector (IDR, USD, …).
   ///
@@ -1101,14 +1219,134 @@ abstract class AppLocalizations {
   /// Title for the full-screen add-transaction sheet from Bills.
   ///
   /// In en, this message translates to:
-  /// **'New bill'**
+  /// **'Add Transaction'**
   String get addTransactionSheetTitle;
 
   /// Explains the flow before posting.
   ///
   /// In en, this message translates to:
-  /// **'Set details, then add line items and who paid.'**
+  /// **'Receipt, people, items, tax — then post.'**
   String get addTransactionSheetSubtitle;
+
+  /// Section label for bill title / memo.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get addTransactionDescriptionSection;
+
+  /// Hint that description can be left blank.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-fills from first item if empty'**
+  String get addTransactionDescriptionAutoHint;
+
+  /// Prefix before apply-suggestion chip.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggested'**
+  String get addTransactionSuggestedCategory;
+
+  /// Apply suggested category chip.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get addTransactionApplySuggestion;
+
+  /// Quick date chip for today.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get addTransactionToday;
+
+  /// Quick date chip for yesterday.
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get addTransactionYesterday;
+
+  /// Section label for date and time.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get addTransactionDateTimeSection;
+
+  /// Section for participants on this bill.
+  ///
+  /// In en, this message translates to:
+  /// **'Who\'s splitting?'**
+  String get addTransactionWhosSplitting;
+
+  /// Explains MVP uses all ledger participants.
+  ///
+  /// In en, this message translates to:
+  /// **'Everyone in this trip is included. Add people from the draft split screen.'**
+  String get addTransactionEveryoneIncludedHint;
+
+  /// Section header for line items with count.
+  ///
+  /// In en, this message translates to:
+  /// **'Items ({count})'**
+  String addTransactionItemsSection(int count);
+
+  /// Adds a receipt line to the draft.
+  ///
+  /// In en, this message translates to:
+  /// **'Add item'**
+  String get addTransactionAddLineItem;
+
+  /// Helper under tax field (v0 parity).
+  ///
+  /// In en, this message translates to:
+  /// **'Split proportionally among participants'**
+  String get addTransactionTaxSplitHint;
+
+  /// Summary row before tax.
+  ///
+  /// In en, this message translates to:
+  /// **'Subtotal ({count} items)'**
+  String addTransactionSubtotalLine(int count);
+
+  /// Tax row in totals card.
+  ///
+  /// In en, this message translates to:
+  /// **'Tax & service'**
+  String get addTransactionTaxSummaryLine;
+
+  /// Final total label.
+  ///
+  /// In en, this message translates to:
+  /// **'Grand total'**
+  String get addTransactionGrandTotal;
+
+  /// Opens draft payment sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Who paid'**
+  String get addTransactionWhoPaidShortcut;
+
+  /// Bill category: entertainment (v0 Fun).
+  ///
+  /// In en, this message translates to:
+  /// **'Fun'**
+  String get categoryEntertainment;
+
+  /// Bill category: shopping.
+  ///
+  /// In en, this message translates to:
+  /// **'Shop'**
+  String get categoryShopping;
+
+  /// Bill category: utilities / subscriptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Bills'**
+  String get categoryUtilities;
+
+  /// Bill category: peer settlement.
+  ///
+  /// In en, this message translates to:
+  /// **'Settlement'**
+  String get categorySettlement;
 
   /// Label for bill category selector.
   ///
@@ -1185,7 +1423,7 @@ abstract class AppLocalizations {
   /// Primary action to post the draft bill with entered metadata.
   ///
   /// In en, this message translates to:
-  /// **'Post bill'**
+  /// **'Add Transaction'**
   String get addTransactionPostAction;
 
   /// Share bill summary action on a posted bill card.

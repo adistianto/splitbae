@@ -8,6 +8,7 @@ import 'package:splitbae/core/theme/splitbae_semantic_colors.dart';
 import 'package:splitbae/core/domain/posted_bill_summary.dart';
 import 'package:splitbae/l10n/app_localizations.dart';
 import 'package:splitbae/money_format.dart';
+import 'package:splitbae/app_settings.dart';
 import 'package:splitbae/providers.dart';
 import 'package:splitbae/screens/settings_screen.dart';
 import 'package:splitbae/widgets/posted_bill_expandable_card.dart';
@@ -62,7 +63,10 @@ class _BillsScreenState extends ConsumerState<BillsScreen> {
       backgroundColor: cs.surface,
       body: async.when(
         data: (all) {
-          final insights = computeBillsInsights(all);
+          final insights = computeBillsInsights(
+            all,
+            emptyStateCurrencyCode: ref.watch(defaultCurrencyProvider),
+          );
           final filtered = _filter(all, _searchCtrl.text);
           final groups = _groupByMonth(filtered);
           final keys = groups.keys.toList()..sort((a, b) => b.compareTo(a));

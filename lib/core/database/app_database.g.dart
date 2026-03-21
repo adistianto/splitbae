@@ -988,6 +988,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
   /// v0 category id: food, transport, accommodation, …, settlement, other.
   final String category;
   final int taxAmountMinor;
+
+  /// ISO 4217 **recording currency** for this bill (immutable for posted rows).
+  /// Independent of the app “default currency” setting; lines store their own code too.
   final String currencyCode;
 
   /// `normal` | `settlement` — extensible for future kinds without migration churn.
@@ -2587,6 +2590,18 @@ class $ReceiptLinesTable extends ReceiptLines
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _quantityMeta = const VerificationMeta(
+    'quantity',
+  );
+  @override
+  late final GeneratedColumn<int> quantity = GeneratedColumn<int>(
+    'quantity',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
   static const VerificationMeta _currencyCodeMeta = const VerificationMeta(
     'currencyCode',
   );
@@ -2627,6 +2642,7 @@ class $ReceiptLinesTable extends ReceiptLines
     transactionId,
     label,
     amountMinor,
+    quantity,
     currencyCode,
     createdAtMs,
     updatedAtMs,
@@ -2683,6 +2699,12 @@ class $ReceiptLinesTable extends ReceiptLines
       );
     } else if (isInserting) {
       context.missing(_amountMinorMeta);
+    }
+    if (data.containsKey('quantity')) {
+      context.handle(
+        _quantityMeta,
+        quantity.isAcceptableOrUnknown(data['quantity']!, _quantityMeta),
+      );
     }
     if (data.containsKey('currency_code')) {
       context.handle(
@@ -2746,6 +2768,10 @@ class $ReceiptLinesTable extends ReceiptLines
         DriftSqlType.int,
         data['${effectivePrefix}amount_minor'],
       )!,
+      quantity: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}quantity'],
+      )!,
       currencyCode: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}currency_code'],
@@ -2773,6 +2799,11 @@ class ReceiptLine extends DataClass implements Insertable<ReceiptLine> {
   final String? transactionId;
   final String label;
   final int amountMinor;
+
+  /// Parsed or user-edited quantity for this line (line amount is still the full row total).
+  final int quantity;
+
+  /// ISO 4217 for this line; **recording currency** when the line was added (not rewritten when settings change).
   final String currencyCode;
   final int createdAtMs;
   final int updatedAtMs;
@@ -2782,6 +2813,7 @@ class ReceiptLine extends DataClass implements Insertable<ReceiptLine> {
     this.transactionId,
     required this.label,
     required this.amountMinor,
+    required this.quantity,
     required this.currencyCode,
     required this.createdAtMs,
     required this.updatedAtMs,
@@ -2796,6 +2828,7 @@ class ReceiptLine extends DataClass implements Insertable<ReceiptLine> {
     }
     map['label'] = Variable<String>(label);
     map['amount_minor'] = Variable<int>(amountMinor);
+    map['quantity'] = Variable<int>(quantity);
     map['currency_code'] = Variable<String>(currencyCode);
     map['created_at_ms'] = Variable<int>(createdAtMs);
     map['updated_at_ms'] = Variable<int>(updatedAtMs);
@@ -2811,6 +2844,7 @@ class ReceiptLine extends DataClass implements Insertable<ReceiptLine> {
           : Value(transactionId),
       label: Value(label),
       amountMinor: Value(amountMinor),
+      quantity: Value(quantity),
       currencyCode: Value(currencyCode),
       createdAtMs: Value(createdAtMs),
       updatedAtMs: Value(updatedAtMs),
@@ -2828,6 +2862,7 @@ class ReceiptLine extends DataClass implements Insertable<ReceiptLine> {
       transactionId: serializer.fromJson<String?>(json['transactionId']),
       label: serializer.fromJson<String>(json['label']),
       amountMinor: serializer.fromJson<int>(json['amountMinor']),
+      quantity: serializer.fromJson<int>(json['quantity']),
       currencyCode: serializer.fromJson<String>(json['currencyCode']),
       createdAtMs: serializer.fromJson<int>(json['createdAtMs']),
       updatedAtMs: serializer.fromJson<int>(json['updatedAtMs']),
@@ -2842,6 +2877,7 @@ class ReceiptLine extends DataClass implements Insertable<ReceiptLine> {
       'transactionId': serializer.toJson<String?>(transactionId),
       'label': serializer.toJson<String>(label),
       'amountMinor': serializer.toJson<int>(amountMinor),
+      'quantity': serializer.toJson<int>(quantity),
       'currencyCode': serializer.toJson<String>(currencyCode),
       'createdAtMs': serializer.toJson<int>(createdAtMs),
       'updatedAtMs': serializer.toJson<int>(updatedAtMs),
@@ -2854,6 +2890,7 @@ class ReceiptLine extends DataClass implements Insertable<ReceiptLine> {
     Value<String?> transactionId = const Value.absent(),
     String? label,
     int? amountMinor,
+    int? quantity,
     String? currencyCode,
     int? createdAtMs,
     int? updatedAtMs,
@@ -2865,6 +2902,7 @@ class ReceiptLine extends DataClass implements Insertable<ReceiptLine> {
         : this.transactionId,
     label: label ?? this.label,
     amountMinor: amountMinor ?? this.amountMinor,
+    quantity: quantity ?? this.quantity,
     currencyCode: currencyCode ?? this.currencyCode,
     createdAtMs: createdAtMs ?? this.createdAtMs,
     updatedAtMs: updatedAtMs ?? this.updatedAtMs,
@@ -2880,6 +2918,7 @@ class ReceiptLine extends DataClass implements Insertable<ReceiptLine> {
       amountMinor: data.amountMinor.present
           ? data.amountMinor.value
           : this.amountMinor,
+      quantity: data.quantity.present ? data.quantity.value : this.quantity,
       currencyCode: data.currencyCode.present
           ? data.currencyCode.value
           : this.currencyCode,
@@ -2900,6 +2939,7 @@ class ReceiptLine extends DataClass implements Insertable<ReceiptLine> {
           ..write('transactionId: $transactionId, ')
           ..write('label: $label, ')
           ..write('amountMinor: $amountMinor, ')
+          ..write('quantity: $quantity, ')
           ..write('currencyCode: $currencyCode, ')
           ..write('createdAtMs: $createdAtMs, ')
           ..write('updatedAtMs: $updatedAtMs')
@@ -2914,6 +2954,7 @@ class ReceiptLine extends DataClass implements Insertable<ReceiptLine> {
     transactionId,
     label,
     amountMinor,
+    quantity,
     currencyCode,
     createdAtMs,
     updatedAtMs,
@@ -2927,6 +2968,7 @@ class ReceiptLine extends DataClass implements Insertable<ReceiptLine> {
           other.transactionId == this.transactionId &&
           other.label == this.label &&
           other.amountMinor == this.amountMinor &&
+          other.quantity == this.quantity &&
           other.currencyCode == this.currencyCode &&
           other.createdAtMs == this.createdAtMs &&
           other.updatedAtMs == this.updatedAtMs);
@@ -2938,6 +2980,7 @@ class ReceiptLinesCompanion extends UpdateCompanion<ReceiptLine> {
   final Value<String?> transactionId;
   final Value<String> label;
   final Value<int> amountMinor;
+  final Value<int> quantity;
   final Value<String> currencyCode;
   final Value<int> createdAtMs;
   final Value<int> updatedAtMs;
@@ -2948,6 +2991,7 @@ class ReceiptLinesCompanion extends UpdateCompanion<ReceiptLine> {
     this.transactionId = const Value.absent(),
     this.label = const Value.absent(),
     this.amountMinor = const Value.absent(),
+    this.quantity = const Value.absent(),
     this.currencyCode = const Value.absent(),
     this.createdAtMs = const Value.absent(),
     this.updatedAtMs = const Value.absent(),
@@ -2959,6 +3003,7 @@ class ReceiptLinesCompanion extends UpdateCompanion<ReceiptLine> {
     this.transactionId = const Value.absent(),
     required String label,
     required int amountMinor,
+    this.quantity = const Value.absent(),
     required String currencyCode,
     required int createdAtMs,
     required int updatedAtMs,
@@ -2976,6 +3021,7 @@ class ReceiptLinesCompanion extends UpdateCompanion<ReceiptLine> {
     Expression<String>? transactionId,
     Expression<String>? label,
     Expression<int>? amountMinor,
+    Expression<int>? quantity,
     Expression<String>? currencyCode,
     Expression<int>? createdAtMs,
     Expression<int>? updatedAtMs,
@@ -2987,6 +3033,7 @@ class ReceiptLinesCompanion extends UpdateCompanion<ReceiptLine> {
       if (transactionId != null) 'transaction_id': transactionId,
       if (label != null) 'label': label,
       if (amountMinor != null) 'amount_minor': amountMinor,
+      if (quantity != null) 'quantity': quantity,
       if (currencyCode != null) 'currency_code': currencyCode,
       if (createdAtMs != null) 'created_at_ms': createdAtMs,
       if (updatedAtMs != null) 'updated_at_ms': updatedAtMs,
@@ -3000,6 +3047,7 @@ class ReceiptLinesCompanion extends UpdateCompanion<ReceiptLine> {
     Value<String?>? transactionId,
     Value<String>? label,
     Value<int>? amountMinor,
+    Value<int>? quantity,
     Value<String>? currencyCode,
     Value<int>? createdAtMs,
     Value<int>? updatedAtMs,
@@ -3011,6 +3059,7 @@ class ReceiptLinesCompanion extends UpdateCompanion<ReceiptLine> {
       transactionId: transactionId ?? this.transactionId,
       label: label ?? this.label,
       amountMinor: amountMinor ?? this.amountMinor,
+      quantity: quantity ?? this.quantity,
       currencyCode: currencyCode ?? this.currencyCode,
       createdAtMs: createdAtMs ?? this.createdAtMs,
       updatedAtMs: updatedAtMs ?? this.updatedAtMs,
@@ -3036,6 +3085,9 @@ class ReceiptLinesCompanion extends UpdateCompanion<ReceiptLine> {
     if (amountMinor.present) {
       map['amount_minor'] = Variable<int>(amountMinor.value);
     }
+    if (quantity.present) {
+      map['quantity'] = Variable<int>(quantity.value);
+    }
     if (currencyCode.present) {
       map['currency_code'] = Variable<String>(currencyCode.value);
     }
@@ -3059,6 +3111,7 @@ class ReceiptLinesCompanion extends UpdateCompanion<ReceiptLine> {
           ..write('transactionId: $transactionId, ')
           ..write('label: $label, ')
           ..write('amountMinor: $amountMinor, ')
+          ..write('quantity: $quantity, ')
           ..write('currencyCode: $currencyCode, ')
           ..write('createdAtMs: $createdAtMs, ')
           ..write('updatedAtMs: $updatedAtMs, ')
@@ -7298,6 +7351,7 @@ typedef $$ReceiptLinesTableCreateCompanionBuilder =
       Value<String?> transactionId,
       required String label,
       required int amountMinor,
+      Value<int> quantity,
       required String currencyCode,
       required int createdAtMs,
       required int updatedAtMs,
@@ -7310,6 +7364,7 @@ typedef $$ReceiptLinesTableUpdateCompanionBuilder =
       Value<String?> transactionId,
       Value<String> label,
       Value<int> amountMinor,
+      Value<int> quantity,
       Value<String> currencyCode,
       Value<int> createdAtMs,
       Value<int> updatedAtMs,
@@ -7408,6 +7463,11 @@ class $$ReceiptLinesTableFilterComposer
 
   ColumnFilters<int> get amountMinor => $composableBuilder(
     column: $table.amountMinor,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get quantity => $composableBuilder(
+    column: $table.quantity,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -7523,6 +7583,11 @@ class $$ReceiptLinesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get quantity => $composableBuilder(
+    column: $table.quantity,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get currencyCode => $composableBuilder(
     column: $table.currencyCode,
     builder: (column) => ColumnOrderings(column),
@@ -7604,6 +7669,9 @@ class $$ReceiptLinesTableAnnotationComposer
     column: $table.amountMinor,
     builder: (column) => column,
   );
+
+  GeneratedColumn<int> get quantity =>
+      $composableBuilder(column: $table.quantity, builder: (column) => column);
 
   GeneratedColumn<String> get currencyCode => $composableBuilder(
     column: $table.currencyCode,
@@ -7730,6 +7798,7 @@ class $$ReceiptLinesTableTableManager
                 Value<String?> transactionId = const Value.absent(),
                 Value<String> label = const Value.absent(),
                 Value<int> amountMinor = const Value.absent(),
+                Value<int> quantity = const Value.absent(),
                 Value<String> currencyCode = const Value.absent(),
                 Value<int> createdAtMs = const Value.absent(),
                 Value<int> updatedAtMs = const Value.absent(),
@@ -7740,6 +7809,7 @@ class $$ReceiptLinesTableTableManager
                 transactionId: transactionId,
                 label: label,
                 amountMinor: amountMinor,
+                quantity: quantity,
                 currencyCode: currencyCode,
                 createdAtMs: createdAtMs,
                 updatedAtMs: updatedAtMs,
@@ -7752,6 +7822,7 @@ class $$ReceiptLinesTableTableManager
                 Value<String?> transactionId = const Value.absent(),
                 required String label,
                 required int amountMinor,
+                Value<int> quantity = const Value.absent(),
                 required String currencyCode,
                 required int createdAtMs,
                 required int updatedAtMs,
@@ -7762,6 +7833,7 @@ class $$ReceiptLinesTableTableManager
                 transactionId: transactionId,
                 label: label,
                 amountMinor: amountMinor,
+                quantity: quantity,
                 currencyCode: currencyCode,
                 createdAtMs: createdAtMs,
                 updatedAtMs: updatedAtMs,

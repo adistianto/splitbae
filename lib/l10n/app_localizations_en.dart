@@ -69,20 +69,63 @@ class AppLocalizationsEn extends AppLocalizations {
   String get languageIndonesian => 'Bahasa Indonesia';
 
   @override
-  String get settingsDefaultCurrency => 'Default currency for new items';
+  String get settingsDefaultCurrency => 'Default currency for new bills';
 
   @override
   String get settingsDefaultCurrencySubtitle =>
-      'You can still pick another currency per item.';
+      'Used when you start a new bill with no lines yet.';
+
+  @override
+  String get settingsDefaultCurrencyRecordingNote =>
+      'Posted transactions keep the currency they were saved in. Changing this only affects new lines and the empty draft.';
 
   @override
   String get addItemTitle => 'Add item';
 
   @override
-  String get addItemSubtitle => 'Amount is in the currency you select below.';
+  String get addItemSubtitle =>
+      'Amounts use this bill’s currency (set by default for an empty bill; change default in Settings).';
+
+  @override
+  String get billCurrencyLabel => 'Bill currency';
 
   @override
   String get scanReceiptButton => 'Scan receipt';
+
+  @override
+  String get scanReceiptScreenTitle => 'Scan receipt';
+
+  @override
+  String get scanReceiptScreenSubtitle => 'Capture to add expenses quickly';
+
+  @override
+  String get scanReceiptHeroQuickAdd => 'Quick add';
+
+  @override
+  String get scanReceiptHeroPointCamera => 'Point camera at receipt';
+
+  @override
+  String scanReceiptHeroItemsDetected(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items detected',
+      one: '1 item detected',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get scanReceiptTakePhotoSubtitle => 'Snap a picture of your receipt';
+
+  @override
+  String get scanReceiptExtractingTitle => 'Extracting items…';
+
+  @override
+  String get scanReceiptExtractingSubtitle => 'This may take a moment';
+
+  @override
+  String get scanReceiptContinueToSplit => 'Continue to Split';
 
   @override
   String get scanReceiptCamera => 'Take photo';
@@ -134,6 +177,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get scanReceiptPickLine => 'Pick a line to use';
 
   @override
+  String scanReceiptLineQtyUnitPrice(int quantity, String unitPrice) {
+    return '×$quantity · $unitPrice each';
+  }
+
+  @override
+  String scanReceiptOcrLineDetail(
+    int quantity,
+    String unitPrice,
+    String lineTotal,
+  ) {
+    return 'Qty $quantity · $unitPrice each · line $lineTotal';
+  }
+
+  @override
   String scanReceiptAddAllLines(int count) {
     return 'Add all $count lines';
   }
@@ -149,18 +206,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get scanReceiptUnavailable =>
-      'Receipt scanning is only available in the Android and iOS apps.';
+      'Receipt scanning needs on-device OCR (Android, iOS, macOS, or Windows in this app).';
 
   @override
   String get scanReceiptChooseImageFile => 'Choose image file';
 
   @override
   String get scanReceiptNonMobileScanHint =>
-      'On-device OCR runs on Android and iOS only—not on desktop or web in this app.';
+      'On-device OCR isn’t available on web or Linux in this build. You can still pick a photo or enter lines manually.';
 
   @override
   String get scanReceiptNoNativeOcr =>
-      'On-device text recognition is only implemented for Android and iOS (not on desktop or web in this app). Enter the line below, or use the phone app to scan.';
+      'On-device receipt OCR isn’t available on this platform. Enter the line manually.';
 
   @override
   String get scanReceiptErrorGeneric => 'Could not read text from the image.';
@@ -181,6 +238,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get priceHint => '15000';
+
+  @override
+  String get itemQuantityLabel => 'Qty';
+
+  @override
+  String get itemQuantityHint => '1';
+
+  @override
+  String get errorQuantityInvalid => 'Use a whole number of at least 1.';
+
+  @override
+  String get draftBillLineQtyColumn => 'Qty';
+
+  @override
+  String get draftBillLineUnitColumn => 'Unit';
+
+  @override
+  String get draftBillLineLineTotalColumn => 'Line';
 
   @override
   String get currencyLabel => 'Currency';
@@ -564,11 +639,78 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fabCreateReport => 'Create Report';
 
   @override
-  String get addTransactionSheetTitle => 'New bill';
+  String get addTransactionSheetTitle => 'Add Transaction';
 
   @override
   String get addTransactionSheetSubtitle =>
-      'Set details, then add line items and who paid.';
+      'Receipt, people, items, tax — then post.';
+
+  @override
+  String get addTransactionDescriptionSection => 'Description';
+
+  @override
+  String get addTransactionDescriptionAutoHint =>
+      'Auto-fills from first item if empty';
+
+  @override
+  String get addTransactionSuggestedCategory => 'Suggested';
+
+  @override
+  String get addTransactionApplySuggestion => 'Apply';
+
+  @override
+  String get addTransactionToday => 'Today';
+
+  @override
+  String get addTransactionYesterday => 'Yesterday';
+
+  @override
+  String get addTransactionDateTimeSection => 'Date';
+
+  @override
+  String get addTransactionWhosSplitting => 'Who\'s splitting?';
+
+  @override
+  String get addTransactionEveryoneIncludedHint =>
+      'Everyone in this trip is included. Add people from the draft split screen.';
+
+  @override
+  String addTransactionItemsSection(int count) {
+    return 'Items ($count)';
+  }
+
+  @override
+  String get addTransactionAddLineItem => 'Add item';
+
+  @override
+  String get addTransactionTaxSplitHint =>
+      'Split proportionally among participants';
+
+  @override
+  String addTransactionSubtotalLine(int count) {
+    return 'Subtotal ($count items)';
+  }
+
+  @override
+  String get addTransactionTaxSummaryLine => 'Tax & service';
+
+  @override
+  String get addTransactionGrandTotal => 'Grand total';
+
+  @override
+  String get addTransactionWhoPaidShortcut => 'Who paid';
+
+  @override
+  String get categoryEntertainment => 'Fun';
+
+  @override
+  String get categoryShopping => 'Shop';
+
+  @override
+  String get categoryUtilities => 'Bills';
+
+  @override
+  String get categorySettlement => 'Settlement';
 
   @override
   String get addTransactionCategoryLabel => 'Category';
@@ -609,7 +751,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addTransactionOpenDraft => 'Line items & split';
 
   @override
-  String get addTransactionPostAction => 'Post bill';
+  String get addTransactionPostAction => 'Add Transaction';
 
   @override
   String get billCardShare => 'Share';

@@ -88,7 +88,11 @@ class BackupPayloadV1 {
           .map((e) => Participant.fromJson(Map<String, dynamic>.from(e as Map)))
           .toList(),
       receiptLines: linesJson
-          .map((e) => ReceiptLine.fromJson(Map<String, dynamic>.from(e as Map)))
+          .map(
+            (e) => ReceiptLine.fromJson(
+              _receiptLineJson(Map<String, dynamic>.from(e as Map)),
+            ),
+          )
           .toList(),
       receiptLineAssignments: _parseAssignments(json['receiptLineAssignments']),
       transactions: _parseTransactions(version, json['transactions']),
@@ -98,6 +102,13 @@ class BackupPayloadV1 {
       settlementTransfers:
           _parseSettlementTransfers(version, json['settlementTransfers']),
     );
+  }
+
+  /// Older backups omit [ReceiptLine.quantity]; default to 1.
+  static Map<String, dynamic> _receiptLineJson(Map<String, dynamic> row) {
+    final m = Map<String, dynamic>.from(row);
+    m.putIfAbsent('quantity', () => 1);
+    return m;
   }
 
   static List<ReceiptLineAssignment> _parseAssignments(Object? raw) {

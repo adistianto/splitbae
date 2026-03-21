@@ -69,21 +69,64 @@ class AppLocalizationsId extends AppLocalizations {
   String get languageIndonesian => 'Bahasa Indonesia';
 
   @override
-  String get settingsDefaultCurrency => 'Mata uang default untuk item baru';
+  String get settingsDefaultCurrency => 'Mata uang default untuk tagihan baru';
 
   @override
   String get settingsDefaultCurrencySubtitle =>
-      'Anda tetap bisa pilih mata uang lain per item.';
+      'Dipakai saat memulai tagihan baru tanpa baris.';
+
+  @override
+  String get settingsDefaultCurrencyRecordingNote =>
+      'Transaksi yang sudah diposting tetap memakai mata uang saat disimpan. Mengubah ini hanya memengaruhi baris baru dan draf kosong.';
 
   @override
   String get addItemTitle => 'Tambah item';
 
   @override
   String get addItemSubtitle =>
-      'Nominal memakai mata uang yang Anda pilih di bawah.';
+      'Nominal memakai mata uang tagihan ini (default saat draf kosong; ubah default di Pengaturan).';
+
+  @override
+  String get billCurrencyLabel => 'Mata uang tagihan';
 
   @override
   String get scanReceiptButton => 'Pindai struk';
+
+  @override
+  String get scanReceiptScreenTitle => 'Pindai struk';
+
+  @override
+  String get scanReceiptScreenSubtitle =>
+      'Ambil gambar untuk menambah pengeluaran dengan cepat';
+
+  @override
+  String get scanReceiptHeroQuickAdd => 'Tambah cepat';
+
+  @override
+  String get scanReceiptHeroPointCamera => 'Arahkan kamera ke struk';
+
+  @override
+  String scanReceiptHeroItemsDetected(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count item terdeteksi',
+      one: '1 item terdeteksi',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get scanReceiptTakePhotoSubtitle => 'Foto struk Anda';
+
+  @override
+  String get scanReceiptExtractingTitle => 'Mengekstrak item…';
+
+  @override
+  String get scanReceiptExtractingSubtitle => 'Ini bisa memakan waktu sebentar';
+
+  @override
+  String get scanReceiptContinueToSplit => 'Lanjut ke bagi tagihan';
 
   @override
   String get scanReceiptCamera => 'Ambil foto';
@@ -136,6 +179,20 @@ class AppLocalizationsId extends AppLocalizations {
   String get scanReceiptPickLine => 'Pilih baris yang dipakai';
 
   @override
+  String scanReceiptLineQtyUnitPrice(int quantity, String unitPrice) {
+    return '×$quantity · $unitPrice per item';
+  }
+
+  @override
+  String scanReceiptOcrLineDetail(
+    int quantity,
+    String unitPrice,
+    String lineTotal,
+  ) {
+    return 'Qty $quantity · $unitPrice per item · baris $lineTotal';
+  }
+
+  @override
   String scanReceiptAddAllLines(int count) {
     return 'Tambah semua $count baris';
   }
@@ -151,18 +208,18 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get scanReceiptUnavailable =>
-      'Pindaian struk hanya di aplikasi Android dan iOS.';
+      'Pindaian struk membutuhkan OCR di perangkat (Android, iOS, macOS, atau Windows di aplikasi ini).';
 
   @override
   String get scanReceiptChooseImageFile => 'Pilih file gambar';
 
   @override
   String get scanReceiptNonMobileScanHint =>
-      'OCR di perangkat hanya di Android dan iOS—bukan di desktop atau web di aplikasi ini.';
+      'OCR di perangkat tidak tersedia di web atau Linux dalam build ini. Anda tetap bisa memilih foto atau mengisi manual.';
 
   @override
   String get scanReceiptNoNativeOcr =>
-      'Pengenalan teks di perangkat hanya di Android dan iOS (bukan di desktop atau web di aplikasi ini). Isi baris di bawah, atau gunakan aplikasi di ponsel untuk memindai.';
+      'OCR struk di perangkat tidak tersedia di platform ini. Isi baris secara manual.';
 
   @override
   String get scanReceiptErrorGeneric => 'Tidak bisa membaca teks dari gambar.';
@@ -183,6 +240,24 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get priceHint => '15000';
+
+  @override
+  String get itemQuantityLabel => 'Jml';
+
+  @override
+  String get itemQuantityHint => '1';
+
+  @override
+  String get errorQuantityInvalid => 'Gunakan bilangan bulat minimal 1.';
+
+  @override
+  String get draftBillLineQtyColumn => 'Jml';
+
+  @override
+  String get draftBillLineUnitColumn => 'Satuan';
+
+  @override
+  String get draftBillLineLineTotalColumn => 'Baris';
 
   @override
   String get currencyLabel => 'Mata uang';
@@ -570,11 +645,77 @@ class AppLocalizationsId extends AppLocalizations {
   String get fabCreateReport => 'Buat laporan';
 
   @override
-  String get addTransactionSheetTitle => 'Tagihan baru';
+  String get addTransactionSheetTitle => 'Tambah transaksi';
 
   @override
   String get addTransactionSheetSubtitle =>
-      'Atur detail, lalu tambah baris dan siapa yang bayar.';
+      'Struk, orang, item, pajak — lalu posting.';
+
+  @override
+  String get addTransactionDescriptionSection => 'Deskripsi';
+
+  @override
+  String get addTransactionDescriptionAutoHint =>
+      'Otomatis dari item pertama jika kosong';
+
+  @override
+  String get addTransactionSuggestedCategory => 'Saran';
+
+  @override
+  String get addTransactionApplySuggestion => 'Terapkan';
+
+  @override
+  String get addTransactionToday => 'Hari ini';
+
+  @override
+  String get addTransactionYesterday => 'Kemarin';
+
+  @override
+  String get addTransactionDateTimeSection => 'Tanggal';
+
+  @override
+  String get addTransactionWhosSplitting => 'Siapa yang patungan?';
+
+  @override
+  String get addTransactionEveryoneIncludedHint =>
+      'Semua orang di trip ini ikut. Tambah orang dari layar bagi tagihan.';
+
+  @override
+  String addTransactionItemsSection(int count) {
+    return 'Item ($count)';
+  }
+
+  @override
+  String get addTransactionAddLineItem => 'Tambah item';
+
+  @override
+  String get addTransactionTaxSplitHint => 'Dibagi proporsional ke peserta';
+
+  @override
+  String addTransactionSubtotalLine(int count) {
+    return 'Subtotal ($count item)';
+  }
+
+  @override
+  String get addTransactionTaxSummaryLine => 'Pajak & layanan';
+
+  @override
+  String get addTransactionGrandTotal => 'Total';
+
+  @override
+  String get addTransactionWhoPaidShortcut => 'Siapa yang bayar';
+
+  @override
+  String get categoryEntertainment => 'Hiburan';
+
+  @override
+  String get categoryShopping => 'Belanja';
+
+  @override
+  String get categoryUtilities => 'Tagihan';
+
+  @override
+  String get categorySettlement => 'Pelunasan';
 
   @override
   String get addTransactionCategoryLabel => 'Kategori';
@@ -615,7 +756,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get addTransactionOpenDraft => 'Baris & bagi';
 
   @override
-  String get addTransactionPostAction => 'Posting';
+  String get addTransactionPostAction => 'Tambah transaksi';
 
   @override
   String get billCardShare => 'Bagikan';

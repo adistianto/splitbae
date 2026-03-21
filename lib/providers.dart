@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:splitbae/app_settings.dart';
 import 'package:splitbae/core/data/draft_payment_repository.dart';
 import 'package:splitbae/core/data/bill_posting_repository.dart';
 import 'package:splitbae/core/data/ledger_settlement_service.dart';
@@ -42,22 +43,38 @@ class ItemsNotifier extends StateNotifier<List<LedgerLineItem>> {
 
   final Ref _ref;
 
+  /// Draft bill’s recording currency ([Transactions.currencyCode] for the draft row).
+  String _draftBillCurrencyCode = 'IDR';
+
+  /// ISO 4217 code for the in-progress bill; matches every line on the draft.
+  String get draftBillCurrencyCode => _draftBillCurrencyCode;
+
   Future<void> _load() async {
     final repo = _ref.read(lineItemRepositoryProvider);
     state = await repo.listLedgerLines(kDefaultLedgerId);
+    await repo.syncDraftTransactionRecordingCurrency(
+      ledgerId: kDefaultLedgerId,
+      defaultWhenNoLines: _ref.read(defaultCurrencyProvider),
+    );
+    _draftBillCurrencyCode =
+        await repo.getDraftTransactionCurrencyCode(kDefaultLedgerId);
     await DraftPaymentRepository(_ref.read(appDatabaseProvider))
         .syncDraftPaymentsWithBill(kDefaultLedgerId);
     _bumpDraftPaymentsDbRevision(_ref);
   }
 
   /// Returns the new line id (for assignment rows after insert).
-  Future<String> addItem(String name, double price, String currencyCode) async {
+  Future<String> addItem(
+    String name,
+    double price, {
+    int quantity = 1,
+  }) async {
     final repo = _ref.read(lineItemRepositoryProvider);
     final id = await repo.addLine(
       ledgerId: kDefaultLedgerId,
       label: name,
       amount: price,
-      currencyCode: currencyCode,
+      quantity: quantity,
     );
     await _load();
     return id;
@@ -67,14 +84,14 @@ class ItemsNotifier extends StateNotifier<List<LedgerLineItem>> {
     required String id,
     required String name,
     required double price,
-    required String currencyCode,
+    int quantity = 1,
   }) async {
     final repo = _ref.read(lineItemRepositoryProvider);
     await repo.updateLine(
       id: id,
       label: name,
       amount: price,
-      currencyCode: currencyCode,
+      quantity: quantity,
     );
     await _load();
   }
@@ -134,6 +151,13 @@ final itemsProvider =
     StateNotifierProvider<ItemsNotifier, List<LedgerLineItem>>((ref) {
       return ItemsNotifier(ref);
     });
+
+/// Recording currency for the current draft bill (one per transaction; not per line in UI).
+final draftBillCurrencyProvider = Provider<String>((ref) {
+  ref.watch(itemsProvider);
+  ref.watch(defaultCurrencyProvider);
+  return ref.read(itemsProvider.notifier).draftBillCurrencyCode;
+});
 
 class ParticipantsNotifier extends StateNotifier<List<ParticipantEntry>> {
   ParticipantsNotifier(this._ref) : super(const []) {

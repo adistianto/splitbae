@@ -40,9 +40,15 @@ class SplitHomeContent extends ConsumerWidget {
     Locale locale,
   ) {
     final l10n = AppLocalizations.of(context)!;
+    final scheme = Theme.of(context).colorScheme;
     return items.map((line) {
       final amountStr = formatCurrencyAmount(
         amount: line.receiptItem.price,
+        currencyCode: line.receiptItem.currencyCode,
+        locale: locale,
+      );
+      final unitStr = formatCurrencyAmount(
+        amount: line.unitPrice,
         currencyCode: line.receiptItem.currencyCode,
         locale: locale,
       );
@@ -56,51 +62,88 @@ class SplitHomeContent extends ConsumerWidget {
             vertical: 6,
           ),
           elevation: 0,
-          color: Theme.of(
-            context,
-          ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+          color: scheme.surfaceContainerHighest.withValues(alpha: 0.35),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
+            side: BorderSide(
+              color: scheme.outlineVariant.withValues(alpha: 0.35),
+            ),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              ListTile(
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 4,
-                ),
-                title: Text(
-                  line.receiptItem.name,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                subtitle: Text(
-                  line.receiptItem.currencyCode,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      amountStr,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
-                    splitBaeAdaptiveToolbarIcon(
-                      context: context,
-                      tooltip: l10n.deleteAction,
-                      icon: Icons.delete_outline,
-                      onPressed: () => onConfirmDeleteLine(context, ref, line),
-                    ),
-                  ],
+              InkWell(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(16),
                 ),
                 onTap: () =>
                     showAddReceiptItemSheet(context, ref, existingLine: line),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 10, 4, 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              line.receiptItem.name,
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                          splitBaeAdaptiveToolbarIcon(
+                            context: context,
+                            tooltip: l10n.deleteAction,
+                            icon: Icons.delete_outline,
+                            onPressed: () =>
+                                onConfirmDeleteLine(context, ref, line),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Expanded(
+                            child: _DraftLineMetric(
+                              label: l10n.draftBillLineQtyColumn,
+                              value: '${line.quantity}',
+                            ),
+                          ),
+                          Expanded(
+                            flex: 2,
+                            child: _DraftLineMetric(
+                              label: l10n.draftBillLineUnitColumn,
+                              value: unitStr,
+                            ),
+                          ),
+                          Expanded(
+                            flex: 2,
+                            child: _DraftLineMetric(
+                              label: l10n.draftBillLineLineTotalColumn,
+                              value: amountStr,
+                              emphasize: true,
+                              valueColor: scheme.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: Text(
+                          line.receiptItem.currencyCode,
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                color: scheme.onSurfaceVariant,
+                              ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
@@ -327,6 +370,48 @@ class SplitHomeContent extends ConsumerWidget {
                     error: (err, stack) => Center(child: Text('Error: $err')),
                   ),
           ),
+        ),
+      ],
+    );
+  }
+}
+
+class _DraftLineMetric extends StatelessWidget {
+  const _DraftLineMetric({
+    required this.label,
+    required this.value,
+    this.emphasize = false,
+    this.valueColor,
+  });
+
+  final String label;
+  final String value;
+  final bool emphasize;
+  final Color? valueColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final vc = valueColor ?? scheme.onSurface;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          label,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: (emphasize
+                  ? Theme.of(context).textTheme.titleSmall
+                  : Theme.of(context).textTheme.bodyMedium)
+              ?.copyWith(
+                fontWeight: emphasize ? FontWeight.w800 : FontWeight.w600,
+                color: vc,
+              ),
         ),
       ],
     );

@@ -6,9 +6,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:splitbae/core/data/amount_minor.dart';
+import 'package:splitbae/core/domain/ledger_line_item.dart';
+import 'package:splitbae/core/suggest/category_from_description.dart';
+import 'package:splitbae/core/theme/splitbae_semantic_colors.dart';
+import 'package:splitbae/core/theme/splitbae_v0_theme.dart';
+import 'package:splitbae/core/ui/category_icons.dart';
+import 'package:splitbae/app_settings.dart';
+import 'package:splitbae/core/widgets/adaptive_app_bar.dart';
 import 'package:splitbae/l10n/app_localizations.dart';
+import 'package:splitbae/money_format.dart';
 import 'package:splitbae/providers.dart';
 import 'package:splitbae/screens/draft_split_screen.dart';
+import 'package:splitbae/widgets/add_receipt_item_sheet.dart';
+import 'package:splitbae/widgets/who_paid_sheet.dart';
 
 Future<void> showAddTransactionSheet(BuildContext context) {
   return showModalBottomSheet<void>(
@@ -16,10 +26,7 @@ Future<void> showAddTransactionSheet(BuildContext context) {
     showDragHandle: true,
     isScrollControlled: true,
     useSafeArea: true,
-    backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-    ),
+    backgroundColor: Colors.transparent,
     builder: (ctx) => _AddTransactionSheetBody(hostContext: context),
   );
 }
@@ -34,12 +41,25 @@ class _AddTransactionSheetBody extends ConsumerStatefulWidget {
       _AddTransactionSheetBodyState();
 }
 
-class _AddTransactionSheetBodyState extends ConsumerState<_AddTransactionSheetBody> {
+class _AddTransactionSheetBodyState
+    extends ConsumerState<_AddTransactionSheetBody> {
   final _desc = TextEditingController();
   final _tax = TextEditingController();
-  DateTime _date = DateTime.now();
-  String _category = 'other';
+  DateTime _when = DateTime.now();
+  String _category = 'food';
   String? _receiptPath;
+  String? _suggestedCategory;
+
+  static const _categories = <String>[
+    'food',
+    'transport',
+    'accommodation',
+    'entertainment',
+    'shopping',
+    'utilities',
+    'other',
+    'settlement',
+  ];
 
   @override
   void dispose() {
@@ -48,9 +68,8 @@ class _AddTransactionSheetBodyState extends ConsumerState<_AddTransactionSheetBo
     super.dispose();
   }
 
-  String _primaryCurrency() {
-    final items = ref.read(itemsProvider);
-    if (items.isEmpty) return 'IDR';
+  String _primaryCurrency(List<LedgerLineItem> items) {
+    if (items.isEmpty) return ref.read(defaultCurrencyProvider);
     return items.first.receiptItem.currencyCode;
   }
 
@@ -74,6 +93,48 @@ class _AddTransactionSheetBodyState extends ConsumerState<_AddTransactionSheetBo
       }
     }
     return e.toString();
+  }
+
+  bool _isToday(DateTime d) {
+    final n = DateTime.now();
+    return d.year == n.year && d.month == n.month && d.day == n.day;
+  }
+
+  bool _isYesterday(DateTime d) {
+    final y = DateTime.now().subtract(const Duration(days: 1));
+    return d.year == y.year && d.month == y.month && d.day == y.day;
+  }
+
+  void _setToday() {
+    setState(() => _when = DateTime.now());
+  }
+
+  void _setYesterday() {
+    final n = DateTime.now();
+    final y = DateTime(n.year, n.month, n.day)
+        .subtract(const Duration(days: 1));
+    final t = TimeOfDay.fromDateTime(_when);
+    setState(() {
+      _when = DateTime(y.year, y.month, y.day, t.hour, t.minute);
+    });
+  }
+
+  Future<void> _pickDateTime() async {
+    final d = await showDatePicker(
+      context: context,
+      initialDate: _when,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+    if (d == null || !mounted) return;
+    final t = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(_when),
+    );
+    if (t == null || !mounted) return;
+    setState(() {
+      _when = DateTime(d.year, d.month, d.day, t.hour, t.minute);
+    });
   }
 
   Future<void> _pickReceipt() async {
@@ -108,13 +169,17 @@ class _AddTransactionSheetBodyState extends ConsumerState<_AddTransactionSheetBo
 
   Future<void> _post(AppLocalizations l10n) async {
     final messenger = ScaffoldMessenger.of(widget.hostContext);
-    final ccy = _primaryCurrency();
+    final items = ref.read(itemsProvider);
+    final ccy = _primaryCurrency(items);
+    var description = _desc.text.trim();
+    if (description.isEmpty && items.isNotEmpty) {
+      description = items.first.receiptItem.name;
+    }
     try {
-      final at = DateTime(_date.year, _date.month, _date.day);
       await ref.read(itemsProvider.notifier).postDraftBill(
-            _desc.text.trim(),
+            description,
             category: _category,
-            createdAtMs: at.millisecondsSinceEpoch,
+            createdAtMs: _when.millisecondsSinceEpoch,
             taxAmountMinor: _taxMinor(ccy),
             receiptSourcePath: _receiptPath,
           );
@@ -129,179 +194,6 @@ class _AddTransactionSheetBodyState extends ConsumerState<_AddTransactionSheetBo
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final locale = Localizations.localeOf(context);
-    final items = ref.watch(itemsProvider);
-    final people = ref.watch(participantsProvider);
-    final ccy = items.isEmpty ? 'IDR' : items.first.receiptItem.currencyCode;
-    final bottom = MediaQuery.viewInsetsOf(context).bottom;
-    final h = MediaQuery.sizeOf(context).height;
-
-    return SizedBox(
-      height: (h * 0.92).clamp(400.0, h),
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(24, 8, 24, 16 + bottom),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              l10n.addTransactionSheetTitle,
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              l10n.addTransactionSheetSubtitle,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-            ),
-            const SizedBox(height: 12),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    TextField(
-                      controller: _desc,
-                      decoration: InputDecoration(
-                        labelText: l10n.postBillDescriptionLabel,
-                        hintText: l10n.postBillDescriptionHint,
-                        border: const OutlineInputBorder(),
-                      ),
-                      textCapitalization: TextCapitalization.sentences,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      l10n.addTransactionCategoryLabel,
-                      style: Theme.of(context).textTheme.labelLarge,
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        for (final c in _categories)
-                          ChoiceChip(
-                            label: Text(_categoryLabel(c, l10n)),
-                            selected: _category == c,
-                            onSelected: (_) => setState(() => _category = c),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(l10n.addTransactionDateLabel),
-                      subtitle: Text(
-                        DateFormat.yMMMd(locale.toString()).format(_date),
-                      ),
-                      trailing: const Icon(Icons.calendar_today_outlined),
-                      onTap: () async {
-                        HapticFeedback.selectionClick();
-                        final picked = await showDatePicker(
-                          context: context,
-                          initialDate: _date,
-                          firstDate: DateTime(2000),
-                          lastDate: DateTime(2100),
-                        );
-                        if (picked != null) {
-                          setState(() => _date = picked);
-                        }
-                      },
-                    ),
-                    TextField(
-                      controller: _tax,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      decoration: InputDecoration(
-                        labelText: '${l10n.addTransactionTaxLabel} ($ccy)',
-                        border: const OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      l10n.addTransactionReceiptLabel,
-                      style: Theme.of(context).textTheme.labelLarge,
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        FilledButton.tonal(
-                          onPressed: _pickReceipt,
-                          child: Text(l10n.addTransactionReceiptPick),
-                        ),
-                        if (_receiptPath != null) ...[
-                          const SizedBox(width: 8),
-                          TextButton(
-                            onPressed: () => setState(() => _receiptPath = null),
-                            child: Text(l10n.addTransactionReceiptRemove),
-                          ),
-                        ],
-                      ],
-                    ),
-                    if (_receiptPath != null) ...[
-                      const SizedBox(height: 8),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: AspectRatio(
-                          aspectRatio: 16 / 9,
-                          child: Image.file(
-                            File(_receiptPath!),
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 16),
-                    Text(
-                      l10n.addTransactionDraftSummary(
-                        items.length,
-                        people.length,
-                      ),
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            OutlinedButton.icon(
-              onPressed: () {
-                HapticFeedback.selectionClick();
-                Navigator.of(context).pop();
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  openDraftSplitScreen(widget.hostContext, ref);
-                });
-              },
-              icon: const Icon(Icons.edit_note_outlined),
-              label: Text(l10n.addTransactionOpenDraft),
-            ),
-            const SizedBox(height: 8),
-            FilledButton(
-              onPressed: () {
-                HapticFeedback.mediumImpact();
-                _post(l10n);
-              },
-              child: Text(l10n.addTransactionPostAction),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  static const _categories = [
-    'food',
-    'transport',
-    'accommodation',
-    'other',
-  ];
-
   String _categoryLabel(String id, AppLocalizations l10n) {
     switch (id) {
       case 'food':
@@ -310,8 +202,667 @@ class _AddTransactionSheetBodyState extends ConsumerState<_AddTransactionSheetBo
         return l10n.categoryTransport;
       case 'accommodation':
         return l10n.categoryAccommodation;
+      case 'entertainment':
+        return l10n.categoryEntertainment;
+      case 'shopping':
+        return l10n.categoryShopping;
+      case 'utilities':
+        return l10n.categoryUtilities;
+      case 'settlement':
+        return l10n.categorySettlement;
       default:
         return l10n.categoryOther;
     }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final locale = Localizations.localeOf(context);
+    final items = ref.watch(itemsProvider);
+    final people = ref.watch(participantsProvider);
+    final ccy = _primaryCurrency(items);
+    final bottom = MediaQuery.viewInsetsOf(context).bottom;
+    final h = MediaQuery.sizeOf(context).height;
+    final scheme = splitBaeV0DarkColorScheme();
+
+    var subtotal = 0.0;
+    for (final line in items) {
+      subtotal += line.receiptItem.price;
+    }
+    final taxVal = double.tryParse(_tax.text.trim().replaceAll(',', '.')) ?? 0.0;
+    final grand = subtotal + (taxVal < 0 ? 0 : taxVal);
+
+    return Theme(
+      data: Theme.of(context).copyWith(
+        colorScheme: scheme,
+        brightness: Brightness.dark,
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          color: scheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: SizedBox(
+          height: (h * 0.92).clamp(400.0, h),
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(20, 8, 20, 16 + bottom),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        l10n.addTransactionSheetTitle,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w800,
+                            ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.close),
+                      tooltip: MaterialLocalizations.of(context)
+                          .closeButtonTooltip,
+                    ),
+                  ],
+                ),
+                Text(
+                  l10n.addTransactionSheetSubtitle,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _sectionLabel(context, l10n.addTransactionReceiptLabel),
+                        const SizedBox(height: 8),
+                        if (_receiptPath == null)
+                          FilledButton.tonal(
+                            onPressed: _pickReceipt,
+                            style: FilledButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(18),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.photo_camera_outlined,
+                                    color: scheme.primary),
+                                const SizedBox(width: 10),
+                                Text(l10n.addTransactionReceiptPick),
+                              ],
+                            ),
+                          )
+                        else
+                          Stack(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(20),
+                                child: AspectRatio(
+                                  aspectRatio: 16 / 9,
+                                  child: Image.file(
+                                    File(_receiptPath!),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                top: 10,
+                                right: 10,
+                                child: Material(
+                                  color: Colors.black54,
+                                  shape: const CircleBorder(),
+                                  child: IconButton(
+                                    onPressed: () =>
+                                        setState(() => _receiptPath = null),
+                                    icon: const Icon(Icons.close,
+                                        color: Colors.white, size: 20),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        const SizedBox(height: 20),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: _sectionLabel(
+                                  context, l10n.addTransactionDescriptionSection),
+                            ),
+                            Text(
+                              l10n.addTransactionDescriptionAutoHint,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelSmall
+                                  ?.copyWith(color: scheme.onSurfaceVariant),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: _desc,
+                          onChanged: (v) {
+                            final s = suggestCategoryFromDescription(v);
+                            setState(() {
+                              _suggestedCategory =
+                                  (s != null && s != _category) ? s : null;
+                            });
+                          },
+                          decoration: InputDecoration(
+                            hintText: l10n.postBillDescriptionHint,
+                            filled: true,
+                            fillColor: scheme.surfaceContainerHighest,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                          textCapitalization: TextCapitalization.sentences,
+                        ),
+                        if (_suggestedCategory != null) ...[
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Text(
+                                l10n.addTransactionSuggestedCategory,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .labelSmall
+                                    ?.copyWith(
+                                        color: scheme.onSurfaceVariant),
+                              ),
+                              const SizedBox(width: 8),
+                              ActionChip(
+                                label: Text(
+                                  _categoryLabel(
+                                      _suggestedCategory!, l10n),
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _category = _suggestedCategory!;
+                                    _suggestedCategory = null;
+                                  });
+                                },
+                              ),
+                            ],
+                          ),
+                        ],
+                        const SizedBox(height: 20),
+                        _sectionLabel(
+                            context, l10n.addTransactionCategoryLabel),
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          height: 48,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: _categories.length,
+                            separatorBuilder: (_, _) =>
+                                const SizedBox(width: 8),
+                            itemBuilder: (ctx, i) {
+                              final id = _categories[i];
+                              final selected = _category == id;
+                              final (bg, fg) = context
+                                  .splitBaeSemantic
+                                  .categoryIconColors(id);
+                              final icon = splitBaeCategoryIcon(id);
+                              return FilterChip(
+                                showCheckmark: false,
+                                selected: selected,
+                                label: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(icon, size: 18, color: selected ? scheme.onPrimary : fg),
+                                    const SizedBox(width: 6),
+                                    Text(_categoryLabel(id, l10n)),
+                                  ],
+                                ),
+                                selectedColor: scheme.primary,
+                                backgroundColor: bg,
+                                onSelected: (_) =>
+                                    setState(() => _category = id),
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        _sectionLabel(
+                            context, l10n.addTransactionDateTimeSection),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            FilledButton.tonal(
+                              onPressed: _setToday,
+                              style: FilledButton.styleFrom(
+                                backgroundColor: _isToday(_when)
+                                    ? scheme.primary
+                                    : scheme.surfaceContainerHighest,
+                                foregroundColor: _isToday(_when)
+                                    ? scheme.onPrimary
+                                    : scheme.onSurface,
+                              ),
+                              child: Text(l10n.addTransactionToday),
+                            ),
+                            const SizedBox(width: 8),
+                            FilledButton.tonal(
+                              onPressed: _setYesterday,
+                              style: FilledButton.styleFrom(
+                                backgroundColor: _isYesterday(_when)
+                                    ? scheme.primary
+                                    : scheme.surfaceContainerHighest,
+                                foregroundColor: _isYesterday(_when)
+                                    ? scheme.onPrimary
+                                    : scheme.onSurface,
+                              ),
+                              child: Text(l10n.addTransactionYesterday),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          tileColor: scheme.surfaceContainerHighest,
+                          leading: Icon(Icons.calendar_today_outlined,
+                              color: scheme.primary),
+                          title: Text(
+                            DateFormat.yMMMd(locale.toString())
+                                .add_jm()
+                                .format(_when),
+                            style: Theme.of(context).textTheme.titleSmall,
+                          ),
+                          onTap: _pickDateTime,
+                        ),
+                        const SizedBox(height: 20),
+                        _sectionLabel(
+                            context, l10n.addTransactionWhosSplitting),
+                        const SizedBox(height: 8),
+                        Text(
+                          l10n.addTransactionEveryoneIncludedHint,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: scheme.onSurfaceVariant,
+                              ),
+                        ),
+                        const SizedBox(height: 10),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            for (final p in people)
+                              Chip(
+                                avatar: CircleAvatar(
+                                  backgroundColor: scheme.primaryContainer,
+                                  child: Text(
+                                    splitBaeInitialGrapheme(p.displayName),
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: scheme.onPrimaryContainer,
+                                    ),
+                                  ),
+                                ),
+                                label: Text(
+                                  p.displayName,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _sectionLabel(
+                                  context,
+                                  l10n.addTransactionItemsSection(
+                                      items.length)),
+                            ),
+                            TextButton.icon(
+                              onPressed: () {
+                                HapticFeedback.selectionClick();
+                                showAddReceiptItemSheet(context, ref);
+                              },
+                              icon: const Icon(Icons.add, size: 20),
+                              label: Text(l10n.addTransactionAddLineItem),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        if (items.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            child: Text(
+                              l10n.emptyBillHint,
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(color: scheme.onSurfaceVariant),
+                            ),
+                          )
+                        else
+                          for (final line in items)
+                            _DraftLinePreviewCard(
+                              line: line,
+                              locale: locale,
+                              scheme: scheme,
+                              onTap: () {
+                                showAddReceiptItemSheet(
+                                  context,
+                                  ref,
+                                  existingLine: line,
+                                );
+                              },
+                            ),
+                        const SizedBox(height: 16),
+                        _sectionLabel(context, l10n.addTransactionTaxLabel),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: _tax,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          onChanged: (_) => setState(() {}),
+                          decoration: InputDecoration(
+                            prefixIcon:
+                                Icon(Icons.receipt_long, color: scheme.primary),
+                            prefixText: '$ccy ',
+                            prefixStyle: TextStyle(
+                              color: scheme.onSurfaceVariant,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            filled: true,
+                            fillColor: scheme.surfaceContainerHighest,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 6, left: 4),
+                          child: Text(
+                            l10n.addTransactionTaxSplitHint,
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelSmall
+                                ?.copyWith(color: scheme.onSurfaceVariant),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: scheme.surfaceContainerHighest
+                                .withValues(alpha: 0.85),
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(
+                              color: scheme.outlineVariant.withValues(alpha: 0.5),
+                            ),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              children: [
+                                _totalRow(
+                                  context,
+                                  l10n.addTransactionSubtotalLine(
+                                    items.where((e) =>
+                                        e.receiptItem.price > 0).length),
+                                  formatCurrencyAmount(
+                                    amount: subtotal,
+                                    currencyCode: ccy,
+                                    locale: locale,
+                                  ),
+                                  emphasize: false,
+                                ),
+                                const SizedBox(height: 10),
+                                _totalRow(
+                                  context,
+                                  l10n.addTransactionTaxSummaryLine,
+                                  formatCurrencyAmount(
+                                    amount: taxVal < 0 ? 0 : taxVal,
+                                    currencyCode: ccy,
+                                    locale: locale,
+                                  ),
+                                  emphasize: false,
+                                ),
+                                Divider(
+                                  height: 24,
+                                  color: scheme.outlineVariant
+                                      .withValues(alpha: 0.6),
+                                ),
+                                _totalRow(
+                                  context,
+                                  l10n.addTransactionGrandTotal,
+                                  formatCurrencyAmount(
+                                    amount: grand,
+                                    currencyCode: ccy,
+                                    locale: locale,
+                                  ),
+                                  emphasize: true,
+                                  valueColor: scheme.primary,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          l10n.addTransactionDraftSummary(
+                            items.length,
+                            people.length,
+                          ),
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: scheme.onSurfaceVariant,
+                              ),
+                        ),
+                        const SizedBox(height: 12),
+                        OutlinedButton.icon(
+                          onPressed: () {
+                            HapticFeedback.selectionClick();
+                            showWhoPaidSheet(context, ref);
+                          },
+                          icon: const Icon(Icons.payments_outlined),
+                          label: Text(l10n.addTransactionWhoPaidShortcut),
+                        ),
+                        const SizedBox(height: 8),
+                        OutlinedButton.icon(
+                          onPressed: () {
+                            HapticFeedback.selectionClick();
+                            Navigator.of(context).pop();
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              openDraftSplitScreen(widget.hostContext, ref);
+                            });
+                          },
+                          icon: const Icon(Icons.edit_note_outlined),
+                          label: Text(l10n.addTransactionOpenDraft),
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+                    ),
+                  ),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    HapticFeedback.mediumImpact();
+                    _post(l10n);
+                  },
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(28),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.check_circle_outline),
+                      const SizedBox(width: 8),
+                      Text(l10n.addTransactionPostAction),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _sectionLabel(BuildContext context, String text) {
+    return Text(
+      text.toUpperCase(),
+      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w700,
+          ),
+    );
+  }
+
+  Widget _totalRow(
+    BuildContext context,
+    String label,
+    String value, {
+    required bool emphasize,
+    Color? valueColor,
+  }) {
+    final t = Theme.of(context);
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            style: emphasize
+                ? t.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800)
+                : t.textTheme.bodyMedium?.copyWith(
+                    color: t.colorScheme.onSurfaceVariant,
+                  ),
+          ),
+        ),
+        Text(
+          value,
+          style: (emphasize ? t.textTheme.titleLarge : t.textTheme.titleSmall)
+              ?.copyWith(
+            fontWeight: emphasize ? FontWeight.w900 : FontWeight.w600,
+            color: valueColor ?? t.colorScheme.onSurface,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _DraftLinePreviewCard extends StatelessWidget {
+  const _DraftLinePreviewCard({
+    required this.line,
+    required this.locale,
+    required this.scheme,
+    required this.onTap,
+  });
+
+  final LedgerLineItem line;
+  final Locale locale;
+  final ColorScheme scheme;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final lineStr = formatCurrencyAmount(
+      amount: line.receiptItem.price,
+      currencyCode: line.receiptItem.currencyCode,
+      locale: locale,
+    );
+    final unitStr = formatCurrencyAmount(
+      amount: line.unitPrice,
+      currencyCode: line.receiptItem.currencyCode,
+      locale: locale,
+    );
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Material(
+        color: scheme.surfaceContainerHighest.withValues(alpha: 0.65),
+        borderRadius: BorderRadius.circular(20),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  line.receiptItem.name,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    _mini(context, AppLocalizations.of(context)!.itemQuantityLabel,
+                        '${line.quantity}'),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _mini(
+                        context,
+                        AppLocalizations.of(context)!.draftBillLineUnitColumn,
+                        unitStr,
+                      ),
+                    ),
+                    _mini(
+                      context,
+                      AppLocalizations.of(context)!.draftBillLineLineTotalColumn,
+                      lineStr,
+                      strong: true,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _mini(
+    BuildContext context,
+    String label,
+    String value, {
+    bool strong = false,
+  }) {
+    final t = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: t.textTheme.labelSmall?.copyWith(
+            color: scheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: strong
+              ? t.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: scheme.primary,
+                )
+              : t.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+        ),
+      ],
+    );
   }
 }

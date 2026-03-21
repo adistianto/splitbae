@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 
+import 'currency_recording.dart';
 import '../database/app_database.dart';
 import '../domain/ledger_ids.dart';
 import '../domain/ledger_line_item.dart';
@@ -65,21 +66,34 @@ class LineItemRepository {
           (row) => LedgerLineItem(
             id: row.id,
             receiptItem: _toReceiptItem(row),
+            quantity: row.quantity,
             assignedParticipantIds: byLine[row.id] ?? const [],
           ),
         )
         .toList();
   }
 
-  /// Returns the new line id.
+  /// ISO 4217 code on the draft [Transactions] row (bill-level recording currency).
+  Future<String> getDraftTransactionCurrencyCode(String ledgerId) async {
+    final draftTx = draftTransactionIdForLedger(ledgerId);
+    final row = await (_db.select(_db.transactions)
+          ..where((t) => t.id.equals(draftTx)))
+        .getSingle();
+    return row.currencyCode;
+  }
+
+  /// Returns the new line id. [currencyCode] is taken from the draft transaction
+  /// (one currency per bill).
   Future<String> addLine({
     required String ledgerId,
     required String label,
     required double amount,
-    required String currencyCode,
+    int quantity = 1,
   }) async {
+    final currencyCode = await getDraftTransactionCurrencyCode(ledgerId);
     final now = DateTime.now().millisecondsSinceEpoch;
     final minor = amountToMinorUnits(amount, currencyCode);
+    final q = quantity < 1 ? 1 : quantity;
     final id = const Uuid().v4();
     await _db
         .into(_db.receiptLines)
@@ -90,6 +104,7 @@ class LineItemRepository {
             transactionId: Value(draftTransactionIdForLedger(ledgerId)),
             label: label,
             amountMinor: minor,
+            quantity: Value(q),
             currencyCode: currencyCode,
             createdAtMs: now,
             updatedAtMs: now,
@@ -102,14 +117,21 @@ class LineItemRepository {
     required String id,
     required String label,
     required double amount,
-    required String currencyCode,
+    int quantity = 1,
   }) async {
+    final row = await (_db.select(_db.receiptLines)
+          ..where((t) => t.id.equals(id)))
+        .getSingle();
+    final currencyCode =
+        await getDraftTransactionCurrencyCode(row.ledgerId);
     final now = DateTime.now().millisecondsSinceEpoch;
     final minor = amountToMinorUnits(amount, currencyCode);
+    final q = quantity < 1 ? 1 : quantity;
     await (_db.update(_db.receiptLines)..where((t) => t.id.equals(id))).write(
       ReceiptLinesCompanion(
         label: Value(label),
         amountMinor: Value(minor),
+        quantity: Value(q),
         currencyCode: Value(currencyCode),
         updatedAtMs: Value(now),
       ),
@@ -118,6 +140,58 @@ class LineItemRepository {
 
   Future<void> deleteLine(String id) async {
     await (_db.delete(_db.receiptLines)..where((t) => t.id.equals(id))).go();
+  }
+
+  /// Keeps the draft [Transactions] row’s [currencyCode] as the single **bill**
+  /// currency. When there are no lines, uses [defaultWhenNoLines]. When lines
+  /// exist, uses the dominant code among lines, then **normalizes** every line
+  /// to that code (amount minors unchanged — same as a relabel for MVP).
+  Future<void> syncDraftTransactionRecordingCurrency({
+    required String ledgerId,
+    required String defaultWhenNoLines,
+  }) async {
+    final draftTx = draftTransactionIdForLedger(ledgerId);
+    final rows =
+        await (_db.select(_db.receiptLines)
+              ..where(
+                (t) =>
+                    t.ledgerId.equals(ledgerId) &
+                    t.transactionId.equals(draftTx),
+              ))
+            .get();
+    final String code;
+    if (rows.isEmpty) {
+      code = defaultWhenNoLines;
+    } else {
+      final totals = <String, int>{};
+      for (final r in rows) {
+        totals[r.currencyCode] =
+            (totals[r.currencyCode] ?? 0) + r.amountMinor.abs();
+      }
+      code = pickDominantCurrencyCode(
+        totals,
+        fallbackWhenEmpty: defaultWhenNoLines,
+      );
+    }
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await (_db.update(_db.transactions)..where((t) => t.id.equals(draftTx)))
+        .write(
+      TransactionsCompanion(
+        currencyCode: Value(code),
+        updatedAtMs: Value(now),
+      ),
+    );
+    if (rows.isNotEmpty) {
+      await (_db.update(_db.receiptLines)
+            ..where((t) => t.ledgerId.equals(ledgerId))
+            ..where((t) => t.transactionId.equals(draftTx)))
+          .write(
+        ReceiptLinesCompanion(
+          currencyCode: Value(code),
+          updatedAtMs: Value(now),
+        ),
+      );
+    }
   }
 
   /// Persists who shares this line. Empty selection or “everyone” clears rows

@@ -214,6 +214,10 @@ class SplitBaeSemanticColors extends ThemeExtension<SplitBaeSemanticColors> {
         return (categoryTransportBg, categoryTransportFg);
       case 'accommodation':
         return (categoryAccommodationBg, categoryAccommodationFg);
+      case 'entertainment':
+      case 'shopping':
+      case 'utilities':
+        return (categoryOtherBg, categoryOtherFg);
       case 'settlement':
         return (categorySettlementBg, categorySettlementFg);
       default:

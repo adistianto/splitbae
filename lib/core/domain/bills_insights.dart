@@ -27,10 +27,13 @@ class BillsInsights {
   final int billCount;
 }
 
-BillsInsights computeBillsInsights(List<PostedBillSummary> list) {
+BillsInsights computeBillsInsights(
+  List<PostedBillSummary> list, {
+  String emptyStateCurrencyCode = 'IDR',
+}) {
   if (list.isEmpty) {
-    return const BillsInsights(
-      currencyCode: 'IDR',
+    return BillsInsights(
+      currencyCode: emptyStateCurrencyCode,
       totalMinor: 0,
       thisWeekMinor: 0,
       lastWeekMinor: 0,

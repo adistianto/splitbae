@@ -433,6 +433,15 @@ class SettingsScreen extends ConsumerWidget {
               ),
             ),
             Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: Text(
+                l10n.settingsDefaultCurrencyRecordingNote,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+            Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: DropdownMenu<String>(
                 key: ValueKey(settings.defaultCurrencyCode),
@@ -446,8 +455,10 @@ class SettingsScreen extends ConsumerWidget {
                       label: currencyMenuLabel(code),
                     ),
                 ],
-                onSelected: (code) {
-                  if (code != null) notifier.setDefaultCurrency(code);
+                onSelected: (code) async {
+                  if (code == null) return;
+                  await notifier.setDefaultCurrency(code);
+                  await ref.read(itemsProvider.notifier).reloadFromDatabase();
                 },
               ),
             ),
@@ -575,6 +586,8 @@ class SettingsScreen extends ConsumerWidget {
             selected: selected,
             notifier: notifier,
             onExport: () => _exportBackup(context, ref),
+            onReloadDraftItems: () =>
+                ref.read(itemsProvider.notifier).reloadFromDatabase(),
           ),
         ),
       );
@@ -592,12 +605,14 @@ class _AppleLiquidSettingsBody extends StatelessWidget {
     required this.selected,
     required this.notifier,
     required this.onExport,
+    required this.onReloadDraftItems,
   });
 
   final AppSettings settings;
   final _LanguageChoice selected;
   final AppSettingsNotifier notifier;
   final VoidCallback onExport;
+  final Future<void> Function() onReloadDraftItems;
 
   @override
   Widget build(BuildContext context) {
@@ -755,7 +770,10 @@ class _AppleLiquidSettingsBody extends StatelessWidget {
                 trailing: settings.defaultCurrencyCode == code
                     ? const Icon(CupertinoIcons.check_mark)
                     : null,
-                onTap: () => notifier.setDefaultCurrency(code),
+                onTap: () async {
+                  await notifier.setDefaultCurrency(code);
+                  await onReloadDraftItems();
+                },
               ),
               if (code != kSupportedCurrencyCodes.last) divider(),
             ],

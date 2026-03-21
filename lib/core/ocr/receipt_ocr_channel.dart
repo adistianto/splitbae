@@ -13,11 +13,13 @@ class ReceiptOcrChannel {
 
   static const MethodChannel _channel = MethodChannel('splitbae/receipt_ocr');
 
-  /// `true` only on **Android** and **iOS** where the native channel exists.
+  /// `true` where the native `splitbae/receipt_ocr` channel is implemented.
   static bool get isSupported {
     if (kIsWeb) return false;
     return defaultTargetPlatform == TargetPlatform.android ||
-        defaultTargetPlatform == TargetPlatform.iOS;
+        defaultTargetPlatform == TargetPlatform.iOS ||
+        defaultTargetPlatform == TargetPlatform.macOS ||
+        defaultTargetPlatform == TargetPlatform.windows;
   }
 
   /// Lightweight check that the native OCR stack is reachable (no image).

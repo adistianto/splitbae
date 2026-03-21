@@ -2,9 +2,9 @@ import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:splitbae/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:splitbae/app_settings.dart';
 import 'package:splitbae/core/data/amount_minor.dart';
 import 'package:splitbae/core/domain/ledger_line_item.dart';
 import 'package:splitbae/core/platform/host_platform.dart';
@@ -100,39 +100,6 @@ Future<void> showAddReceiptItemSheet(
   return _showMaterialExpressiveSheet(context, ref, existingLine: existingLine);
 }
 
-Future<void> _openCurrencyPicker({
-  required BuildContext context,
-  required String selected,
-  required ValueChanged<String> onSelected,
-}) {
-  return showModalBottomSheet<void>(
-    context: context,
-    showDragHandle: true,
-    builder: (ctx) {
-      return SafeArea(
-        child: ListView(
-          children: [
-            for (final code in kSupportedCurrencyCodes)
-              ListTile(
-                title: Text(currencyMenuLabel(code)),
-                trailing: code == selected
-                    ? Icon(
-                        Icons.check,
-                        color: Theme.of(ctx).colorScheme.primary,
-                      )
-                    : null,
-                onTap: () {
-                  onSelected(code);
-                  Navigator.of(ctx).pop();
-                },
-              ),
-          ],
-        ),
-      );
-    },
-  );
-}
-
 Future<void> _showCupertinoGlassSheet(
   BuildContext context,
   WidgetRef ref, {
@@ -211,8 +178,8 @@ class _AddItemFormCupertino extends ConsumerStatefulWidget {
 
 class _AddItemFormCupertinoState extends ConsumerState<_AddItemFormCupertino> {
   late final TextEditingController _nameCtrl;
+  late final TextEditingController _qtyCtrl;
   late final TextEditingController _priceCtrl;
-  late String _currencyCode;
   late Set<String> _assigneeIds;
   String? _error;
 
@@ -222,18 +189,21 @@ class _AddItemFormCupertinoState extends ConsumerState<_AddItemFormCupertino> {
     final existing = widget.existingLine;
     final item = existing?.receiptItem;
     _nameCtrl = TextEditingController(text: item?.name ?? '');
+    _qtyCtrl = TextEditingController(
+      text: '${existing?.quantity ?? 1}',
+    );
     _priceCtrl = TextEditingController(
       text: item != null
           ? amountToInputText(item.price, item.currencyCode)
           : '',
     );
-    _currencyCode = item?.currencyCode ?? ref.read(defaultCurrencyProvider);
     _assigneeIds = Set.from(existing?.assignedParticipantIds ?? const []);
   }
 
   @override
   void dispose() {
     _nameCtrl.dispose();
+    _qtyCtrl.dispose();
     _priceCtrl.dispose();
     super.dispose();
   }
@@ -251,6 +221,11 @@ class _AddItemFormCupertinoState extends ConsumerState<_AddItemFormCupertino> {
       setState(() => _error = l10n.errorPriceInvalid);
       return;
     }
+    final qRaw = int.tryParse(_qtyCtrl.text.trim());
+    if (qRaw == null || qRaw < 1) {
+      setState(() => _error = l10n.errorQuantityInvalid);
+      return;
+    }
     final notifier = ref.read(itemsProvider.notifier);
     if (widget.existingLine != null) {
       final id = widget.existingLine!.id;
@@ -258,14 +233,14 @@ class _AddItemFormCupertinoState extends ConsumerState<_AddItemFormCupertino> {
         id: id,
         name: name,
         price: price,
-        currencyCode: _currencyCode,
+        quantity: qRaw,
       );
       await notifier.setLineAssignments(
         lineId: id,
         selectedParticipantIds: _assigneeIds,
       );
     } else {
-      final id = await notifier.addItem(name, price, _currencyCode);
+      final id = await notifier.addItem(name, price, quantity: qRaw);
       await notifier.setLineAssignments(
         lineId: id,
         selectedParticipantIds: _assigneeIds,
@@ -282,7 +257,11 @@ class _AddItemFormCupertinoState extends ConsumerState<_AddItemFormCupertino> {
     final allIds = participants.map((e) => e.id).toSet();
     final notifier = ref.read(itemsProvider.notifier);
     for (final c in candidates) {
-      final id = await notifier.addItem(c.label, c.amount, _currencyCode);
+      final id = await notifier.addItem(
+        c.label,
+        c.amount,
+        quantity: c.quantity ?? 1,
+      );
       await notifier.setLineAssignments(
         lineId: id,
         selectedParticipantIds: allIds,
@@ -298,7 +277,8 @@ class _AddItemFormCupertinoState extends ConsumerState<_AddItemFormCupertino> {
       context: context,
       nameController: _nameCtrl,
       priceController: _priceCtrl,
-      currencyCode: _currencyCode,
+      quantityController: _qtyCtrl,
+      currencyCode: ref.read(draftBillCurrencyProvider),
       onApplied: () => setState(() {}),
       l10n: l10n,
       onAddAllLines: widget.existingLine == null ? _addOcrLinesToDraft : null,
@@ -316,6 +296,7 @@ class _AddItemFormCupertinoState extends ConsumerState<_AddItemFormCupertino> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final billCcy = ref.watch(draftBillCurrencyProvider);
     final padding = const EdgeInsets.fromLTRB(20, 20, 20, 16);
     final title = widget.existingLine != null
         ? l10n.editItemTitle
@@ -323,15 +304,17 @@ class _AddItemFormCupertinoState extends ConsumerState<_AddItemFormCupertino> {
 
     return Padding(
       padding: padding,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: CupertinoTheme.of(context).textTheme.navLargeTitleTextStyle,
-          ),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style:
+                  CupertinoTheme.of(context).textTheme.navLargeTitleTextStyle,
+            ),
           const SizedBox(height: 8),
           Text(
             l10n.addItemSubtitle,
@@ -370,58 +353,107 @@ class _AddItemFormCupertinoState extends ConsumerState<_AddItemFormCupertino> {
             textCapitalization: TextCapitalization.sentences,
             autofocus: true,
           ),
-          const SizedBox(height: 12),
-          CupertinoButton(
-            padding: EdgeInsets.zero,
-            onPressed: () => _openCurrencyPicker(
-              context: context,
-              selected: _currencyCode,
-              onSelected: (c) => setState(() => _currencyCode = c),
-            ),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-              decoration: BoxDecoration(
-                color: CupertinoColors.secondarySystemFill.resolveFrom(context),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      l10n.currencyLabel,
-                      style: CupertinoTheme.of(context).textTheme.textStyle
-                          .copyWith(
-                            color: CupertinoColors.secondaryLabel.resolveFrom(
-                              context,
-                            ),
-                          ),
-                    ),
-                  ),
-                  Text(
-                    _currencyCode,
-                    style: CupertinoTheme.of(
-                      context,
-                    ).textTheme.textStyle.copyWith(fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(width: 4),
-                  Icon(
-                    CupertinoIcons.chevron_down,
-                    size: 18,
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              SizedBox(
+                width: 76,
+                child: Text(
+                  l10n.itemQuantityLabel,
+                  style: CupertinoTheme.of(context).textTheme.textStyle
+                      .copyWith(
+                    fontSize: 13,
                     color: CupertinoColors.secondaryLabel.resolveFrom(context),
                   ),
-                ],
+                ),
               ),
-            ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  l10n.priceLabel,
+                  style: CupertinoTheme.of(context).textTheme.textStyle
+                      .copyWith(
+                    fontSize: 13,
+                    color: CupertinoColors.secondaryLabel.resolveFrom(context),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 76,
+                child: CupertinoTextField(
+                  controller: _qtyCtrl,
+                  placeholder: l10n.itemQuantityHint,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 14,
+                  ),
+                  decoration: BoxDecoration(
+                    color: CupertinoColors.secondarySystemFill.resolveFrom(
+                      context,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: CupertinoTextField(
+                  controller: _priceCtrl,
+                  placeholder: l10n.priceHint,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 14,
+                  ),
+                  decoration: BoxDecoration(
+                    color: CupertinoColors.secondarySystemFill.resolveFrom(
+                      context,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
-          CupertinoTextField(
-            controller: _priceCtrl,
-            placeholder: l10n.priceHint,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
             decoration: BoxDecoration(
               color: CupertinoColors.secondarySystemFill.resolveFrom(context),
               borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    l10n.billCurrencyLabel,
+                    style: CupertinoTheme.of(context).textTheme.textStyle
+                        .copyWith(
+                      color: CupertinoColors.secondaryLabel.resolveFrom(
+                        context,
+                      ),
+                    ),
+                  ),
+                ),
+                Flexible(
+                  child: Text(
+                    currencyMenuLabel(billCcy),
+                    textAlign: TextAlign.end,
+                    style: CupertinoTheme.of(context).textTheme.textStyle
+                        .copyWith(fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 16),
@@ -466,6 +498,7 @@ class _AddItemFormCupertinoState extends ConsumerState<_AddItemFormCupertino> {
             ],
           ),
         ],
+        ),
       ),
     );
   }
@@ -508,8 +541,8 @@ class _AddItemFormMaterial extends ConsumerStatefulWidget {
 
 class _AddItemFormMaterialState extends ConsumerState<_AddItemFormMaterial> {
   late final TextEditingController _nameCtrl;
+  late final TextEditingController _qtyCtrl;
   late final TextEditingController _priceCtrl;
-  late String _currencyCode;
   late Set<String> _assigneeIds;
   final _formKey = GlobalKey<FormState>();
 
@@ -519,18 +552,19 @@ class _AddItemFormMaterialState extends ConsumerState<_AddItemFormMaterial> {
     final existing = widget.existingLine;
     final item = existing?.receiptItem;
     _nameCtrl = TextEditingController(text: item?.name ?? '');
+    _qtyCtrl = TextEditingController(text: '${existing?.quantity ?? 1}');
     _priceCtrl = TextEditingController(
       text: item != null
           ? amountToInputText(item.price, item.currencyCode)
           : '',
     );
-    _currencyCode = item?.currencyCode ?? ref.read(defaultCurrencyProvider);
     _assigneeIds = Set.from(existing?.assignedParticipantIds ?? const []);
   }
 
   @override
   void dispose() {
     _nameCtrl.dispose();
+    _qtyCtrl.dispose();
     _priceCtrl.dispose();
     super.dispose();
   }
@@ -573,7 +607,11 @@ class _AddItemFormMaterialState extends ConsumerState<_AddItemFormMaterial> {
     final allIds = participants.map((e) => e.id).toSet();
     final notifier = ref.read(itemsProvider.notifier);
     for (final c in candidates) {
-      final id = await notifier.addItem(c.label, c.amount, _currencyCode);
+      final id = await notifier.addItem(
+        c.label,
+        c.amount,
+        quantity: c.quantity ?? 1,
+      );
       await notifier.setLineAssignments(
         lineId: id,
         selectedParticipantIds: allIds,
@@ -589,7 +627,8 @@ class _AddItemFormMaterialState extends ConsumerState<_AddItemFormMaterial> {
       context: context,
       nameController: _nameCtrl,
       priceController: _priceCtrl,
-      currencyCode: _currencyCode,
+      quantityController: _qtyCtrl,
+      currencyCode: ref.read(draftBillCurrencyProvider),
       onApplied: () => setState(() {}),
       l10n: l10n,
       onAddAllLines: widget.existingLine == null ? _addOcrLinesToDraft : null,
@@ -609,6 +648,7 @@ class _AddItemFormMaterialState extends ConsumerState<_AddItemFormMaterial> {
     final name = _nameCtrl.text.trim();
     final raw = _priceCtrl.text.trim().replaceAll(RegExp(r'[^\d.]'), '');
     final price = double.parse(raw);
+    final qRaw = int.parse(_qtyCtrl.text.trim());
     final notifier = ref.read(itemsProvider.notifier);
     if (widget.existingLine != null) {
       final id = widget.existingLine!.id;
@@ -616,14 +656,14 @@ class _AddItemFormMaterialState extends ConsumerState<_AddItemFormMaterial> {
         id: id,
         name: name,
         price: price,
-        currencyCode: _currencyCode,
+        quantity: qRaw,
       );
       await notifier.setLineAssignments(
         lineId: id,
         selectedParticipantIds: _assigneeIds,
       );
     } else {
-      final id = await notifier.addItem(name, price, _currencyCode);
+      final id = await notifier.addItem(name, price, quantity: qRaw);
       await notifier.setLineAssignments(
         lineId: id,
         selectedParticipantIds: _assigneeIds,
@@ -636,6 +676,7 @@ class _AddItemFormMaterialState extends ConsumerState<_AddItemFormMaterial> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final billCcy = ref.watch(draftBillCurrencyProvider);
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final title = widget.existingLine != null
@@ -688,41 +729,70 @@ class _AddItemFormMaterialState extends ConsumerState<_AddItemFormMaterial> {
               onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
             ),
             const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              // Controlled selection; `value` remains the correct API until a stable replacement.
-              // ignore: deprecated_member_use
-              value: _currencyCode,
-              decoration: _fieldDecoration(context, label: l10n.currencyLabel),
-              items: [
-                for (final code in kSupportedCurrencyCodes)
-                  DropdownMenuItem(value: code, child: Text(code)),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: 96,
+                  child: TextFormField(
+                    controller: _qtyCtrl,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                    ],
+                    decoration: _fieldDecoration(
+                      context,
+                      label: l10n.itemQuantityLabel,
+                      hint: l10n.itemQuantityHint,
+                    ),
+                    validator: (v) {
+                      final n = int.tryParse(v?.trim() ?? '');
+                      if (n == null || n < 1) {
+                        return l10n.errorQuantityInvalid;
+                      }
+                      return null;
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextFormField(
+                    controller: _priceCtrl,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    decoration: _fieldDecoration(
+                      context,
+                      label: l10n.priceLabel,
+                      hint: l10n.priceHint,
+                    ),
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) {
+                        return l10n.errorPriceRequired;
+                      }
+                      final raw = v.trim().replaceAll(RegExp(r'[^\d.]'), '');
+                      final n = double.tryParse(raw);
+                      if (n == null || n <= 0) {
+                        return l10n.errorPriceInvalid;
+                      }
+                      return null;
+                    },
+                  ),
+                ),
               ],
-              onChanged: (v) {
-                if (v != null) setState(() => _currencyCode = v);
-              },
             ),
             const SizedBox(height: 16),
-            TextFormField(
-              controller: _priceCtrl,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
+            InputDecorator(
               decoration: _fieldDecoration(
                 context,
-                label: l10n.priceLabel,
-                hint: l10n.priceHint,
+                label: l10n.billCurrencyLabel,
               ),
-              validator: (v) {
-                if (v == null || v.trim().isEmpty) {
-                  return l10n.errorPriceRequired;
-                }
-                final raw = v.trim().replaceAll(RegExp(r'[^\d.]'), '');
-                final n = double.tryParse(raw);
-                if (n == null || n <= 0) {
-                  return l10n.errorPriceInvalid;
-                }
-                return null;
-              },
+              child: Text(
+                currencyMenuLabel(billCcy),
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
             const SizedBox(height: 16),
             ItemAssigneeChips(

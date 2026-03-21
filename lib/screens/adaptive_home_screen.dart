@@ -1,16 +1,20 @@
 import 'dart:async' show unawaited;
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:splitbae/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:splitbae/core/layout/app_breakpoints.dart';
+import 'package:splitbae/core/platform/host_platform.dart';
 import 'package:splitbae/core/platform/platform_capabilities.dart';
+import 'package:splitbae/core/ocr/receipt_line_parse.dart';
 import 'package:splitbae/core/ocr/receipt_ocr_probe_provider.dart';
+import 'package:splitbae/providers.dart';
 import 'package:splitbae/screens/balances_screen.dart';
 import 'package:splitbae/screens/bills_screen.dart';
-import 'package:splitbae/screens/draft_split_screen.dart';
+import 'package:splitbae/screens/scan_receipt_screen.dart';
 import 'package:splitbae/screens/settings_screen.dart';
 import 'package:splitbae/widgets/add_transaction_sheet.dart';
 
@@ -35,12 +39,53 @@ class _AdaptiveHomeScreenState extends ConsumerState<AdaptiveHomeScreen> {
     });
   }
 
-  void _openComposeDraft({bool openAddItemSheetAfter = false}) {
-    openDraftSplitScreen(
-      context,
-      ref,
-      openAddItemSheetAfter: openAddItemSheetAfter,
-    );
+  Future<void> _addOcrLinesToDraft(
+    WidgetRef ref,
+    List<ReceiptLineCandidate> candidates,
+  ) async {
+    final participants = ref.read(participantsProvider);
+    final allIds = participants.map((e) => e.id).toSet();
+    final notifier = ref.read(itemsProvider.notifier);
+    for (final c in candidates) {
+      final id = await notifier.addItem(
+        c.label,
+        c.amount,
+        quantity: c.quantity ?? 1,
+      );
+      await notifier.setLineAssignments(
+        lineId: id,
+        selectedParticipantIds: allIds,
+      );
+    }
+  }
+
+  void _openScanBill() {
+    Widget buildScan(WidgetRef ref) {
+      return ScanReceiptScreen(
+        currencyCode: ref.read(draftBillCurrencyProvider),
+        openDraftAfterBatchAdd: true,
+        onAddAllLines: (candidates) => _addOcrLinesToDraft(ref, candidates),
+      );
+    }
+
+    if (hostPlatformIsApple()) {
+      Navigator.of(context).push(
+        CupertinoPageRoute<void>(
+          builder: (_) => Consumer(
+            builder: (context, ref, _) => buildScan(ref),
+          ),
+        ),
+      );
+    } else {
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          fullscreenDialog: true,
+          builder: (_) => Consumer(
+            builder: (context, ref, _) => buildScan(ref),
+          ),
+        ),
+      );
+    }
   }
 
   void _openNewBillSheet() {
@@ -87,9 +132,7 @@ class _AdaptiveHomeScreenState extends ConsumerState<AdaptiveHomeScreen> {
                       padding: hinge,
                       child: BillsScreen(
                         onNewBill: _openNewBillSheet,
-                        onScanBillEntry: () => _openComposeDraft(
-                          openAddItemSheetAfter: true,
-                        ),
+                        onScanBillEntry: _openScanBill,
                         onSwitchToBalances: () => setState(() {
                           _bottomTabIndex = 1;
                         }),
@@ -168,9 +211,7 @@ class _AdaptiveHomeScreenState extends ConsumerState<AdaptiveHomeScreen> {
                         padding: hinge,
                         child: BillsScreen(
                           onNewBill: _openNewBillSheet,
-                          onScanBillEntry: () => _openComposeDraft(
-                            openAddItemSheetAfter: true,
-                          ),
+                          onScanBillEntry: _openScanBill,
                           onSwitchToBalances: () => setState(() {
                             _railIndex = 1;
                           }),

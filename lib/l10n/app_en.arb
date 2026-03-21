@@ -76,25 +76,74 @@
   "@languageIndonesian": {
     "description": "Fixed language option: Indonesian (use the autonym in target locale)."
   },
-  "settingsDefaultCurrency": "Default currency for new items",
+  "settingsDefaultCurrency": "Default currency for new bills",
   "@settingsDefaultCurrency": {
-    "description": "Settings row: default ISO currency for new line items."
+    "description": "Settings row: default ISO currency for new draft bills (empty draft)."
   },
-  "settingsDefaultCurrencySubtitle": "You can still pick another currency per item.",
+  "settingsDefaultCurrencySubtitle": "Used when you start a new bill with no lines yet.",
   "@settingsDefaultCurrencySubtitle": {
-    "description": "Clarifies that per-line currency can differ from the default."
+    "description": "Clarifies when the default applies."
+  },
+  "settingsDefaultCurrencyRecordingNote": "Posted transactions keep the currency they were saved in. Changing this only affects new lines and the empty draft.",
+  "@settingsDefaultCurrencyRecordingNote": {
+    "description": "Explains that historical bills do not change when the default currency setting changes."
   },
   "addItemTitle": "Add item",
   "@addItemTitle": {
     "description": "Title of the modal or sheet for creating a receipt line."
   },
-  "addItemSubtitle": "Amount is in the currency you select below.",
+  "addItemSubtitle": "Amounts use this bill’s currency (set by default for an empty bill; change default in Settings).",
   "@addItemSubtitle": {
-    "description": "Explains that the amount uses the selected currency."
+    "description": "Explains bill-level currency for line amounts."
+  },
+  "billCurrencyLabel": "Bill currency",
+  "@billCurrencyLabel": {
+    "description": "Read-only label for the ISO currency of the current draft or posted bill."
   },
   "scanReceiptButton": "Scan receipt",
   "@scanReceiptButton": {
     "description": "Starts camera/gallery OCR to fill item name and amount."
+  },
+  "scanReceiptScreenTitle": "Scan receipt",
+  "@scanReceiptScreenTitle": {
+    "description": "Full-screen scan flow title (v0 parity)."
+  },
+  "scanReceiptScreenSubtitle": "Capture to add expenses quickly",
+  "@scanReceiptScreenSubtitle": {
+    "description": "Subtitle under the scan screen title."
+  },
+  "scanReceiptHeroQuickAdd": "Quick add",
+  "@scanReceiptHeroQuickAdd": {
+    "description": "Small label on the gradient hero card during scan."
+  },
+  "scanReceiptHeroPointCamera": "Point camera at receipt",
+  "@scanReceiptHeroPointCamera": {
+    "description": "Hero card line before any OCR result."
+  },
+  "scanReceiptHeroItemsDetected": "{count, plural, =1{1 item detected} other{{count} items detected}}",
+  "@scanReceiptHeroItemsDetected": {
+    "description": "Hero card line after OCR found line items.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "scanReceiptTakePhotoSubtitle": "Snap a picture of your receipt",
+  "@scanReceiptTakePhotoSubtitle": {
+    "description": "Helper under the large Take photo control."
+  },
+  "scanReceiptExtractingTitle": "Extracting items…",
+  "@scanReceiptExtractingTitle": {
+    "description": "Shown while OCR runs on the captured image."
+  },
+  "scanReceiptExtractingSubtitle": "This may take a moment",
+  "@scanReceiptExtractingSubtitle": {
+    "description": "Secondary line under extracting title."
+  },
+  "scanReceiptContinueToSplit": "Continue to Split",
+  "@scanReceiptContinueToSplit": {
+    "description": "Primary action after OCR when opening the draft split flow (FAB)."
   },
   "scanReceiptCamera": "Take photo",
   "@scanReceiptCamera": {
@@ -152,6 +201,33 @@
   "@scanReceiptPickLine": {
     "description": "Header when OCR found multiple price lines."
   },
+  "scanReceiptLineQtyUnitPrice": "×{quantity} · {unitPrice} each",
+  "@scanReceiptLineQtyUnitPrice": {
+    "description": "Line picker subtitle when quantity and line total were parsed.",
+    "placeholders": {
+      "quantity": {
+        "type": "int"
+      },
+      "unitPrice": {
+        "type": "String"
+      }
+    }
+  },
+  "scanReceiptOcrLineDetail": "Qty {quantity} · {unitPrice} each · line {lineTotal}",
+  "@scanReceiptOcrLineDetail": {
+    "description": "OCR line picker: quantity, unit price, and line total when a qty column was parsed.",
+    "placeholders": {
+      "quantity": {
+        "type": "int"
+      },
+      "unitPrice": {
+        "type": "String"
+      },
+      "lineTotal": {
+        "type": "String"
+      }
+    }
+  },
   "scanReceiptAddAllLines": "Add all {count} lines",
   "@scanReceiptAddAllLines": {
     "description": "Primary action to import every parsed OCR line into the draft bill.",
@@ -174,21 +250,21 @@
   "@scanReceiptNoLines": {
     "description": "Snack bar when OCR text had no parseable lines."
   },
-  "scanReceiptUnavailable": "Receipt scanning is only available in the Android and iOS apps.",
+  "scanReceiptUnavailable": "Receipt scanning needs on-device OCR (Android, iOS, macOS, or Windows in this app).",
   "@scanReceiptUnavailable": {
-    "description": "Legacy copy; prefer scanReceiptNoNativeOcr when explaining desktop/web."
+    "description": "Legacy banner when scan is unavailable on the current platform."
   },
   "scanReceiptChooseImageFile": "Choose image file",
   "@scanReceiptChooseImageFile": {
     "description": "Desktop/web: open a file dialog to pick a receipt image."
   },
-  "scanReceiptNonMobileScanHint": "On-device OCR runs on Android and iOS only—not on desktop or web in this app.",
+  "scanReceiptNonMobileScanHint": "On-device OCR isn’t available on web or Linux in this build. You can still pick a photo or enter lines manually.",
   "@scanReceiptNonMobileScanHint": {
-    "description": "Short hint above camera/file/manual options when native OCR is unavailable."
+    "description": "Hint when native OCR is unavailable (e.g. web, Linux); camera/file/manual still offered."
   },
-  "scanReceiptNoNativeOcr": "On-device text recognition is only implemented for Android and iOS (not on desktop or web in this app). Enter the line below, or use the phone app to scan.",
+  "scanReceiptNoNativeOcr": "On-device receipt OCR isn’t available on this platform. Enter the line manually.",
   "@scanReceiptNoNativeOcr": {
-    "description": "After user picks an image on a platform without native OCR."
+    "description": "Snack bar when OCR can’t run (e.g. web with no file path, or Linux)."
   },
   "scanReceiptErrorGeneric": "Could not read text from the image.",
   "@scanReceiptErrorGeneric": {
@@ -218,6 +294,30 @@
   "priceHint": "15000",
   "@priceHint": {
     "description": "Numeric placeholder example without currency symbol (locale formats it)."
+  },
+  "itemQuantityLabel": "Qty",
+  "@itemQuantityLabel": {
+    "description": "Short label for line quantity on add-item and split bill cards."
+  },
+  "itemQuantityHint": "1",
+  "@itemQuantityHint": {
+    "description": "Placeholder for quantity field (integer)."
+  },
+  "errorQuantityInvalid": "Use a whole number of at least 1.",
+  "@errorQuantityInvalid": {
+    "description": "Validation when quantity is missing or below 1."
+  },
+  "draftBillLineQtyColumn": "Qty",
+  "@draftBillLineQtyColumn": {
+    "description": "Column header for quantity on draft split line cards."
+  },
+  "draftBillLineUnitColumn": "Unit",
+  "@draftBillLineUnitColumn": {
+    "description": "Column header for unit price (line total ÷ qty)."
+  },
+  "draftBillLineLineTotalColumn": "Line",
+  "@draftBillLineLineTotalColumn": {
+    "description": "Column header for line total amount."
   },
   "currencyLabel": "Currency",
   "@currencyLabel": {
@@ -714,13 +814,103 @@
   "@fabCreateReport": {
     "description": "FAB speed dial: jump to balances / settlements view."
   },
-  "addTransactionSheetTitle": "New bill",
+  "addTransactionSheetTitle": "Add Transaction",
   "@addTransactionSheetTitle": {
     "description": "Title for the full-screen add-transaction sheet from Bills."
   },
-  "addTransactionSheetSubtitle": "Set details, then add line items and who paid.",
+  "addTransactionSheetSubtitle": "Receipt, people, items, tax — then post.",
   "@addTransactionSheetSubtitle": {
     "description": "Explains the flow before posting."
+  },
+  "addTransactionDescriptionSection": "Description",
+  "@addTransactionDescriptionSection": {
+    "description": "Section label for bill title / memo."
+  },
+  "addTransactionDescriptionAutoHint": "Auto-fills from first item if empty",
+  "@addTransactionDescriptionAutoHint": {
+    "description": "Hint that description can be left blank."
+  },
+  "addTransactionSuggestedCategory": "Suggested",
+  "@addTransactionSuggestedCategory": {
+    "description": "Prefix before apply-suggestion chip."
+  },
+  "addTransactionApplySuggestion": "Apply",
+  "@addTransactionApplySuggestion": {
+    "description": "Apply suggested category chip."
+  },
+  "addTransactionToday": "Today",
+  "@addTransactionToday": {
+    "description": "Quick date chip for today."
+  },
+  "addTransactionYesterday": "Yesterday",
+  "@addTransactionYesterday": {
+    "description": "Quick date chip for yesterday."
+  },
+  "addTransactionDateTimeSection": "Date",
+  "@addTransactionDateTimeSection": {
+    "description": "Section label for date and time."
+  },
+  "addTransactionWhosSplitting": "Who's splitting?",
+  "@addTransactionWhosSplitting": {
+    "description": "Section for participants on this bill."
+  },
+  "addTransactionEveryoneIncludedHint": "Everyone in this trip is included. Add people from the draft split screen.",
+  "@addTransactionEveryoneIncludedHint": {
+    "description": "Explains MVP uses all ledger participants."
+  },
+  "addTransactionItemsSection": "Items ({count})",
+  "@addTransactionItemsSection": {
+    "description": "Section header for line items with count.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "addTransactionAddLineItem": "Add item",
+  "@addTransactionAddLineItem": {
+    "description": "Adds a receipt line to the draft."
+  },
+  "addTransactionTaxSplitHint": "Split proportionally among participants",
+  "@addTransactionTaxSplitHint": {
+    "description": "Helper under tax field (v0 parity)."
+  },
+  "addTransactionSubtotalLine": "Subtotal ({count} items)",
+  "@addTransactionSubtotalLine": {
+    "description": "Summary row before tax.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "addTransactionTaxSummaryLine": "Tax & service",
+  "@addTransactionTaxSummaryLine": {
+    "description": "Tax row in totals card."
+  },
+  "addTransactionGrandTotal": "Grand total",
+  "@addTransactionGrandTotal": {
+    "description": "Final total label."
+  },
+  "addTransactionWhoPaidShortcut": "Who paid",
+  "@addTransactionWhoPaidShortcut": {
+    "description": "Opens draft payment sheet."
+  },
+  "categoryEntertainment": "Fun",
+  "@categoryEntertainment": {
+    "description": "Bill category: entertainment (v0 Fun)."
+  },
+  "categoryShopping": "Shop",
+  "@categoryShopping": {
+    "description": "Bill category: shopping."
+  },
+  "categoryUtilities": "Bills",
+  "@categoryUtilities": {
+    "description": "Bill category: utilities / subscriptions."
+  },
+  "categorySettlement": "Settlement",
+  "@categorySettlement": {
+    "description": "Bill category: peer settlement."
   },
   "addTransactionCategoryLabel": "Category",
   "@addTransactionCategoryLabel": {
@@ -778,7 +968,7 @@
   "@addTransactionOpenDraft": {
     "description": "Opens the draft split workspace to edit lines and payments."
   },
-  "addTransactionPostAction": "Post bill",
+  "addTransactionPostAction": "Add Transaction",
   "@addTransactionPostAction": {
     "description": "Primary action to post the draft bill with entered metadata."
   },

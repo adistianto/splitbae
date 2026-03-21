@@ -29,6 +29,7 @@ void main() {
           ledgerId: 'l1',
           label: 'Coffee',
           amountMinor: 5000,
+          quantity: 1,
           currencyCode: 'IDR',
           createdAtMs: 4,
           updatedAtMs: 5,
