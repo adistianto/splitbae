@@ -535,5 +535,89 @@
   "settleUpPartialInvalid": "Enter a valid amount greater than zero and not more than owed.",
   "@settleUpPartialInvalid": {
     "description": "Validation when partial amount is empty or out of range."
+  },
+  "appTagline": "Split bills with friends",
+  "@appTagline": {
+    "description": "Subtitle under the SplitBae wordmark on the Bills dashboard."
+  },
+  "billsTotalExpenses": "Total expenses",
+  "@billsTotalExpenses": {
+    "description": "Label on the teal hero card on the Bills tab."
+  },
+  "billsThisWeek": "This week",
+  "@billsThisWeek": {
+    "description": "Sub-stat on the Bills hero card."
+  },
+  "billsAverage": "Average",
+  "@billsAverage": {
+    "description": "Sub-stat on the Bills hero card (per bill)."
+  },
+  "billsInsightVsLastWeek": "{value}% vs last week",
+  "@billsInsightVsLastWeek": {
+    "description": "Trend chip; value includes sign e.g. +100 or -12.",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "billsInsightTop": "Top: {amount}",
+  "@billsInsightTop": {
+    "description": "Chip showing largest single bill amount.",
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "billsInsightStreak": "{days} day streak",
+  "@billsInsightStreak": {
+    "description": "Chip for consecutive days with activity.",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "billsCountLabel": "{count} bills",
+  "@billsCountLabel": {
+    "description": "Chip with total bill count.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "billsSearchHint": "Search bills, items…",
+  "@billsSearchHint": {
+    "description": "Placeholder in the Bills search field."
+  },
+  "billsSearchEmpty": "No matching bills",
+  "@billsSearchEmpty": {
+    "description": "When search/filter returns nothing but bills exist."
+  },
+  "billsSearchPeopleHint": "Search people…",
+  "@billsSearchPeopleHint": {
+    "description": "Placeholder when searching on Balances (reserved)."
+  },
+  "billsEmptyHeroTitle": "No transactions yet",
+  "@billsEmptyHeroTitle": {
+    "description": "Empty state title on Bills feed."
+  },
+  "billsEmptyHeroSubtitle": "Tap + to add a bill and start splitting.",
+  "@billsEmptyHeroSubtitle": {
+    "description": "Empty state subtitle on Bills feed."
+  },
+  "fabNewBill": "New Bill",
+  "@fabNewBill": {
+    "description": "FAB speed dial: open compose flow."
+  },
+  "fabScanBill": "Scan Bill",
+  "@fabScanBill": {
+    "description": "FAB speed dial: scan receipt into a bill."
+  },
+  "fabCreateReport": "Create Report",
+  "@fabCreateReport": {
+    "description": "FAB speed dial: jump to balances / settlements view."
   }
 }

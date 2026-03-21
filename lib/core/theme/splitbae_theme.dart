@@ -11,6 +11,12 @@ ThemeData splitBaeMaterialTheme({required ColorScheme colorScheme}) {
     brightness: colorScheme.brightness,
     visualDensity: VisualDensity.adaptivePlatformDensity,
     materialTapTargetSize: MaterialTapTargetSize.padded,
+    navigationBarTheme: NavigationBarThemeData(
+      indicatorColor: colorScheme.primary.withValues(alpha: 0.15),
+      labelTextStyle: WidgetStateProperty.all(
+        const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+      ),
+    ),
     typography: Typography.material2021(
       platform: apple ? TargetPlatform.iOS : TargetPlatform.android,
     ),

@@ -70,9 +70,6 @@ class _AdaptiveHomeScreenState extends ConsumerState<AdaptiveHomeScreen> {
           final maxContent = wc == AppWindowClass.medium
               ? 720.0
               : double.infinity;
-          void goToSplitAndAddItem() {
-            _openComposeDraft(openAddItemSheetAfter: true);
-          }
 
           return Scaffold(
             body: IndexedStack(
@@ -84,7 +81,15 @@ class _AdaptiveHomeScreenState extends ConsumerState<AdaptiveHomeScreen> {
                     child: Padding(
                       padding: hinge,
                       child: BillsScreen(
-                        onComposeNewBill: goToSplitAndAddItem,
+                        onNewBill: () => _openComposeDraft(
+                          openAddItemSheetAfter: false,
+                        ),
+                        onScanBillEntry: () => _openComposeDraft(
+                          openAddItemSheetAfter: true,
+                        ),
+                        onSwitchToBalances: () => setState(() {
+                          _bottomTabIndex = 1;
+                        }),
                       ),
                     ),
                   ),
@@ -159,9 +164,15 @@ class _AdaptiveHomeScreenState extends ConsumerState<AdaptiveHomeScreen> {
                     ? Padding(
                         padding: hinge,
                         child: BillsScreen(
-                          onComposeNewBill: () {
-                            _openComposeDraft(openAddItemSheetAfter: true);
-                          },
+                          onNewBill: () => _openComposeDraft(
+                            openAddItemSheetAfter: false,
+                          ),
+                          onScanBillEntry: () => _openComposeDraft(
+                            openAddItemSheetAfter: true,
+                          ),
+                          onSwitchToBalances: () => setState(() {
+                            _railIndex = 1;
+                          }),
                         ),
                       )
                     : _railIndex == 1

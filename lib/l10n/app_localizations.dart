@@ -875,6 +875,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Enter a valid amount greater than zero and not more than owed.'**
   String get settleUpPartialInvalid;
+
+  /// Subtitle under the SplitBae wordmark on the Bills dashboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Split bills with friends'**
+  String get appTagline;
+
+  /// Label on the teal hero card on the Bills tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Total expenses'**
+  String get billsTotalExpenses;
+
+  /// Sub-stat on the Bills hero card.
+  ///
+  /// In en, this message translates to:
+  /// **'This week'**
+  String get billsThisWeek;
+
+  /// Sub-stat on the Bills hero card (per bill).
+  ///
+  /// In en, this message translates to:
+  /// **'Average'**
+  String get billsAverage;
+
+  /// Trend chip; value includes sign e.g. +100 or -12.
+  ///
+  /// In en, this message translates to:
+  /// **'{value}% vs last week'**
+  String billsInsightVsLastWeek(String value);
+
+  /// Chip showing largest single bill amount.
+  ///
+  /// In en, this message translates to:
+  /// **'Top: {amount}'**
+  String billsInsightTop(String amount);
+
+  /// Chip for consecutive days with activity.
+  ///
+  /// In en, this message translates to:
+  /// **'{days} day streak'**
+  String billsInsightStreak(int days);
+
+  /// Chip with total bill count.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} bills'**
+  String billsCountLabel(int count);
+
+  /// Placeholder in the Bills search field.
+  ///
+  /// In en, this message translates to:
+  /// **'Search bills, items…'**
+  String get billsSearchHint;
+
+  /// When search/filter returns nothing but bills exist.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching bills'**
+  String get billsSearchEmpty;
+
+  /// Placeholder when searching on Balances (reserved).
+  ///
+  /// In en, this message translates to:
+  /// **'Search people…'**
+  String get billsSearchPeopleHint;
+
+  /// Empty state title on Bills feed.
+  ///
+  /// In en, this message translates to:
+  /// **'No transactions yet'**
+  String get billsEmptyHeroTitle;
+
+  /// Empty state subtitle on Bills feed.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap + to add a bill and start splitting.'**
+  String get billsEmptyHeroSubtitle;
+
+  /// FAB speed dial: open compose flow.
+  ///
+  /// In en, this message translates to:
+  /// **'New Bill'**
+  String get fabNewBill;
+
+  /// FAB speed dial: scan receipt into a bill.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan Bill'**
+  String get fabScanBill;
+
+  /// FAB speed dial: jump to balances / settlements view.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Report'**
+  String get fabCreateReport;
 }
 
 class _AppLocalizationsDelegate

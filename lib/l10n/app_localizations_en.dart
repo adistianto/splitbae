@@ -430,4 +430,61 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get settleUpPartialInvalid =>
       'Enter a valid amount greater than zero and not more than owed.';
+
+  @override
+  String get appTagline => 'Split bills with friends';
+
+  @override
+  String get billsTotalExpenses => 'Total expenses';
+
+  @override
+  String get billsThisWeek => 'This week';
+
+  @override
+  String get billsAverage => 'Average';
+
+  @override
+  String billsInsightVsLastWeek(String value) {
+    return '$value% vs last week';
+  }
+
+  @override
+  String billsInsightTop(String amount) {
+    return 'Top: $amount';
+  }
+
+  @override
+  String billsInsightStreak(int days) {
+    return '$days day streak';
+  }
+
+  @override
+  String billsCountLabel(int count) {
+    return '$count bills';
+  }
+
+  @override
+  String get billsSearchHint => 'Search bills, items…';
+
+  @override
+  String get billsSearchEmpty => 'No matching bills';
+
+  @override
+  String get billsSearchPeopleHint => 'Search people…';
+
+  @override
+  String get billsEmptyHeroTitle => 'No transactions yet';
+
+  @override
+  String get billsEmptyHeroSubtitle =>
+      'Tap + to add a bill and start splitting.';
+
+  @override
+  String get fabNewBill => 'New Bill';
+
+  @override
+  String get fabScanBill => 'Scan Bill';
+
+  @override
+  String get fabCreateReport => 'Create Report';
 }

@@ -436,4 +436,60 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get settleUpPartialInvalid =>
       'Masukkan jumlah lebih dari nol dan tidak melebihi yang terutang.';
+
+  @override
+  String get appTagline => 'Bagi tagihan bareng teman';
+
+  @override
+  String get billsTotalExpenses => 'Total pengeluaran';
+
+  @override
+  String get billsThisWeek => 'Minggu ini';
+
+  @override
+  String get billsAverage => 'Rata-rata';
+
+  @override
+  String billsInsightVsLastWeek(String value) {
+    return '$value% vs minggu lalu';
+  }
+
+  @override
+  String billsInsightTop(String amount) {
+    return 'Tertinggi: $amount';
+  }
+
+  @override
+  String billsInsightStreak(int days) {
+    return 'Streak $days hari';
+  }
+
+  @override
+  String billsCountLabel(int count) {
+    return '$count tagihan';
+  }
+
+  @override
+  String get billsSearchHint => 'Cari tagihan, item…';
+
+  @override
+  String get billsSearchEmpty => 'Tidak ada tagihan yang cocok';
+
+  @override
+  String get billsSearchPeopleHint => 'Cari orang…';
+
+  @override
+  String get billsEmptyHeroTitle => 'Belum ada transaksi';
+
+  @override
+  String get billsEmptyHeroSubtitle => 'Ketuk + untuk menambah tagihan.';
+
+  @override
+  String get fabNewBill => 'Tagihan baru';
+
+  @override
+  String get fabScanBill => 'Pindai struk';
+
+  @override
+  String get fabCreateReport => 'Buat laporan';
 }

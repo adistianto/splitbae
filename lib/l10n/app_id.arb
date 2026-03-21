@@ -128,5 +128,21 @@
   "settleUpAmountOfTotal": "dari {amount}",
   "settleUpPayPartial": "Bayar sebagian",
   "settleUpPartialHint": "Jumlah yang dicatat",
-  "settleUpPartialInvalid": "Masukkan jumlah lebih dari nol dan tidak melebihi yang terutang."
+  "settleUpPartialInvalid": "Masukkan jumlah lebih dari nol dan tidak melebihi yang terutang.",
+  "appTagline": "Bagi tagihan bareng teman",
+  "billsTotalExpenses": "Total pengeluaran",
+  "billsThisWeek": "Minggu ini",
+  "billsAverage": "Rata-rata",
+  "billsInsightVsLastWeek": "{value}% vs minggu lalu",
+  "billsInsightTop": "Tertinggi: {amount}",
+  "billsInsightStreak": "Streak {days} hari",
+  "billsCountLabel": "{count} tagihan",
+  "billsSearchHint": "Cari tagihan, item…",
+  "billsSearchEmpty": "Tidak ada tagihan yang cocok",
+  "billsSearchPeopleHint": "Cari orang…",
+  "billsEmptyHeroTitle": "Belum ada transaksi",
+  "billsEmptyHeroSubtitle": "Ketuk + untuk menambah tagihan.",
+  "fabNewBill": "Tagihan baru",
+  "fabScanBill": "Pindai struk",
+  "fabCreateReport": "Buat laporan"
 }
