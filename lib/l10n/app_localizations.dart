@@ -140,6 +140,48 @@ abstract class AppLocalizations {
   /// **'Uses your phone language until you pick one here.'**
   String get settingsLanguageSubtitle;
 
+  /// Section header for theme (light/dark) and related display options.
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance'**
+  String get settingsAppearance;
+
+  /// Short note under appearance section on Material settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme follows your choice; you can still use system-wide dark mode when set to device default.'**
+  String get settingsAppearanceSubtitle;
+
+  /// Follow OS light/dark appearance.
+  ///
+  /// In en, this message translates to:
+  /// **'Device default'**
+  String get settingsThemeSystem;
+
+  /// Force light theme.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get settingsThemeLight;
+
+  /// Force dark theme.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get settingsThemeDark;
+
+  /// Android 12+ toggle: use wallpaper-derived dynamic colors.
+  ///
+  /// In en, this message translates to:
+  /// **'Material You colors'**
+  String get settingsMaterialYou;
+
+  /// Explains dynamic color on Android.
+  ///
+  /// In en, this message translates to:
+  /// **'Uses your wallpaper palette on supported Android devices. Turn off to use SplitBae’s fixed teal theme.'**
+  String get settingsMaterialYouSubtitle;
+
   /// Option to follow the system locale instead of a fixed app language.
   ///
   /// In en, this message translates to:

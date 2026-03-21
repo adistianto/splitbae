@@ -31,6 +31,29 @@ class AppLocalizationsId extends AppLocalizations {
       'Mengikuti bahasa perangkat sampai Anda memilih di sini.';
 
   @override
+  String get settingsAppearance => 'Tampilan';
+
+  @override
+  String get settingsAppearanceSubtitle =>
+      'Tema mengikuti pilihan Anda; mode gelap sistem tetap dipakai jika Anda pilih default perangkat.';
+
+  @override
+  String get settingsThemeSystem => 'Default perangkat';
+
+  @override
+  String get settingsThemeLight => 'Terang';
+
+  @override
+  String get settingsThemeDark => 'Gelap';
+
+  @override
+  String get settingsMaterialYou => 'Warna Material You';
+
+  @override
+  String get settingsMaterialYouSubtitle =>
+      'Memakai palet dari wallpaper di Android 12+. Matikan untuk tema teal tetap SplitBae.';
+
+  @override
   String get languageDevice => 'Ikuti bahasa perangkat';
 
   @override

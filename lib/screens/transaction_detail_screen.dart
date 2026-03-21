@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:splitbae/core/data/amount_minor.dart'
     show amountToMinorUnits, minorUnitsToAmount;
 import 'package:splitbae/core/platform/host_platform.dart';
+import 'package:splitbae/core/theme/splitbae_semantic_colors.dart';
 import 'package:splitbae/core/ui/category_icons.dart';
 import 'package:splitbae/l10n/app_localizations.dart';
 import 'package:splitbae/money_format.dart';
@@ -63,6 +64,8 @@ class TransactionDetailScreen extends ConsumerWidget {
           locale: locale,
         );
         final icon = splitBaeCategoryIcon(t.category);
+        final (catBg, catFg) =
+            context.splitBaeSemantic.categoryIconColors(t.category);
 
         return DefaultTabController(
           length: 3,
@@ -78,12 +81,12 @@ class TransactionDetailScreen extends ConsumerWidget {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primaryContainer,
+                      color: catBg,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(
                       icon,
-                      color: Theme.of(context).colorScheme.onPrimaryContainer,
+                      color: catFg,
                     ),
                   ),
                   const SizedBox(width: 12),

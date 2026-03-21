@@ -1,12 +1,14 @@
 import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:splitbae/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:splitbae/app_settings.dart';
 import 'package:splitbae/core/platform/host_platform.dart';
 import 'package:splitbae/core/providers/database_providers.dart';
+import 'package:splitbae/core/theme/dynamic_color_support.dart';
 import 'package:splitbae/core/platform/adaptive_confirm_dialog.dart';
 import 'package:splitbae/core/widgets/adaptive_app_bar.dart';
 import 'package:splitbae/screens/backup_screen.dart';
@@ -89,6 +91,85 @@ _LanguageChoice _languageChoice(AppSettings s) {
   if (s.followSystemLocale) return _LanguageChoice.device;
   if (s.appLocaleCode == 'id') return _LanguageChoice.indonesian;
   return _LanguageChoice.english;
+}
+
+enum _ThemeChoice { system, light, dark }
+
+_ThemeChoice _themeChoice(AppSettings s) {
+  switch (s.themeModeCode) {
+    case 'light':
+      return _ThemeChoice.light;
+    case 'dark':
+      return _ThemeChoice.dark;
+    default:
+      return _ThemeChoice.system;
+  }
+}
+
+class _ThemeChoiceSegment extends StatelessWidget {
+  const _ThemeChoiceSegment({
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final _ThemeChoice selected;
+  final ValueChanged<_ThemeChoice> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return SegmentedButton<_ThemeChoice>(
+      showSelectedIcon: false,
+      segments: [
+        ButtonSegment<_ThemeChoice>(
+          value: _ThemeChoice.system,
+          icon: const Icon(Icons.brightness_auto_outlined),
+          label: Text(l10n.settingsThemeSystem),
+        ),
+        ButtonSegment<_ThemeChoice>(
+          value: _ThemeChoice.light,
+          icon: const Icon(Icons.light_mode_outlined),
+          label: Text(l10n.settingsThemeLight),
+        ),
+        ButtonSegment<_ThemeChoice>(
+          value: _ThemeChoice.dark,
+          icon: const Icon(Icons.dark_mode_outlined),
+          label: Text(l10n.settingsThemeDark),
+        ),
+      ],
+      selected: {selected},
+      onSelectionChanged: (values) {
+        final choice = values.firstOrNull;
+        if (choice != null) onSelected(choice);
+      },
+    );
+  }
+}
+
+class _ThemeTile extends StatelessWidget {
+  const _ThemeTile({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Icon(
+        selected ? Icons.radio_button_checked : Icons.radio_button_off,
+        color: selected
+            ? Theme.of(context).colorScheme.primary
+            : Theme.of(context).colorScheme.onSurfaceVariant,
+      ),
+      title: Text(label),
+      onTap: onTap,
+    );
+  }
 }
 
 Future<void> _onEncryptDatabaseToggle({
@@ -263,6 +344,70 @@ class SettingsScreen extends ConsumerWidget {
                 onTap: () => notifier.setExplicitLanguage('id'),
               ),
             ],
+            const Divider(height: 32),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Text(
+                l10n.settingsAppearance,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                l10n.settingsAppearanceSubtitle,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            if (_useExpressiveComponents(context))
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: _ThemeChoiceSegment(
+                  selected: _themeChoice(settings),
+                  onSelected: (choice) {
+                    notifier.setThemeMode(
+                      switch (choice) {
+                        _ThemeChoice.light => ThemeMode.light,
+                        _ThemeChoice.dark => ThemeMode.dark,
+                        _ThemeChoice.system => ThemeMode.system,
+                      },
+                    );
+                  },
+                ),
+              )
+            else ...[
+              _ThemeTile(
+                label: l10n.settingsThemeSystem,
+                selected: _themeChoice(settings) == _ThemeChoice.system,
+                onTap: () => notifier.setThemeMode(ThemeMode.system),
+              ),
+              _ThemeTile(
+                label: l10n.settingsThemeLight,
+                selected: _themeChoice(settings) == _ThemeChoice.light,
+                onTap: () => notifier.setThemeMode(ThemeMode.light),
+              ),
+              _ThemeTile(
+                label: l10n.settingsThemeDark,
+                selected: _themeChoice(settings) == _ThemeChoice.dark,
+                onTap: () => notifier.setThemeMode(ThemeMode.dark),
+              ),
+            ],
+            if (defaultTargetPlatform == TargetPlatform.android &&
+                ref.watch(dynamicColorSupportedProvider))
+              SwitchListTile.adaptive(
+                value: settings.useDynamicColor,
+                onChanged: (enabled) => notifier.setUseDynamicColor(enabled),
+                title: Text(l10n.settingsMaterialYou),
+                subtitle: Text(
+                  l10n.settingsMaterialYouSubtitle,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                ),
+              ),
             const Divider(height: 32),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
@@ -548,6 +693,34 @@ class _AppleLiquidSettingsBody extends StatelessWidget {
                   ? const Icon(CupertinoIcons.check_mark)
                   : null,
               onTap: () => notifier.setExplicitLanguage('id'),
+            ),
+          ],
+        ),
+        sectionTitle(l10n.settingsAppearance),
+        glassSection(
+          children: [
+            CupertinoListTile(
+              title: Text(l10n.settingsThemeSystem),
+              trailing: _themeChoice(settings) == _ThemeChoice.system
+                  ? const Icon(CupertinoIcons.check_mark)
+                  : null,
+              onTap: () => notifier.setThemeMode(ThemeMode.system),
+            ),
+            divider(),
+            CupertinoListTile(
+              title: Text(l10n.settingsThemeLight),
+              trailing: _themeChoice(settings) == _ThemeChoice.light
+                  ? const Icon(CupertinoIcons.check_mark)
+                  : null,
+              onTap: () => notifier.setThemeMode(ThemeMode.light),
+            ),
+            divider(),
+            CupertinoListTile(
+              title: Text(l10n.settingsThemeDark),
+              trailing: _themeChoice(settings) == _ThemeChoice.dark
+                  ? const Icon(CupertinoIcons.check_mark)
+                  : null,
+              onTap: () => notifier.setThemeMode(ThemeMode.dark),
             ),
           ],
         ),

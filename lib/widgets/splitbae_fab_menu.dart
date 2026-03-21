@@ -57,8 +57,8 @@ class _SplitBaeFabMenuState extends State<SplitBaeFabMenu> {
                 if (_open) ...[
                   _FabPill(
                     label: l10n.fabCreateReport,
-                    background: const Color(0xFFE9D5FF),
-                    foreground: const Color(0xFF5B21B6),
+                    background: cs.secondaryContainer,
+                    foreground: cs.onSecondaryContainer,
                     icon: Icons.description_outlined,
                     onTap: () {
                       HapticFeedback.selectionClick();
@@ -68,8 +68,8 @@ class _SplitBaeFabMenuState extends State<SplitBaeFabMenu> {
                   const SizedBox(height: 12),
                   _FabPill(
                     label: l10n.fabScanBill,
-                    background: const Color(0xFFFEF3C7),
-                    foreground: const Color(0xFFB45309),
+                    background: cs.tertiaryContainer,
+                    foreground: cs.onTertiaryContainer,
                     icon: Icons.photo_camera_outlined,
                     onTap: () {
                       HapticFeedback.selectionClick();
@@ -79,8 +79,8 @@ class _SplitBaeFabMenuState extends State<SplitBaeFabMenu> {
                   const SizedBox(height: 12),
                   _FabPill(
                     label: l10n.fabNewBill,
-                    background: const Color(0xFFCCFBF1),
-                    foreground: const Color(0xFF0F766E),
+                    background: cs.primaryContainer,
+                    foreground: cs.onPrimaryContainer,
                     icon: Icons.receipt_long_outlined,
                     onTap: () {
                       HapticFeedback.selectionClick();

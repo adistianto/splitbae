@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:splitbae/core/data/amount_minor.dart';
 import 'package:splitbae/core/domain/bills_insights.dart';
+import 'package:splitbae/core/theme/splitbae_semantic_colors.dart';
 import 'package:splitbae/core/domain/posted_bill_summary.dart';
 import 'package:splitbae/l10n/app_localizations.dart';
 import 'package:splitbae/money_format.dart';
@@ -450,6 +451,7 @@ class _InsightChipsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final sem = context.splitBaeSemantic;
     final chips = <Widget>[];
 
     final sign = insights.weekTrendPercent > 0
@@ -459,14 +461,14 @@ class _InsightChipsRow extends StatelessWidget {
             : '';
     final trendStr = '$sign${insights.weekTrendPercent.round()}';
     final trendColor = insights.weekTrendPercent > 0
-        ? const Color(0xFFBE123C)
+        ? sem.insightTrendWorseFg
         : insights.weekTrendPercent < 0
-            ? const Color(0xFF059669)
+            ? sem.insightTrendBetterFg
             : Theme.of(context).colorScheme.onSurfaceVariant;
     final trendBg = insights.weekTrendPercent > 0
-        ? const Color(0xFFFFE4E6)
+        ? sem.insightTrendWorseBg
         : insights.weekTrendPercent < 0
-            ? const Color(0xFFD1FAE5)
+            ? sem.insightTrendBetterBg
             : Theme.of(context).colorScheme.surfaceContainerHighest;
 
     chips.add(
@@ -502,16 +504,16 @@ class _InsightChipsRow extends StatelessWidget {
     );
     chips.add(
       _Chip(
-        background: const Color(0xFFFEF3C7),
+        background: sem.insightTopBg,
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.show_chart, size: 16, color: Color(0xFFB45309)),
+            Icon(Icons.show_chart, size: 16, color: sem.insightTopFg),
             const SizedBox(width: 6),
             Text(
               l10n.billsInsightTop(topAmt),
-              style: const TextStyle(
-                color: Color(0xFF92400E),
+              style: TextStyle(
+                color: sem.insightTopFg,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -523,16 +525,20 @@ class _InsightChipsRow extends StatelessWidget {
     if (insights.streakDays > 0) {
       chips.add(
         _Chip(
-          background: const Color(0xFFFFEDD5),
+          background: sem.insightStreakBg,
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.local_fire_department, size: 16, color: Color(0xFFEA580C)),
+              Icon(
+                Icons.local_fire_department,
+                size: 16,
+                color: sem.insightStreakFg,
+              ),
               const SizedBox(width: 6),
               Text(
                 l10n.billsInsightStreak(insights.streakDays),
-                style: const TextStyle(
-                  color: Color(0xFF9A3412),
+                style: TextStyle(
+                  color: sem.insightStreakFg,
                   fontWeight: FontWeight.w600,
                 ),
               ),

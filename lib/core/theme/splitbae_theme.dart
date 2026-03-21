@@ -1,18 +1,42 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:splitbae/core/platform/host_platform.dart';
+import 'package:splitbae/core/theme/splitbae_semantic_colors.dart';
 
 /// Material 3 theme tuned for the host platform’s typography (Roboto vs SF-like).
+///
+/// [colorScheme] is usually from **dynamic color** (Android wallpaper) or the
+/// v0 seed palette. **Error** roles use fixed destructive tones from
+/// [SplitBaeSemanticColors]; insight and category accents are **harmonized**
+/// toward the live scheme for a cohesive Material You look without recoloring
+/// pay/receive semantics.
 ThemeData splitBaeMaterialTheme({required ColorScheme colorScheme}) {
   final apple = hostPlatformIsApple();
+  final semanticBase = colorScheme.brightness == Brightness.dark
+      ? SplitBaeSemanticColors.dark
+      : SplitBaeSemanticColors.light;
+
+  final cs = colorScheme.copyWith(
+    error: semanticBase.destructive,
+    onError: semanticBase.onDestructive,
+    errorContainer: semanticBase.destructiveContainer,
+    onErrorContainer: semanticBase.onDestructiveContainer,
+  );
+
+  final semantic = SplitBaeSemanticColors.harmonizedWithScheme(
+    base: semanticBase,
+    scheme: cs,
+  );
+
   return ThemeData(
     useMaterial3: true,
-    colorScheme: colorScheme,
-    brightness: colorScheme.brightness,
+    colorScheme: cs,
+    brightness: cs.brightness,
+    extensions: <ThemeExtension<dynamic>>[semantic],
     visualDensity: VisualDensity.adaptivePlatformDensity,
     materialTapTargetSize: MaterialTapTargetSize.padded,
     navigationBarTheme: NavigationBarThemeData(
-      indicatorColor: colorScheme.primary.withValues(alpha: 0.15),
+      indicatorColor: cs.primary.withValues(alpha: 0.15),
       labelTextStyle: WidgetStateProperty.all(
         const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
       ),

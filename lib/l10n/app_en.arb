@@ -28,6 +28,34 @@
   "@settingsLanguageSubtitle": {
     "description": "Explains that the app follows the OS locale until the user overrides."
   },
+  "settingsAppearance": "Appearance",
+  "@settingsAppearance": {
+    "description": "Section header for theme (light/dark) and related display options."
+  },
+  "settingsAppearanceSubtitle": "Theme follows your choice; you can still use system-wide dark mode when set to device default.",
+  "@settingsAppearanceSubtitle": {
+    "description": "Short note under appearance section on Material settings."
+  },
+  "settingsThemeSystem": "Device default",
+  "@settingsThemeSystem": {
+    "description": "Follow OS light/dark appearance."
+  },
+  "settingsThemeLight": "Light",
+  "@settingsThemeLight": {
+    "description": "Force light theme."
+  },
+  "settingsThemeDark": "Dark",
+  "@settingsThemeDark": {
+    "description": "Force dark theme."
+  },
+  "settingsMaterialYou": "Material You colors",
+  "@settingsMaterialYou": {
+    "description": "Android 12+ toggle: use wallpaper-derived dynamic colors."
+  },
+  "settingsMaterialYouSubtitle": "Uses your wallpaper palette on supported Android devices. Turn off to use SplitBae’s fixed teal theme.",
+  "@settingsMaterialYouSubtitle": {
+    "description": "Explains dynamic color on Android."
+  },
   "languageDevice": "Use device language",
   "@languageDevice": {
     "description": "Option to follow the system locale instead of a fixed app language."

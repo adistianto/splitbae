@@ -7,6 +7,7 @@ import 'package:splitbae/core/domain/ledger_ids.dart';
 import 'package:splitbae/core/platform/adaptive_confirm_dialog.dart';
 import 'package:splitbae/core/platform/host_platform.dart';
 import 'package:splitbae/core/providers/database_providers.dart';
+import 'package:splitbae/core/theme/splitbae_semantic_colors.dart';
 import 'package:splitbae/core/widgets/adaptive_app_bar.dart';
 import 'package:splitbae/l10n/app_localizations.dart';
 import 'package:splitbae/money_format.dart';
@@ -116,7 +117,7 @@ class _BalancesScreenState extends ConsumerState<BalancesScreen> {
             padding: const EdgeInsets.all(16),
             child: Text(
               '$e',
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
+              style: TextStyle(color: context.splitBaeSemantic.destructive),
             ),
           ),
         ),
@@ -309,16 +310,17 @@ class _SettlementEdgeCardState extends ConsumerState<_SettlementEdgeCard> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
-    final paysColor = theme.colorScheme.error;
-    final receivesColor = theme.colorScheme.tertiary;
+    final sem = context.splitBaeSemantic;
+    final paysColor = sem.balancePay;
+    final receivesColor = sem.balanceReceive;
 
     Widget participantRow() {
       return Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           CircleAvatar(
-            backgroundColor: theme.colorScheme.errorContainer,
-            foregroundColor: theme.colorScheme.onErrorContainer,
+            backgroundColor: sem.balancePayContainer,
+            foregroundColor: sem.onBalancePayContainer,
             child: Text(
               splitBaeDisplayInitials(widget.fromName),
               style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
@@ -376,8 +378,8 @@ class _SettlementEdgeCardState extends ConsumerState<_SettlementEdgeCard> {
           ),
           const SizedBox(width: 12),
           CircleAvatar(
-            backgroundColor: theme.colorScheme.tertiaryContainer,
-            foregroundColor: theme.colorScheme.onTertiaryContainer,
+            backgroundColor: sem.balanceReceiveContainer,
+            foregroundColor: sem.onBalanceReceiveContainer,
             child: Text(
               splitBaeDisplayInitials(widget.toName),
               style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),

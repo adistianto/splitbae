@@ -31,6 +31,29 @@ class AppLocalizationsEn extends AppLocalizations {
       'Uses your phone language until you pick one here.';
 
   @override
+  String get settingsAppearance => 'Appearance';
+
+  @override
+  String get settingsAppearanceSubtitle =>
+      'Theme follows your choice; you can still use system-wide dark mode when set to device default.';
+
+  @override
+  String get settingsThemeSystem => 'Device default';
+
+  @override
+  String get settingsThemeLight => 'Light';
+
+  @override
+  String get settingsThemeDark => 'Dark';
+
+  @override
+  String get settingsMaterialYou => 'Material You colors';
+
+  @override
+  String get settingsMaterialYouSubtitle =>
+      'Uses your wallpaper palette on supported Android devices. Turn off to use SplitBae’s fixed teal theme.';
+
+  @override
   String get languageDevice => 'Use device language';
 
   @override

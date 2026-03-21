@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart' show ShareParams, SharePlus;
 import 'package:splitbae/core/data/amount_minor.dart';
 import 'package:splitbae/core/domain/posted_bill_summary.dart';
+import 'package:splitbae/core/theme/splitbae_semantic_colors.dart';
 import 'package:splitbae/core/ui/category_icons.dart';
 import 'package:splitbae/l10n/app_localizations.dart';
 import 'package:splitbae/money_format.dart';
@@ -111,6 +112,7 @@ class _PostedBillExpandableCardState extends ConsumerState<PostedBillExpandableC
     final icon = splitBaeCategoryIcon(t.category);
     final id = t.id;
     final receiptPath = t.receiptImagePath;
+    final (catBg, catFg) = context.splitBaeSemantic.categoryIconColors(t.category);
 
     final card = Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -138,12 +140,12 @@ class _PostedBillExpandableCardState extends ConsumerState<PostedBillExpandableC
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primaryContainer,
+                      color: catBg,
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Icon(
                       icon,
-                      color: Theme.of(context).colorScheme.onPrimaryContainer,
+                      color: catFg,
                     ),
                   ),
                   const SizedBox(width: 12),
