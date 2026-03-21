@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:splitbae/core/data/draft_payment_repository.dart';
 import 'package:splitbae/core/data/bill_posting_repository.dart';
@@ -18,6 +20,18 @@ import 'package:splitbae/src/rust/api/simple.dart'
         calculateSplitAssigned;
 import 'package:splitbae/src/rust/api/settlement.dart' show SettlementEdge;
 
+/// [draftTransactionPaymentsProvider] / [postedBillSummariesProvider] watch
+/// [itemsProvider] (and sometimes [participantsProvider]). Invalidating those
+/// futures from inside the same notifier graph triggers [CircularDependencyError]
+/// in debug; schedule for the next microtask instead.
+void _scheduleInvalidateDraftPayments(Ref ref) {
+  Future.microtask(() => ref.invalidate(draftTransactionPaymentsProvider));
+}
+
+void _scheduleInvalidatePostedBills(Ref ref) {
+  Future.microtask(() => ref.invalidate(postedBillSummariesProvider));
+}
+
 class ItemsNotifier extends StateNotifier<List<LedgerLineItem>> {
   ItemsNotifier(this._ref) : super(const []) {
     _load();
@@ -30,7 +44,7 @@ class ItemsNotifier extends StateNotifier<List<LedgerLineItem>> {
     state = await repo.listLedgerLines(kDefaultLedgerId);
     await DraftPaymentRepository(_ref.read(appDatabaseProvider))
         .syncDraftPaymentsWithBill(kDefaultLedgerId);
-    _ref.invalidate(draftTransactionPaymentsProvider);
+    _scheduleInvalidateDraftPayments(_ref);
   }
 
   /// Returns the new line id (for assignment rows after insert).
@@ -91,7 +105,7 @@ class ItemsNotifier extends StateNotifier<List<LedgerLineItem>> {
           description: description,
         );
     await _load();
-    _ref.invalidate(postedBillSummariesProvider);
+    _scheduleInvalidatePostedBills(_ref);
   }
 }
 
@@ -112,7 +126,7 @@ class ParticipantsNotifier extends StateNotifier<List<ParticipantEntry>> {
     state = await repo.listParticipants(kDefaultLedgerId);
     await DraftPaymentRepository(_ref.read(appDatabaseProvider))
         .syncDraftPaymentsWithBill(kDefaultLedgerId);
-    _ref.invalidate(draftTransactionPaymentsProvider);
+    _scheduleInvalidateDraftPayments(_ref);
   }
 
   Future<void> addParticipant(String name) async {
