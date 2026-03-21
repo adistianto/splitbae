@@ -1,3 +1,4 @@
+import 'backup_payload_v1.dart';
 import '../database/app_database.dart';
 
 /// In-memory snapshot of all user tables for encryption migration or future
@@ -38,4 +39,33 @@ class LocalDatabaseSnapshot {
       }
     });
   }
+
+  factory LocalDatabaseSnapshot.fromBackupPayload(BackupPayloadV1 p) {
+    return LocalDatabaseSnapshot(
+      ledgers: p.ledgers,
+      participants: p.participants,
+      receiptLines: p.receiptLines,
+    );
+  }
+
+  BackupPayloadV1 toBackupPayload({int? exportedAtUtcMs}) {
+    return BackupPayloadV1(
+      exportedAtUtcMs:
+          exportedAtUtcMs ?? DateTime.now().toUtc().millisecondsSinceEpoch,
+      ledgers: ledgers,
+      participants: participants,
+      receiptLines: receiptLines,
+    );
+  }
+
+  /// Deletes all rows (FK-safe order) then [restoreIntoEmpty].
+  Future<void> replaceEntireDatabase(AppDatabase db) async {
+    await db.transaction(() async {
+      await db.delete(db.receiptLines).go();
+      await db.delete(db.participants).go();
+      await db.delete(db.ledgers).go();
+    });
+    await restoreIntoEmpty(db);
+  }
 }
+

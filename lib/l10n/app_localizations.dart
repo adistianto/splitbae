@@ -289,6 +289,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not update the database. Try again or restart the app.'**
   String get settingsEncryptChangeError;
+
+  /// Section header for manual backup export/import.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup'**
+  String get settingsBackup;
+
+  /// List tile: write .sb_backup and open share sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Export backup file'**
+  String get settingsBackupExport;
+
+  /// Security disclaimer for unencrypted backup.
+  ///
+  /// In en, this message translates to:
+  /// **'Plain JSON (.sb_backup). Anyone with the file can read names and amounts—only store or send it where you trust.'**
+  String get settingsBackupExportSubtitle;
+
+  /// List tile: pick .sb_backup and replace local DB.
+  ///
+  /// In en, this message translates to:
+  /// **'Import backup file'**
+  String get settingsBackupImport;
+
+  /// Warns import is destructive locally.
+  ///
+  /// In en, this message translates to:
+  /// **'Replaces all ledgers, people, and line items on this device.'**
+  String get settingsBackupImportSubtitle;
+
+  /// Dialog title before importing a backup over current DB.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace all local data?'**
+  String get backupImportConfirmTitle;
+
+  /// Explains destructive import.
+  ///
+  /// In en, this message translates to:
+  /// **'Your current bill data will be removed and replaced by the backup. This cannot be undone.'**
+  String get backupImportConfirmBody;
+
+  /// Confirm button on import dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace and import'**
+  String get backupImportConfirmAction;
+
+  /// Snack bar after export file written and share opened.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup file ready.'**
+  String get backupExportSuccess;
+
+  /// Snack bar after successful import.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup restored.'**
+  String get backupImportSuccess;
+
+  /// Parse or format error for .sb_backup.
+  ///
+  /// In en, this message translates to:
+  /// **'That file is not a valid SplitBae backup.'**
+  String get backupErrorInvalid;
+
+  /// IO or share failure on export.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not create the backup file.'**
+  String get backupErrorExport;
 }
 
 class _AppLocalizationsDelegate

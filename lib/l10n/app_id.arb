@@ -31,5 +31,17 @@
   "settingsEncryptChangeBody": "Buku besar, orang, dan baris item akan disalin ke basis data terenkripsi atau biasa yang baru di perangkat ini. Tidak ada unggahan. Jika terjadi masalah, data Anda dikembalikan dan pengaturan enkripsi tetap seperti semula.",
   "settingsEncryptChangeConfirm": "Lanjutkan",
   "settingsEncryptMigrationRolledBack": "Enkripsi tidak bisa diubah; data Anda tidak berubah.",
-  "settingsEncryptChangeError": "Basis data tidak bisa diperbarui. Coba lagi atau mulai ulang aplikasi."
+  "settingsEncryptChangeError": "Basis data tidak bisa diperbarui. Coba lagi atau mulai ulang aplikasi.",
+  "settingsBackup": "Cadangan",
+  "settingsBackupExport": "Ekspor file cadangan",
+  "settingsBackupExportSubtitle": "JSON biasa (.sb_backup). Siapa pun yang punya file bisa membaca nama dan nominal—simpan atau kirim hanya ke tempat yang Anda percaya.",
+  "settingsBackupImport": "Impor file cadangan",
+  "settingsBackupImportSubtitle": "Mengganti semua buku besar, orang, dan baris item di perangkat ini.",
+  "backupImportConfirmTitle": "Ganti semua data lokal?",
+  "backupImportConfirmBody": "Data tagihan saat ini akan dihapus dan diganti cadangan. Tidak bisa dibatalkan.",
+  "backupImportConfirmAction": "Ganti dan impor",
+  "backupExportSuccess": "File cadangan siap.",
+  "backupImportSuccess": "Cadangan dipulihkan.",
+  "backupErrorInvalid": "File itu bukan cadangan SplitBae yang valid.",
+  "backupErrorExport": "Tidak bisa membuat file cadangan."
 }

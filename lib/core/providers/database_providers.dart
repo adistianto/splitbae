@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/ledger_repository.dart';
 import '../data/line_item_repository.dart';
 import '../data/participant_repository.dart';
+import '../data/backup_service.dart';
 import '../data/local_database_snapshot.dart';
 import '../database/app_database.dart';
 import '../database/database_files.dart';
@@ -98,4 +99,8 @@ final lineItemRepositoryProvider = Provider<LineItemRepository>((ref) {
 
 final participantRepositoryProvider = Provider<ParticipantRepository>((ref) {
   return ParticipantRepository(ref.watch(appDatabaseProvider));
+});
+
+final backupServiceProvider = Provider<BackupService>((ref) {
+  return BackupService(ref.watch(appDatabaseProvider));
 });

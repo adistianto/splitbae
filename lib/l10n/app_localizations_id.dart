@@ -110,4 +110,44 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get settingsEncryptChangeError =>
       'Basis data tidak bisa diperbarui. Coba lagi atau mulai ulang aplikasi.';
+
+  @override
+  String get settingsBackup => 'Cadangan';
+
+  @override
+  String get settingsBackupExport => 'Ekspor file cadangan';
+
+  @override
+  String get settingsBackupExportSubtitle =>
+      'JSON biasa (.sb_backup). Siapa pun yang punya file bisa membaca nama dan nominal—simpan atau kirim hanya ke tempat yang Anda percaya.';
+
+  @override
+  String get settingsBackupImport => 'Impor file cadangan';
+
+  @override
+  String get settingsBackupImportSubtitle =>
+      'Mengganti semua buku besar, orang, dan baris item di perangkat ini.';
+
+  @override
+  String get backupImportConfirmTitle => 'Ganti semua data lokal?';
+
+  @override
+  String get backupImportConfirmBody =>
+      'Data tagihan saat ini akan dihapus dan diganti cadangan. Tidak bisa dibatalkan.';
+
+  @override
+  String get backupImportConfirmAction => 'Ganti dan impor';
+
+  @override
+  String get backupExportSuccess => 'File cadangan siap.';
+
+  @override
+  String get backupImportSuccess => 'Cadangan dipulihkan.';
+
+  @override
+  String get backupErrorInvalid =>
+      'File itu bukan cadangan SplitBae yang valid.';
+
+  @override
+  String get backupErrorExport => 'Tidak bisa membuat file cadangan.';
 }

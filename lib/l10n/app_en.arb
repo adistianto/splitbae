@@ -127,5 +127,53 @@
   "settingsEncryptChangeError": "Could not update the database. Try again or restart the app.",
   "@settingsEncryptChangeError": {
     "description": "Snack bar when DB recreate fails after encryption toggle."
+  },
+  "settingsBackup": "Backup",
+  "@settingsBackup": {
+    "description": "Section header for manual backup export/import."
+  },
+  "settingsBackupExport": "Export backup file",
+  "@settingsBackupExport": {
+    "description": "List tile: write .sb_backup and open share sheet."
+  },
+  "settingsBackupExportSubtitle": "Plain JSON (.sb_backup). Anyone with the file can read names and amounts—only store or send it where you trust.",
+  "@settingsBackupExportSubtitle": {
+    "description": "Security disclaimer for unencrypted backup."
+  },
+  "settingsBackupImport": "Import backup file",
+  "@settingsBackupImport": {
+    "description": "List tile: pick .sb_backup and replace local DB."
+  },
+  "settingsBackupImportSubtitle": "Replaces all ledgers, people, and line items on this device.",
+  "@settingsBackupImportSubtitle": {
+    "description": "Warns import is destructive locally."
+  },
+  "backupImportConfirmTitle": "Replace all local data?",
+  "@backupImportConfirmTitle": {
+    "description": "Dialog title before importing a backup over current DB."
+  },
+  "backupImportConfirmBody": "Your current bill data will be removed and replaced by the backup. This cannot be undone.",
+  "@backupImportConfirmBody": {
+    "description": "Explains destructive import."
+  },
+  "backupImportConfirmAction": "Replace and import",
+  "@backupImportConfirmAction": {
+    "description": "Confirm button on import dialog."
+  },
+  "backupExportSuccess": "Backup file ready.",
+  "@backupExportSuccess": {
+    "description": "Snack bar after export file written and share opened."
+  },
+  "backupImportSuccess": "Backup restored.",
+  "@backupImportSuccess": {
+    "description": "Snack bar after successful import."
+  },
+  "backupErrorInvalid": "That file is not a valid SplitBae backup.",
+  "@backupErrorInvalid": {
+    "description": "Parse or format error for .sb_backup."
+  },
+  "backupErrorExport": "Could not create the backup file.",
+  "@backupErrorExport": {
+    "description": "IO or share failure on export."
   }
 }

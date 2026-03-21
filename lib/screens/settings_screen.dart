@@ -106,6 +106,95 @@ Future<void> _onEncryptDatabaseToggle({
   }
 }
 
+void _showBlockingProgress(BuildContext context) {
+  showDialog<void>(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) => const PopScope(
+      canPop: false,
+      child: Center(child: CircularProgressIndicator()),
+    ),
+  );
+}
+
+void _dismissBlockingProgress(BuildContext context) {
+  if (context.mounted) {
+    Navigator.of(context, rootNavigator: true).pop();
+  }
+}
+
+Future<void> _onExportBackup(BuildContext context, WidgetRef ref) async {
+  final l10n = AppLocalizations.of(context)!;
+  _showBlockingProgress(context);
+  try {
+    final svc = ref.read(backupServiceProvider);
+    final file = await svc.writeExportFile();
+    await svc.shareExportFile(file);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(l10n.backupExportSuccess)),
+    );
+  } catch (_) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.backupErrorExport)),
+      );
+    }
+  } finally {
+    _dismissBlockingProgress(context);
+  }
+}
+
+Future<void> _onImportBackup(BuildContext context, WidgetRef ref) async {
+  final l10n = AppLocalizations.of(context)!;
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(l10n.backupImportConfirmTitle),
+      content: Text(l10n.backupImportConfirmBody),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(false),
+          child: Text(l10n.cancel),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(ctx).pop(true),
+          child: Text(l10n.backupImportConfirmAction),
+        ),
+      ],
+    ),
+  );
+  if (confirmed != true || !context.mounted) return;
+
+  _showBlockingProgress(context);
+  try {
+    final didImport = await ref.read(backupServiceProvider).importFromUserPick();
+    if (!didImport) {
+      return;
+    }
+    await ref.read(itemsProvider.notifier).reloadFromDatabase();
+    await ref.read(participantsProvider.notifier).reloadFromDatabase();
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(l10n.backupImportSuccess)),
+    );
+  } on FormatException catch (_) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.backupErrorInvalid)),
+      );
+    }
+  } catch (_) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.backupErrorInvalid)),
+      );
+    }
+  } finally {
+    _dismissBlockingProgress(context);
+  }
+}
+
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
@@ -212,6 +301,36 @@ class SettingsScreen extends ConsumerWidget {
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
             ),
+          ),
+          const Divider(height: 32),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: Text(
+              l10n.settingsBackup,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.upload_file_outlined),
+            title: Text(l10n.settingsBackupExport),
+            subtitle: Text(
+              l10n.settingsBackupExportSubtitle,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+            ),
+            onTap: () => _onExportBackup(context, ref),
+          ),
+          ListTile(
+            leading: const Icon(Icons.download_outlined),
+            title: Text(l10n.settingsBackupImport),
+            subtitle: Text(
+              l10n.settingsBackupImportSubtitle,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+            ),
+            onTap: () => _onImportBackup(context, ref),
           ),
         ],
       ),

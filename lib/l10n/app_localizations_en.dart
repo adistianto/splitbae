@@ -110,4 +110,43 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get settingsEncryptChangeError =>
       'Could not update the database. Try again or restart the app.';
+
+  @override
+  String get settingsBackup => 'Backup';
+
+  @override
+  String get settingsBackupExport => 'Export backup file';
+
+  @override
+  String get settingsBackupExportSubtitle =>
+      'Plain JSON (.sb_backup). Anyone with the file can read names and amounts—only store or send it where you trust.';
+
+  @override
+  String get settingsBackupImport => 'Import backup file';
+
+  @override
+  String get settingsBackupImportSubtitle =>
+      'Replaces all ledgers, people, and line items on this device.';
+
+  @override
+  String get backupImportConfirmTitle => 'Replace all local data?';
+
+  @override
+  String get backupImportConfirmBody =>
+      'Your current bill data will be removed and replaced by the backup. This cannot be undone.';
+
+  @override
+  String get backupImportConfirmAction => 'Replace and import';
+
+  @override
+  String get backupExportSuccess => 'Backup file ready.';
+
+  @override
+  String get backupImportSuccess => 'Backup restored.';
+
+  @override
+  String get backupErrorInvalid => 'That file is not a valid SplitBae backup.';
+
+  @override
+  String get backupErrorExport => 'Could not create the backup file.';
 }
