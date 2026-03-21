@@ -12,6 +12,7 @@ import 'package:splitbae/screens/balances_screen.dart';
 import 'package:splitbae/screens/bills_screen.dart';
 import 'package:splitbae/screens/draft_split_screen.dart';
 import 'package:splitbae/screens/settings_screen.dart';
+import 'package:splitbae/widgets/add_transaction_sheet.dart';
 
 /// Phone: **Bills · Balances** (v0-style). Draft split opens as a pushed screen.
 /// Wide: rail **Bills · Balances · Settings**; compose opens [DraftSplitScreen] on a route.
@@ -40,6 +41,10 @@ class _AdaptiveHomeScreenState extends ConsumerState<AdaptiveHomeScreen> {
       ref,
       openAddItemSheetAfter: openAddItemSheetAfter,
     );
+  }
+
+  void _openNewBillSheet() {
+    showAddTransactionSheet(context);
   }
 
   void _openSettingsShortcut() {
@@ -81,9 +86,7 @@ class _AdaptiveHomeScreenState extends ConsumerState<AdaptiveHomeScreen> {
                     child: Padding(
                       padding: hinge,
                       child: BillsScreen(
-                        onNewBill: () => _openComposeDraft(
-                          openAddItemSheetAfter: false,
-                        ),
+                        onNewBill: _openNewBillSheet,
                         onScanBillEntry: () => _openComposeDraft(
                           openAddItemSheetAfter: true,
                         ),
@@ -164,9 +167,7 @@ class _AdaptiveHomeScreenState extends ConsumerState<AdaptiveHomeScreen> {
                     ? Padding(
                         padding: hinge,
                         child: BillsScreen(
-                          onNewBill: () => _openComposeDraft(
-                            openAddItemSheetAfter: false,
-                          ),
+                          onNewBill: _openNewBillSheet,
                           onScanBillEntry: () => _openComposeDraft(
                             openAddItemSheetAfter: true,
                           ),

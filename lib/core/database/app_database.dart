@@ -46,6 +46,8 @@ class Transactions extends Table {
   TextColumn get kind => text().withDefault(const Constant('normal'))();
   IntColumn get createdAtMs => integer()();
   IntColumn get updatedAtMs => integer()();
+  /// App-documents path to a JPEG/PNG saved after pick; shown on expanded bill cards.
+  TextColumn get receiptImagePath => text().nullable()();
 
   @override
   Set<Column<Object>> get primaryKey => {id};
@@ -160,7 +162,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -216,6 +218,9 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 5) {
         await m.addColumn(transactionPayments, transactionPayments.currencyCode);
+      }
+      if (from < 6) {
+        await m.addColumn(transactions, transactions.receiptImagePath);
       }
     },
   );

@@ -492,4 +492,71 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get fabCreateReport => 'Buat laporan';
+
+  @override
+  String get addTransactionSheetTitle => 'Tagihan baru';
+
+  @override
+  String get addTransactionSheetSubtitle =>
+      'Atur detail, lalu tambah baris dan siapa yang bayar.';
+
+  @override
+  String get addTransactionCategoryLabel => 'Kategori';
+
+  @override
+  String get categoryFood => 'Makanan';
+
+  @override
+  String get categoryTransport => 'Transport';
+
+  @override
+  String get categoryAccommodation => 'Akomodasi';
+
+  @override
+  String get categoryOther => 'Lainnya';
+
+  @override
+  String get addTransactionDateLabel => 'Tanggal';
+
+  @override
+  String get addTransactionTaxLabel => 'Pajak & layanan';
+
+  @override
+  String get addTransactionReceiptLabel => 'Foto struk';
+
+  @override
+  String get addTransactionReceiptPick => 'Lampirkan foto';
+
+  @override
+  String get addTransactionReceiptRemove => 'Hapus';
+
+  @override
+  String addTransactionDraftSummary(int itemCount, int peopleCount) {
+    return '$itemCount item · $peopleCount orang';
+  }
+
+  @override
+  String get addTransactionOpenDraft => 'Baris & bagi';
+
+  @override
+  String get addTransactionPostAction => 'Posting';
+
+  @override
+  String get billCardShare => 'Bagikan';
+
+  @override
+  String get billCardEdit => 'Detail';
+
+  @override
+  String get billCardDelete => 'Hapus';
+
+  @override
+  String get billDeleteConfirmTitle => 'Hapus tagihan ini?';
+
+  @override
+  String get billDeleteConfirmBody =>
+      'Tagihan dan barisnya akan dihapus di perangkat ini.';
+
+  @override
+  String get billSwipeDeleteHint => 'Geser kiri untuk hapus';
 }

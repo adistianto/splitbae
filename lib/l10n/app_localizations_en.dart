@@ -487,4 +487,71 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fabCreateReport => 'Create Report';
+
+  @override
+  String get addTransactionSheetTitle => 'New bill';
+
+  @override
+  String get addTransactionSheetSubtitle =>
+      'Set details, then add line items and who paid.';
+
+  @override
+  String get addTransactionCategoryLabel => 'Category';
+
+  @override
+  String get categoryFood => 'Food';
+
+  @override
+  String get categoryTransport => 'Transport';
+
+  @override
+  String get categoryAccommodation => 'Accommodation';
+
+  @override
+  String get categoryOther => 'Other';
+
+  @override
+  String get addTransactionDateLabel => 'Date';
+
+  @override
+  String get addTransactionTaxLabel => 'Tax & service';
+
+  @override
+  String get addTransactionReceiptLabel => 'Receipt photo';
+
+  @override
+  String get addTransactionReceiptPick => 'Attach photo';
+
+  @override
+  String get addTransactionReceiptRemove => 'Remove';
+
+  @override
+  String addTransactionDraftSummary(int itemCount, int peopleCount) {
+    return '$itemCount items · $peopleCount people';
+  }
+
+  @override
+  String get addTransactionOpenDraft => 'Line items & split';
+
+  @override
+  String get addTransactionPostAction => 'Post bill';
+
+  @override
+  String get billCardShare => 'Share';
+
+  @override
+  String get billCardEdit => 'Details';
+
+  @override
+  String get billCardDelete => 'Delete';
+
+  @override
+  String get billDeleteConfirmTitle => 'Delete this bill?';
+
+  @override
+  String get billDeleteConfirmBody =>
+      'This removes the bill and its lines from this device.';
+
+  @override
+  String get billSwipeDeleteHint => 'Swipe left to delete';
 }

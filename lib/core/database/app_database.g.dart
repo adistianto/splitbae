@@ -803,6 +803,17 @@ class $TransactionsTable extends Transactions
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _receiptImagePathMeta = const VerificationMeta(
+    'receiptImagePath',
+  );
+  @override
+  late final GeneratedColumn<String> receiptImagePath = GeneratedColumn<String>(
+    'receipt_image_path',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -814,6 +825,7 @@ class $TransactionsTable extends Transactions
     kind,
     createdAtMs,
     updatedAtMs,
+    receiptImagePath,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -901,6 +913,15 @@ class $TransactionsTable extends Transactions
     } else if (isInserting) {
       context.missing(_updatedAtMsMeta);
     }
+    if (data.containsKey('receipt_image_path')) {
+      context.handle(
+        _receiptImagePathMeta,
+        receiptImagePath.isAcceptableOrUnknown(
+          data['receipt_image_path']!,
+          _receiptImagePathMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -946,6 +967,10 @@ class $TransactionsTable extends Transactions
         DriftSqlType.int,
         data['${effectivePrefix}updated_at_ms'],
       )!,
+      receiptImagePath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}receipt_image_path'],
+      ),
     );
   }
 
@@ -969,6 +994,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
   final String kind;
   final int createdAtMs;
   final int updatedAtMs;
+
+  /// App-documents path to a JPEG/PNG saved after pick; shown on expanded bill cards.
+  final String? receiptImagePath;
   const Transaction({
     required this.id,
     required this.ledgerId,
@@ -979,6 +1007,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     required this.kind,
     required this.createdAtMs,
     required this.updatedAtMs,
+    this.receiptImagePath,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -992,6 +1021,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     map['kind'] = Variable<String>(kind);
     map['created_at_ms'] = Variable<int>(createdAtMs);
     map['updated_at_ms'] = Variable<int>(updatedAtMs);
+    if (!nullToAbsent || receiptImagePath != null) {
+      map['receipt_image_path'] = Variable<String>(receiptImagePath);
+    }
     return map;
   }
 
@@ -1006,6 +1038,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       kind: Value(kind),
       createdAtMs: Value(createdAtMs),
       updatedAtMs: Value(updatedAtMs),
+      receiptImagePath: receiptImagePath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(receiptImagePath),
     );
   }
 
@@ -1024,6 +1059,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       kind: serializer.fromJson<String>(json['kind']),
       createdAtMs: serializer.fromJson<int>(json['createdAtMs']),
       updatedAtMs: serializer.fromJson<int>(json['updatedAtMs']),
+      receiptImagePath: serializer.fromJson<String?>(json['receiptImagePath']),
     );
   }
   @override
@@ -1039,6 +1075,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       'kind': serializer.toJson<String>(kind),
       'createdAtMs': serializer.toJson<int>(createdAtMs),
       'updatedAtMs': serializer.toJson<int>(updatedAtMs),
+      'receiptImagePath': serializer.toJson<String?>(receiptImagePath),
     };
   }
 
@@ -1052,6 +1089,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     String? kind,
     int? createdAtMs,
     int? updatedAtMs,
+    Value<String?> receiptImagePath = const Value.absent(),
   }) => Transaction(
     id: id ?? this.id,
     ledgerId: ledgerId ?? this.ledgerId,
@@ -1062,6 +1100,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     kind: kind ?? this.kind,
     createdAtMs: createdAtMs ?? this.createdAtMs,
     updatedAtMs: updatedAtMs ?? this.updatedAtMs,
+    receiptImagePath: receiptImagePath.present
+        ? receiptImagePath.value
+        : this.receiptImagePath,
   );
   Transaction copyWithCompanion(TransactionsCompanion data) {
     return Transaction(
@@ -1084,6 +1125,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       updatedAtMs: data.updatedAtMs.present
           ? data.updatedAtMs.value
           : this.updatedAtMs,
+      receiptImagePath: data.receiptImagePath.present
+          ? data.receiptImagePath.value
+          : this.receiptImagePath,
     );
   }
 
@@ -1098,7 +1142,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           ..write('currencyCode: $currencyCode, ')
           ..write('kind: $kind, ')
           ..write('createdAtMs: $createdAtMs, ')
-          ..write('updatedAtMs: $updatedAtMs')
+          ..write('updatedAtMs: $updatedAtMs, ')
+          ..write('receiptImagePath: $receiptImagePath')
           ..write(')'))
         .toString();
   }
@@ -1114,6 +1159,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     kind,
     createdAtMs,
     updatedAtMs,
+    receiptImagePath,
   );
   @override
   bool operator ==(Object other) =>
@@ -1127,7 +1173,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           other.currencyCode == this.currencyCode &&
           other.kind == this.kind &&
           other.createdAtMs == this.createdAtMs &&
-          other.updatedAtMs == this.updatedAtMs);
+          other.updatedAtMs == this.updatedAtMs &&
+          other.receiptImagePath == this.receiptImagePath);
 }
 
 class TransactionsCompanion extends UpdateCompanion<Transaction> {
@@ -1140,6 +1187,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
   final Value<String> kind;
   final Value<int> createdAtMs;
   final Value<int> updatedAtMs;
+  final Value<String?> receiptImagePath;
   final Value<int> rowid;
   const TransactionsCompanion({
     this.id = const Value.absent(),
@@ -1151,6 +1199,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     this.kind = const Value.absent(),
     this.createdAtMs = const Value.absent(),
     this.updatedAtMs = const Value.absent(),
+    this.receiptImagePath = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   TransactionsCompanion.insert({
@@ -1163,6 +1212,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     this.kind = const Value.absent(),
     required int createdAtMs,
     required int updatedAtMs,
+    this.receiptImagePath = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        ledgerId = Value(ledgerId),
@@ -1178,6 +1228,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Expression<String>? kind,
     Expression<int>? createdAtMs,
     Expression<int>? updatedAtMs,
+    Expression<String>? receiptImagePath,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1190,6 +1241,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       if (kind != null) 'kind': kind,
       if (createdAtMs != null) 'created_at_ms': createdAtMs,
       if (updatedAtMs != null) 'updated_at_ms': updatedAtMs,
+      if (receiptImagePath != null) 'receipt_image_path': receiptImagePath,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1204,6 +1256,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Value<String>? kind,
     Value<int>? createdAtMs,
     Value<int>? updatedAtMs,
+    Value<String?>? receiptImagePath,
     Value<int>? rowid,
   }) {
     return TransactionsCompanion(
@@ -1216,6 +1269,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       kind: kind ?? this.kind,
       createdAtMs: createdAtMs ?? this.createdAtMs,
       updatedAtMs: updatedAtMs ?? this.updatedAtMs,
+      receiptImagePath: receiptImagePath ?? this.receiptImagePath,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1250,6 +1304,9 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     if (updatedAtMs.present) {
       map['updated_at_ms'] = Variable<int>(updatedAtMs.value);
     }
+    if (receiptImagePath.present) {
+      map['receipt_image_path'] = Variable<String>(receiptImagePath.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1268,6 +1325,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
           ..write('kind: $kind, ')
           ..write('createdAtMs: $createdAtMs, ')
           ..write('updatedAtMs: $updatedAtMs, ')
+          ..write('receiptImagePath: $receiptImagePath, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -4883,6 +4941,7 @@ typedef $$TransactionsTableCreateCompanionBuilder =
       Value<String> kind,
       required int createdAtMs,
       required int updatedAtMs,
+      Value<String?> receiptImagePath,
       Value<int> rowid,
     });
 typedef $$TransactionsTableUpdateCompanionBuilder =
@@ -4896,6 +4955,7 @@ typedef $$TransactionsTableUpdateCompanionBuilder =
       Value<String> kind,
       Value<int> createdAtMs,
       Value<int> updatedAtMs,
+      Value<String?> receiptImagePath,
       Value<int> rowid,
     });
 
@@ -5075,6 +5135,11 @@ class $$TransactionsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get receiptImagePath => $composableBuilder(
+    column: $table.receiptImagePath,
+    builder: (column) => ColumnFilters(column),
+  );
+
   $$LedgersTableFilterComposer get ledgerId {
     final $$LedgersTableFilterComposer composer = $composerBuilder(
       composer: this,
@@ -5249,6 +5314,11 @@ class $$TransactionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get receiptImagePath => $composableBuilder(
+    column: $table.receiptImagePath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$LedgersTableOrderingComposer get ledgerId {
     final $$LedgersTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -5313,6 +5383,11 @@ class $$TransactionsTableAnnotationComposer
 
   GeneratedColumn<int> get updatedAtMs => $composableBuilder(
     column: $table.updatedAtMs,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get receiptImagePath => $composableBuilder(
+    column: $table.receiptImagePath,
     builder: (column) => column,
   );
 
@@ -5487,6 +5562,7 @@ class $$TransactionsTableTableManager
                 Value<String> kind = const Value.absent(),
                 Value<int> createdAtMs = const Value.absent(),
                 Value<int> updatedAtMs = const Value.absent(),
+                Value<String?> receiptImagePath = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => TransactionsCompanion(
                 id: id,
@@ -5498,6 +5574,7 @@ class $$TransactionsTableTableManager
                 kind: kind,
                 createdAtMs: createdAtMs,
                 updatedAtMs: updatedAtMs,
+                receiptImagePath: receiptImagePath,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -5511,6 +5588,7 @@ class $$TransactionsTableTableManager
                 Value<String> kind = const Value.absent(),
                 required int createdAtMs,
                 required int updatedAtMs,
+                Value<String?> receiptImagePath = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => TransactionsCompanion.insert(
                 id: id,
@@ -5522,6 +5600,7 @@ class $$TransactionsTableTableManager
                 kind: kind,
                 createdAtMs: createdAtMs,
                 updatedAtMs: updatedAtMs,
+                receiptImagePath: receiptImagePath,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

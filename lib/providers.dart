@@ -99,13 +99,31 @@ class ItemsNotifier extends StateNotifier<List<LedgerLineItem>> {
   Future<void> reloadFromDatabase() => _load();
 
   /// Commits the draft bill to history and reloads the empty draft.
-  Future<void> postDraftBill(String description) async {
+  Future<void> postDraftBill(
+    String description, {
+    String category = 'other',
+    int? createdAtMs,
+    int taxAmountMinor = 0,
+    String? receiptSourcePath,
+  }) async {
     await _ref.read(billPostingRepositoryProvider).postDraftBill(
           ledgerId: kDefaultLedgerId,
           description: description,
+          category: category,
+          createdAtMs: createdAtMs,
+          taxAmountMinor: taxAmountMinor,
+          receiptSourcePath: receiptSourcePath,
         );
     await _load();
     _scheduleInvalidatePostedBills(_ref);
+  }
+
+  Future<void> deletePostedBill(String transactionId) async {
+    await _ref
+        .read(billPostingRepositoryProvider)
+        .deletePostedTransaction(transactionId);
+    _scheduleInvalidatePostedBills(_ref);
+    _ref.invalidate(transactionDetailProvider(transactionId));
   }
 }
 

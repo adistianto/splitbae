@@ -619,5 +619,97 @@
   "fabCreateReport": "Create Report",
   "@fabCreateReport": {
     "description": "FAB speed dial: jump to balances / settlements view."
+  },
+  "addTransactionSheetTitle": "New bill",
+  "@addTransactionSheetTitle": {
+    "description": "Title for the full-screen add-transaction sheet from Bills."
+  },
+  "addTransactionSheetSubtitle": "Set details, then add line items and who paid.",
+  "@addTransactionSheetSubtitle": {
+    "description": "Explains the flow before posting."
+  },
+  "addTransactionCategoryLabel": "Category",
+  "@addTransactionCategoryLabel": {
+    "description": "Label for bill category selector."
+  },
+  "categoryFood": "Food",
+  "@categoryFood": {
+    "description": "Bill category: food and dining."
+  },
+  "categoryTransport": "Transport",
+  "@categoryTransport": {
+    "description": "Bill category: transport."
+  },
+  "categoryAccommodation": "Accommodation",
+  "@categoryAccommodation": {
+    "description": "Bill category: lodging."
+  },
+  "categoryOther": "Other",
+  "@categoryOther": {
+    "description": "Bill category: uncategorized."
+  },
+  "addTransactionDateLabel": "Date",
+  "@addTransactionDateLabel": {
+    "description": "Label for bill date picker."
+  },
+  "addTransactionTaxLabel": "Tax & service",
+  "@addTransactionTaxLabel": {
+    "description": "Optional tax and service charge in the bill currency."
+  },
+  "addTransactionReceiptLabel": "Receipt photo",
+  "@addTransactionReceiptLabel": {
+    "description": "Optional receipt image attachment."
+  },
+  "addTransactionReceiptPick": "Attach photo",
+  "@addTransactionReceiptPick": {
+    "description": "Button to pick a receipt image."
+  },
+  "addTransactionReceiptRemove": "Remove",
+  "@addTransactionReceiptRemove": {
+    "description": "Clear selected receipt image."
+  },
+  "addTransactionDraftSummary": "{itemCount} items · {peopleCount} people",
+  "@addTransactionDraftSummary": {
+    "description": "Summary of current draft line items and participants.",
+    "placeholders": {
+      "itemCount": {
+        "type": "int"
+      },
+      "peopleCount": {
+        "type": "int"
+      }
+    }
+  },
+  "addTransactionOpenDraft": "Line items & split",
+  "@addTransactionOpenDraft": {
+    "description": "Opens the draft split workspace to edit lines and payments."
+  },
+  "addTransactionPostAction": "Post bill",
+  "@addTransactionPostAction": {
+    "description": "Primary action to post the draft bill with entered metadata."
+  },
+  "billCardShare": "Share",
+  "@billCardShare": {
+    "description": "Share bill summary action on a posted bill card."
+  },
+  "billCardEdit": "Details",
+  "@billCardEdit": {
+    "description": "Open full transaction detail from a bill card."
+  },
+  "billCardDelete": "Delete",
+  "@billCardDelete": {
+    "description": "Delete a posted bill from history."
+  },
+  "billDeleteConfirmTitle": "Delete this bill?",
+  "@billDeleteConfirmTitle": {
+    "description": "Title for delete confirmation dialog."
+  },
+  "billDeleteConfirmBody": "This removes the bill and its lines from this device.",
+  "@billDeleteConfirmBody": {
+    "description": "Body for delete confirmation dialog."
+  },
+  "billSwipeDeleteHint": "Swipe left to delete",
+  "@billSwipeDeleteHint": {
+    "description": "Accessibility hint when bill row can be dismissed."
   }
 }

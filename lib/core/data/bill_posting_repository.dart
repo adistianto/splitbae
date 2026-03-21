@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:uuid/uuid.dart';
 
+import 'receipt_image_store.dart';
 import '../database/app_database.dart';
 import '../domain/ledger_ids.dart';
 import '../domain/posted_bill_summary.dart';
@@ -74,6 +75,9 @@ class BillPostingRepository {
     required String ledgerId,
     required String description,
     String category = 'other',
+    int? createdAtMs,
+    int taxAmountMinor = 0,
+    String? receiptSourcePath,
   }) async {
     final draftTx = draftTransactionIdForLedger(ledgerId);
     final lines = await LineItemRepository(_db).listLedgerLines(ledgerId);
@@ -138,6 +142,8 @@ class BillPostingRepository {
     final primaryCcy = _primaryCurrency(totals);
     final now = DateTime.now().millisecondsSinceEpoch;
     final postedId = const Uuid().v4();
+    final atMs = createdAtMs ?? now;
+    final persistedReceipt = await persistReceiptImageFromPath(receiptSourcePath);
 
     await _db.transaction(() async {
       await _db.into(_db.transactions).insert(
@@ -146,11 +152,12 @@ class BillPostingRepository {
               ledgerId: ledgerId,
               description: Value(description.trim()),
               category: Value(category),
-              taxAmountMinor: const Value(0),
+              taxAmountMinor: Value(taxAmountMinor),
               currencyCode: Value(primaryCcy),
               kind: const Value('normal'),
-              createdAtMs: now,
+              createdAtMs: atMs,
               updatedAtMs: now,
+              receiptImagePath: Value(persistedReceipt),
             ),
           );
 
@@ -188,5 +195,16 @@ class BillPostingRepository {
       }
     }
     return best.isNotEmpty ? best : 'IDR';
+  }
+
+  /// Removes a posted transaction and dependent rows; deletes receipt file if any.
+  Future<void> deletePostedTransaction(String transactionId) async {
+    final row = await (_db.select(_db.transactions)
+          ..where((t) => t.id.equals(transactionId)))
+        .getSingleOrNull();
+    if (row == null) return;
+    await deleteReceiptImageFileIfExists(row.receiptImagePath);
+    await (_db.delete(_db.transactions)..where((t) => t.id.equals(transactionId)))
+        .go();
   }
 }

@@ -971,6 +971,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Create Report'**
   String get fabCreateReport;
+
+  /// Title for the full-screen add-transaction sheet from Bills.
+  ///
+  /// In en, this message translates to:
+  /// **'New bill'**
+  String get addTransactionSheetTitle;
+
+  /// Explains the flow before posting.
+  ///
+  /// In en, this message translates to:
+  /// **'Set details, then add line items and who paid.'**
+  String get addTransactionSheetSubtitle;
+
+  /// Label for bill category selector.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get addTransactionCategoryLabel;
+
+  /// Bill category: food and dining.
+  ///
+  /// In en, this message translates to:
+  /// **'Food'**
+  String get categoryFood;
+
+  /// Bill category: transport.
+  ///
+  /// In en, this message translates to:
+  /// **'Transport'**
+  String get categoryTransport;
+
+  /// Bill category: lodging.
+  ///
+  /// In en, this message translates to:
+  /// **'Accommodation'**
+  String get categoryAccommodation;
+
+  /// Bill category: uncategorized.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get categoryOther;
+
+  /// Label for bill date picker.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get addTransactionDateLabel;
+
+  /// Optional tax and service charge in the bill currency.
+  ///
+  /// In en, this message translates to:
+  /// **'Tax & service'**
+  String get addTransactionTaxLabel;
+
+  /// Optional receipt image attachment.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt photo'**
+  String get addTransactionReceiptLabel;
+
+  /// Button to pick a receipt image.
+  ///
+  /// In en, this message translates to:
+  /// **'Attach photo'**
+  String get addTransactionReceiptPick;
+
+  /// Clear selected receipt image.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get addTransactionReceiptRemove;
+
+  /// Summary of current draft line items and participants.
+  ///
+  /// In en, this message translates to:
+  /// **'{itemCount} items · {peopleCount} people'**
+  String addTransactionDraftSummary(int itemCount, int peopleCount);
+
+  /// Opens the draft split workspace to edit lines and payments.
+  ///
+  /// In en, this message translates to:
+  /// **'Line items & split'**
+  String get addTransactionOpenDraft;
+
+  /// Primary action to post the draft bill with entered metadata.
+  ///
+  /// In en, this message translates to:
+  /// **'Post bill'**
+  String get addTransactionPostAction;
+
+  /// Share bill summary action on a posted bill card.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get billCardShare;
+
+  /// Open full transaction detail from a bill card.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get billCardEdit;
+
+  /// Delete a posted bill from history.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get billCardDelete;
+
+  /// Title for delete confirmation dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this bill?'**
+  String get billDeleteConfirmTitle;
+
+  /// Body for delete confirmation dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'This removes the bill and its lines from this device.'**
+  String get billDeleteConfirmBody;
+
+  /// Accessibility hint when bill row can be dismissed.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe left to delete'**
+  String get billSwipeDeleteHint;
 }
 
 class _AppLocalizationsDelegate
