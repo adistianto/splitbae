@@ -9,12 +9,12 @@ import 'package:splitbae/core/layout/app_breakpoints.dart';
 import 'package:splitbae/core/platform/platform_capabilities.dart';
 import 'package:splitbae/core/ocr/receipt_ocr_probe_provider.dart';
 import 'package:splitbae/screens/balances_screen.dart';
-import 'package:splitbae/screens/settings_screen.dart';
-import 'package:splitbae/widgets/add_receipt_item_sheet.dart';
 import 'package:splitbae/screens/bills_screen.dart';
 import 'package:splitbae/screens/draft_split_screen.dart';
+import 'package:splitbae/screens/settings_screen.dart';
 
-/// Phone, fold, tablet, and desktop: navigation rail + optional two-pane split.
+/// Phone: **Bills · Balances** (v0-style). Draft split opens as a pushed screen.
+/// Wide: rail **Bills · Balances · Settings**; compose opens [DraftSplitScreen] on a route.
 class AdaptiveHomeScreen extends ConsumerStatefulWidget {
   const AdaptiveHomeScreen({super.key});
 
@@ -34,11 +34,19 @@ class _AdaptiveHomeScreenState extends ConsumerState<AdaptiveHomeScreen> {
     });
   }
 
+  void _openComposeDraft({bool openAddItemSheetAfter = false}) {
+    openDraftSplitScreen(
+      context,
+      ref,
+      openAddItemSheetAfter: openAddItemSheetAfter,
+    );
+  }
+
   void _openSettingsShortcut() {
     if (!mounted) return;
     final width = MediaQuery.sizeOf(context).width;
     if (width >= AppBreakpoints.expandedMin) {
-      setState(() => _railIndex = 3);
+      setState(() => _railIndex = 2);
     } else {
       Navigator.of(
         context,
@@ -63,10 +71,7 @@ class _AdaptiveHomeScreenState extends ConsumerState<AdaptiveHomeScreen> {
               ? 720.0
               : double.infinity;
           void goToSplitAndAddItem() {
-            setState(() => _bottomTabIndex = 1);
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              showAddReceiptItemSheet(context, ref);
-            });
+            _openComposeDraft(openAddItemSheetAfter: true);
           }
 
           return Scaffold(
@@ -81,15 +86,6 @@ class _AdaptiveHomeScreenState extends ConsumerState<AdaptiveHomeScreen> {
                       child: BillsScreen(
                         onComposeNewBill: goToSplitAndAddItem,
                       ),
-                    ),
-                  ),
-                ),
-                Center(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: maxContent),
-                    child: Padding(
-                      padding: hinge,
-                      child: const DraftSplitScreen(),
                     ),
                   ),
                 ),
@@ -115,11 +111,6 @@ class _AdaptiveHomeScreenState extends ConsumerState<AdaptiveHomeScreen> {
                   icon: const Icon(Icons.receipt_long_outlined),
                   selectedIcon: const Icon(Icons.receipt_long),
                   label: l10n.navBillsTab,
-                ),
-                NavigationDestination(
-                  icon: const Icon(Icons.edit_note_outlined),
-                  selectedIcon: const Icon(Icons.edit_note),
-                  label: l10n.navSplitTab,
                 ),
                 NavigationDestination(
                   icon: const Icon(Icons.account_balance_wallet_outlined),
@@ -151,11 +142,6 @@ class _AdaptiveHomeScreenState extends ConsumerState<AdaptiveHomeScreen> {
                     label: Text(l10n.navBillsTab),
                   ),
                   NavigationRailDestination(
-                    icon: const Icon(Icons.edit_note_outlined),
-                    selectedIcon: const Icon(Icons.edit_note),
-                    label: Text(l10n.navSplitTab),
-                  ),
-                  NavigationRailDestination(
                     icon: const Icon(Icons.account_balance_wallet_outlined),
                     selectedIcon: const Icon(Icons.account_balance_wallet),
                     label: Text(l10n.balancesTitle),
@@ -174,24 +160,16 @@ class _AdaptiveHomeScreenState extends ConsumerState<AdaptiveHomeScreen> {
                         padding: hinge,
                         child: BillsScreen(
                           onComposeNewBill: () {
-                            setState(() => _railIndex = 1);
-                            WidgetsBinding.instance.addPostFrameCallback((_) {
-                              showAddReceiptItemSheet(context, ref);
-                            });
+                            _openComposeDraft(openAddItemSheetAfter: true);
                           },
                         ),
                       )
                     : _railIndex == 1
                         ? Padding(
                             padding: hinge,
-                            child: const DraftSplitScreen(),
+                            child: const BalancesScreen(embedded: true),
                           )
-                        : _railIndex == 2
-                            ? Padding(
-                                padding: hinge,
-                                child: const BalancesScreen(embedded: true),
-                              )
-                            : const SafeArea(child: SettingsScreen(embedded: true)),
+                        : const SafeArea(child: SettingsScreen(embedded: true)),
               ),
             ],
           ),

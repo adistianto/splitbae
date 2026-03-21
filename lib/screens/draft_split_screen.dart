@@ -1,8 +1,10 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:splitbae/core/layout/adaptive_insets.dart';
 import 'package:splitbae/core/layout/app_breakpoints.dart';
+import 'package:splitbae/core/platform/host_platform.dart';
 import 'package:splitbae/core/widgets/adaptive_app_bar.dart';
 import 'package:splitbae/l10n/app_localizations.dart';
 import 'package:splitbae/screens/balances_screen.dart';
@@ -13,6 +15,24 @@ import 'package:splitbae/widgets/confirm_delete_line.dart';
 import 'package:splitbae/widgets/manage_participants_sheet.dart';
 import 'package:splitbae/widgets/split_home_content.dart';
 import 'package:splitbae/widgets/who_paid_sheet.dart';
+
+/// Opens the draft split workspace (v0: full-screen flow from Bills, not a tab).
+void openDraftSplitScreen(
+  BuildContext context,
+  WidgetRef ref, {
+  bool openAddItemSheetAfter = false,
+}) {
+  final route = hostPlatformIsApple()
+      ? CupertinoPageRoute<void>(builder: (_) => const DraftSplitScreen())
+      : MaterialPageRoute<void>(builder: (_) => const DraftSplitScreen());
+  Navigator.of(context).push(route).then((_) {
+    if (!context.mounted || !openAddItemSheetAfter) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!context.mounted) return;
+      showAddReceiptItemSheet(context, ref);
+    });
+  });
+}
 
 /// In-progress bill (draft lines, split, post) — v0 “compose” workspace.
 class DraftSplitScreen extends ConsumerWidget {

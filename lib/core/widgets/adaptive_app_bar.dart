@@ -13,6 +13,11 @@ ObstructingPreferredSizeWidget splitBaeCupertinoNavigationBar({
 }) {
   final theme = Theme.of(context);
   return CupertinoNavigationBar(
+    leading: Navigator.canPop(context)
+        ? CupertinoNavigationBarBackButton(
+            onPressed: () => Navigator.maybePop(context),
+          )
+        : null,
     middle: Text(title),
     backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.74),
     enableBackgroundFilterBlur: true,
@@ -40,7 +45,12 @@ PreferredSizeWidget splitBaeAdaptiveAppBar({
       actions: actions,
     );
   }
-  return AppBar(title: Text(title), centerTitle: centerTitle, actions: actions);
+  return AppBar(
+    title: Text(title),
+    centerTitle: centerTitle,
+    actions: actions,
+    automaticallyImplyLeading: Navigator.canPop(context),
+  );
 }
 
 /// Toolbar icon: [CupertinoButton] on iOS, [IconButton] on other platforms.
