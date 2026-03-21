@@ -266,6 +266,48 @@ abstract class AppLocalizations {
   /// **'Use the name and amount fields below'**
   String get scanReceiptEnterManuallySubtitle;
 
+  /// Snack bar when the user denies the camera permission prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera access is required to take a receipt photo.'**
+  String get scanReceiptPermissionCameraDenied;
+
+  /// Snack bar when the user denies photo library access (iOS).
+  ///
+  /// In en, this message translates to:
+  /// **'Photo library access is required to choose a receipt image.'**
+  String get scanReceiptPermissionPhotosDenied;
+
+  /// Dialog title when camera is blocked in system settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera access is off'**
+  String get scanReceiptPermissionCameraBlockedTitle;
+
+  /// Dialog body prompting the user to open system settings for camera.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow SplitBae to use the camera in Settings so you can scan receipts.'**
+  String get scanReceiptPermissionCameraBlockedBody;
+
+  /// Dialog title when photo library access is blocked in system settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo access is off'**
+  String get scanReceiptPermissionPhotosBlockedTitle;
+
+  /// Dialog body prompting the user to open system settings for photos.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow SplitBae to access your photo library in Settings so you can choose receipt images.'**
+  String get scanReceiptPermissionPhotosBlockedBody;
+
+  /// Opens the app’s page in system Settings (permissions).
+  ///
+  /// In en, this message translates to:
+  /// **'Open Settings'**
+  String get scanReceiptPermissionOpenSettings;
+
   /// When native OCR exceeds the time limit.
   ///
   /// In en, this message translates to:
@@ -284,17 +326,47 @@ abstract class AppLocalizations {
   /// **'Pick a line to use'**
   String get scanReceiptPickLine;
 
+  /// Primary action to import every parsed OCR line into the draft bill.
+  ///
+  /// In en, this message translates to:
+  /// **'Add all {count} lines'**
+  String scanReceiptAddAllLines(int count);
+
+  /// Snack bar after batch-importing OCR lines to the draft.
+  ///
+  /// In en, this message translates to:
+  /// **'Added {count} lines from the receipt.'**
+  String scanReceiptBatchAdded(int count);
+
   /// Snack bar when OCR text had no parseable lines.
   ///
   /// In en, this message translates to:
   /// **'No lines with an amount were found. Try a clearer photo or enter the item manually.'**
   String get scanReceiptNoLines;
 
-  /// When OCR is not supported (e.g. web/desktop).
+  /// Legacy copy; prefer scanReceiptNoNativeOcr when explaining desktop/web.
   ///
   /// In en, this message translates to:
   /// **'Receipt scanning is only available in the Android and iOS apps.'**
   String get scanReceiptUnavailable;
+
+  /// Desktop/web: open a file dialog to pick a receipt image.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose image file'**
+  String get scanReceiptChooseImageFile;
+
+  /// Short hint above camera/file/manual options when native OCR is unavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'On-device OCR runs on Android and iOS only—not on desktop or web in this app.'**
+  String get scanReceiptNonMobileScanHint;
+
+  /// After user picks an image on a platform without native OCR.
+  ///
+  /// In en, this message translates to:
+  /// **'On-device text recognition is only implemented for Android and iOS (not on desktop or web in this app). Enter the line below, or use the phone app to scan.'**
+  String get scanReceiptNoNativeOcr;
 
   /// Generic OCR failure snack bar.
   ///

@@ -9,6 +9,7 @@ import 'package:splitbae/core/data/amount_minor.dart';
 import 'package:splitbae/core/domain/ledger_line_item.dart';
 import 'package:splitbae/core/platform/host_platform.dart';
 import 'package:splitbae/currency_catalog.dart';
+import 'package:splitbae/core/ocr/receipt_line_parse.dart';
 import 'package:splitbae/core/ocr/receipt_ocr_probe_provider.dart';
 import 'package:splitbae/providers.dart';
 import 'package:splitbae/widgets/item_assignee_chips.dart';
@@ -35,10 +36,7 @@ Widget receiptOcrProbeBanner(
               Icon(Icons.info_outline, color: scheme.primary, size: 22),
               const SizedBox(width: 10),
               Expanded(
-                child: Text(
-                  text,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
+                child: Text(text, style: Theme.of(context).textTheme.bodySmall),
               ),
             ],
           ),
@@ -255,17 +253,64 @@ class _AddItemFormCupertinoState extends ConsumerState<_AddItemFormCupertino> {
     }
     final notifier = ref.read(itemsProvider.notifier);
     if (widget.existingLine != null) {
+      final id = widget.existingLine!.id;
       await notifier.updateItem(
-        id: widget.existingLine!.id,
+        id: id,
         name: name,
         price: price,
         currencyCode: _currencyCode,
       );
+      await notifier.setLineAssignments(
+        lineId: id,
+        selectedParticipantIds: _assigneeIds,
+      );
     } else {
-      await notifier.addItem(name, price, _currencyCode);
+      final id = await notifier.addItem(name, price, _currencyCode);
+      await notifier.setLineAssignments(
+        lineId: id,
+        selectedParticipantIds: _assigneeIds,
+      );
     }
     if (!context.mounted) return;
     Navigator.of(context).pop();
+  }
+
+  Future<void> _addOcrLinesToDraft(
+    List<ReceiptLineCandidate> candidates,
+  ) async {
+    final participants = ref.read(participantsProvider);
+    final allIds = participants.map((e) => e.id).toSet();
+    final notifier = ref.read(itemsProvider.notifier);
+    for (final c in candidates) {
+      final id = await notifier.addItem(c.label, c.amount, _currencyCode);
+      await notifier.setLineAssignments(
+        lineId: id,
+        selectedParticipantIds: allIds,
+      );
+    }
+  }
+
+  Future<void> _onScanPressed(
+    BuildContext context,
+    AppLocalizations l10n,
+  ) async {
+    final n = await runReceiptScanFlow(
+      context: context,
+      nameController: _nameCtrl,
+      priceController: _priceCtrl,
+      currencyCode: _currencyCode,
+      onApplied: () => setState(() {}),
+      l10n: l10n,
+      onAddAllLines: widget.existingLine == null ? _addOcrLinesToDraft : null,
+    );
+    if (!context.mounted) return;
+    if (n != null && n > 1) {
+      final messenger = ScaffoldMessenger.of(context);
+      Navigator.of(context).pop();
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.scanReceiptBatchAdded(n))),
+      );
+    }
   }
 
   @override
@@ -299,14 +344,7 @@ class _AddItemFormCupertinoState extends ConsumerState<_AddItemFormCupertino> {
           receiptOcrProbeBanner(context, ref, l10n, material: false),
           CupertinoButton(
             padding: const EdgeInsets.symmetric(vertical: 8),
-            onPressed: () => runReceiptScanFlow(
-              context: context,
-              nameController: _nameCtrl,
-              priceController: _priceCtrl,
-              currencyCode: _currencyCode,
-              onApplied: () => setState(() {}),
-              l10n: l10n,
-            ),
+            onPressed: () => _onScanPressed(context, l10n),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -528,6 +566,44 @@ class _AddItemFormMaterialState extends ConsumerState<_AddItemFormMaterial> {
     );
   }
 
+  Future<void> _addOcrLinesToDraft(
+    List<ReceiptLineCandidate> candidates,
+  ) async {
+    final participants = ref.read(participantsProvider);
+    final allIds = participants.map((e) => e.id).toSet();
+    final notifier = ref.read(itemsProvider.notifier);
+    for (final c in candidates) {
+      final id = await notifier.addItem(c.label, c.amount, _currencyCode);
+      await notifier.setLineAssignments(
+        lineId: id,
+        selectedParticipantIds: allIds,
+      );
+    }
+  }
+
+  Future<void> _onScanPressed(
+    BuildContext context,
+    AppLocalizations l10n,
+  ) async {
+    final n = await runReceiptScanFlow(
+      context: context,
+      nameController: _nameCtrl,
+      priceController: _priceCtrl,
+      currencyCode: _currencyCode,
+      onApplied: () => setState(() {}),
+      l10n: l10n,
+      onAddAllLines: widget.existingLine == null ? _addOcrLinesToDraft : null,
+    );
+    if (!context.mounted) return;
+    if (n != null && n > 1) {
+      final messenger = ScaffoldMessenger.of(context);
+      Navigator.of(context).pop();
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.scanReceiptBatchAdded(n))),
+      );
+    }
+  }
+
   Future<void> _submit(BuildContext context, AppLocalizations l10n) async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     final name = _nameCtrl.text.trim();
@@ -590,14 +666,7 @@ class _AddItemFormMaterialState extends ConsumerState<_AddItemFormMaterial> {
             const SizedBox(height: 16),
             receiptOcrProbeBanner(context, ref, l10n, material: true),
             OutlinedButton.icon(
-              onPressed: () => runReceiptScanFlow(
-                context: context,
-                nameController: _nameCtrl,
-                priceController: _priceCtrl,
-                currencyCode: _currencyCode,
-                onApplied: () => setState(() {}),
-                l10n: l10n,
-              ),
+              onPressed: () => _onScanPressed(context, l10n),
               icon: const Icon(Icons.document_scanner_outlined),
               label: Text(l10n.scanReceiptButton),
             ),

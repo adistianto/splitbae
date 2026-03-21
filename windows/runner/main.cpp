@@ -5,6 +5,12 @@
 #include "flutter_window.h"
 #include "utils.h"
 
+// On-device receipt OCR (`splitbae/receipt_ocr`) is registered from
+// `FlutterWindow::OnCreate` in `flutter_window.cpp` via `receipt_ocr_win.cpp`
+// (WinRT `Windows.Media.Ocr`). NPU-oriented `Microsoft.Windows.AI.Imaging`
+// text recognition can be layered in when the Windows App SDK is linked; see
+// `receipt_ocr_win.cpp` header comment.
+
 int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
                       _In_ wchar_t *command_line, _In_ int show_command) {
   // Attach to console when present (e.g., 'flutter run') or create a

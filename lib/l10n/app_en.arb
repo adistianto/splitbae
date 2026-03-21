@@ -112,6 +112,34 @@
   "@scanReceiptEnterManuallySubtitle": {
     "description": "Explains manual path when OCR is skipped."
   },
+  "scanReceiptPermissionCameraDenied": "Camera access is required to take a receipt photo.",
+  "@scanReceiptPermissionCameraDenied": {
+    "description": "Snack bar when the user denies the camera permission prompt."
+  },
+  "scanReceiptPermissionPhotosDenied": "Photo library access is required to choose a receipt image.",
+  "@scanReceiptPermissionPhotosDenied": {
+    "description": "Snack bar when the user denies photo library access (iOS)."
+  },
+  "scanReceiptPermissionCameraBlockedTitle": "Camera access is off",
+  "@scanReceiptPermissionCameraBlockedTitle": {
+    "description": "Dialog title when camera is blocked in system settings."
+  },
+  "scanReceiptPermissionCameraBlockedBody": "Allow SplitBae to use the camera in Settings so you can scan receipts.",
+  "@scanReceiptPermissionCameraBlockedBody": {
+    "description": "Dialog body prompting the user to open system settings for camera."
+  },
+  "scanReceiptPermissionPhotosBlockedTitle": "Photo access is off",
+  "@scanReceiptPermissionPhotosBlockedTitle": {
+    "description": "Dialog title when photo library access is blocked in system settings."
+  },
+  "scanReceiptPermissionPhotosBlockedBody": "Allow SplitBae to access your photo library in Settings so you can choose receipt images.",
+  "@scanReceiptPermissionPhotosBlockedBody": {
+    "description": "Dialog body prompting the user to open system settings for photos."
+  },
+  "scanReceiptPermissionOpenSettings": "Open Settings",
+  "@scanReceiptPermissionOpenSettings": {
+    "description": "Opens the app’s page in system Settings (permissions)."
+  },
   "scanReceiptTimeout": "Scanning took too long. Try another photo or enter the item manually below.",
   "@scanReceiptTimeout": {
     "description": "When native OCR exceeds the time limit."
@@ -124,13 +152,43 @@
   "@scanReceiptPickLine": {
     "description": "Header when OCR found multiple price lines."
   },
+  "scanReceiptAddAllLines": "Add all {count} lines",
+  "@scanReceiptAddAllLines": {
+    "description": "Primary action to import every parsed OCR line into the draft bill.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "scanReceiptBatchAdded": "Added {count} lines from the receipt.",
+  "@scanReceiptBatchAdded": {
+    "description": "Snack bar after batch-importing OCR lines to the draft.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "scanReceiptNoLines": "No lines with an amount were found. Try a clearer photo or enter the item manually.",
   "@scanReceiptNoLines": {
     "description": "Snack bar when OCR text had no parseable lines."
   },
   "scanReceiptUnavailable": "Receipt scanning is only available in the Android and iOS apps.",
   "@scanReceiptUnavailable": {
-    "description": "When OCR is not supported (e.g. web/desktop)."
+    "description": "Legacy copy; prefer scanReceiptNoNativeOcr when explaining desktop/web."
+  },
+  "scanReceiptChooseImageFile": "Choose image file",
+  "@scanReceiptChooseImageFile": {
+    "description": "Desktop/web: open a file dialog to pick a receipt image."
+  },
+  "scanReceiptNonMobileScanHint": "On-device OCR runs on Android and iOS only—not on desktop or web in this app.",
+  "@scanReceiptNonMobileScanHint": {
+    "description": "Short hint above camera/file/manual options when native OCR is unavailable."
+  },
+  "scanReceiptNoNativeOcr": "On-device text recognition is only implemented for Android and iOS (not on desktop or web in this app). Enter the line below, or use the phone app to scan.",
+  "@scanReceiptNoNativeOcr": {
+    "description": "After user picks an image on a platform without native OCR."
   },
   "scanReceiptErrorGeneric": "Could not read text from the image.",
   "@scanReceiptErrorGeneric": {

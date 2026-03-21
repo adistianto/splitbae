@@ -3,13 +3,17 @@ import 'package:flutter/foundation.dart'
 import 'package:flutter/services.dart';
 import 'package:splitbae/core/ocr/receipt_ocr_probe_result.dart';
 
-/// Native on-device text recognition: ML Kit (Android) and Vision (iOS).
+/// Native **on-device** text recognition via `splitbae/receipt_ocr`:
+/// **ML Kit** (Android), **Vision** (iOS + macOS), **WinRT** `Windows.Media.Ocr`
+/// (Windows). Parsing helpers in Dart run after native text is returned.
+///
+/// **Linux / web:** not wired. Linux typically needs Tesseract or a similar engine.
 class ReceiptOcrChannel {
   ReceiptOcrChannel._();
 
   static const MethodChannel _channel = MethodChannel('splitbae/receipt_ocr');
 
-  /// Android / iPhone / iPad only (native channel registered there).
+  /// `true` only on **Android** and **iOS** where the native channel exists.
   static bool get isSupported {
     if (kIsWeb) return false;
     return defaultTargetPlatform == TargetPlatform.android ||
@@ -44,7 +48,7 @@ class ReceiptOcrChannel {
   static Future<String> recognizeText(String absoluteImagePath) async {
     if (!isSupported) {
       throw UnsupportedError(
-        'Receipt OCR is only available on Android and iOS.',
+        'Receipt OCR is not available on this platform.',
       );
     }
     try {
@@ -58,7 +62,7 @@ class ReceiptOcrChannel {
     } on MissingPluginException {
       throw ReceiptOcrException(
         'missing_plugin',
-        'Receipt OCR is only available on Android and iOS.',
+        'Receipt OCR native implementation is missing.',
       );
     }
   }

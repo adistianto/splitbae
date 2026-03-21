@@ -98,6 +98,31 @@ class AppLocalizationsEn extends AppLocalizations {
       'Use the name and amount fields below';
 
   @override
+  String get scanReceiptPermissionCameraDenied =>
+      'Camera access is required to take a receipt photo.';
+
+  @override
+  String get scanReceiptPermissionPhotosDenied =>
+      'Photo library access is required to choose a receipt image.';
+
+  @override
+  String get scanReceiptPermissionCameraBlockedTitle => 'Camera access is off';
+
+  @override
+  String get scanReceiptPermissionCameraBlockedBody =>
+      'Allow SplitBae to use the camera in Settings so you can scan receipts.';
+
+  @override
+  String get scanReceiptPermissionPhotosBlockedTitle => 'Photo access is off';
+
+  @override
+  String get scanReceiptPermissionPhotosBlockedBody =>
+      'Allow SplitBae to access your photo library in Settings so you can choose receipt images.';
+
+  @override
+  String get scanReceiptPermissionOpenSettings => 'Open Settings';
+
+  @override
   String get scanReceiptTimeout =>
       'Scanning took too long. Try another photo or enter the item manually below.';
 
@@ -109,12 +134,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get scanReceiptPickLine => 'Pick a line to use';
 
   @override
+  String scanReceiptAddAllLines(int count) {
+    return 'Add all $count lines';
+  }
+
+  @override
+  String scanReceiptBatchAdded(int count) {
+    return 'Added $count lines from the receipt.';
+  }
+
+  @override
   String get scanReceiptNoLines =>
       'No lines with an amount were found. Try a clearer photo or enter the item manually.';
 
   @override
   String get scanReceiptUnavailable =>
       'Receipt scanning is only available in the Android and iOS apps.';
+
+  @override
+  String get scanReceiptChooseImageFile => 'Choose image file';
+
+  @override
+  String get scanReceiptNonMobileScanHint =>
+      'On-device OCR runs on Android and iOS only—not on desktop or web in this app.';
+
+  @override
+  String get scanReceiptNoNativeOcr =>
+      'On-device text recognition is only implemented for Android and iOS (not on desktop or web in this app). Enter the line below, or use the phone app to scan.';
 
   @override
   String get scanReceiptErrorGeneric => 'Could not read text from the image.';

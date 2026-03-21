@@ -99,6 +99,32 @@ class AppLocalizationsId extends AppLocalizations {
       'Pakai kolom nama dan jumlah di bawah';
 
   @override
+  String get scanReceiptPermissionCameraDenied =>
+      'Akses kamera diperlukan untuk memotret struk.';
+
+  @override
+  String get scanReceiptPermissionPhotosDenied =>
+      'Akses galeri diperlukan untuk memilih gambar struk.';
+
+  @override
+  String get scanReceiptPermissionCameraBlockedTitle =>
+      'Akses kamera dimatikan';
+
+  @override
+  String get scanReceiptPermissionCameraBlockedBody =>
+      'Izinkan SplitBae menggunakan kamera di Pengaturan agar Anda bisa memindai struk.';
+
+  @override
+  String get scanReceiptPermissionPhotosBlockedTitle => 'Akses foto dimatikan';
+
+  @override
+  String get scanReceiptPermissionPhotosBlockedBody =>
+      'Izinkan SplitBae mengakses galeri di Pengaturan agar Anda bisa memilih gambar struk.';
+
+  @override
+  String get scanReceiptPermissionOpenSettings => 'Buka Pengaturan';
+
+  @override
   String get scanReceiptTimeout =>
       'Pindaian terlalu lama. Coba foto lain atau isi item manual di bawah.';
 
@@ -110,12 +136,33 @@ class AppLocalizationsId extends AppLocalizations {
   String get scanReceiptPickLine => 'Pilih baris yang dipakai';
 
   @override
+  String scanReceiptAddAllLines(int count) {
+    return 'Tambah semua $count baris';
+  }
+
+  @override
+  String scanReceiptBatchAdded(int count) {
+    return 'Menambahkan $count baris dari struk.';
+  }
+
+  @override
   String get scanReceiptNoLines =>
       'Tidak ada baris dengan nominal. Coba foto lebih jelas atau isi manual.';
 
   @override
   String get scanReceiptUnavailable =>
       'Pindaian struk hanya di aplikasi Android dan iOS.';
+
+  @override
+  String get scanReceiptChooseImageFile => 'Pilih file gambar';
+
+  @override
+  String get scanReceiptNonMobileScanHint =>
+      'OCR di perangkat hanya di Android dan iOS—bukan di desktop atau web di aplikasi ini.';
+
+  @override
+  String get scanReceiptNoNativeOcr =>
+      'Pengenalan teks di perangkat hanya di Android dan iOS (bukan di desktop atau web di aplikasi ini). Isi baris di bawah, atau gunakan aplikasi di ponsel untuk memindai.';
 
   @override
   String get scanReceiptErrorGeneric => 'Tidak bisa membaca teks dari gambar.';
