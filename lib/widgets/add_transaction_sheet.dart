@@ -18,6 +18,7 @@ import 'package:splitbae/money_format.dart';
 import 'package:splitbae/providers.dart';
 import 'package:splitbae/screens/draft_split_screen.dart';
 import 'package:splitbae/widgets/add_receipt_item_sheet.dart';
+import 'package:splitbae/widgets/draft_paid_by_compact.dart';
 import 'package:splitbae/widgets/who_paid_sheet.dart';
 
 Future<void> showAddTransactionSheet(BuildContext context) {
@@ -666,13 +667,17 @@ class _AddTransactionSheetBodyState
                               ),
                         ),
                         const SizedBox(height: 12),
-                        OutlinedButton.icon(
-                          onPressed: () {
-                            HapticFeedback.selectionClick();
-                            showWhoPaidSheet(context, ref);
-                          },
-                          icon: const Icon(Icons.payments_outlined),
-                          label: Text(l10n.addTransactionWhoPaidShortcut),
+                        const DraftPaidByCompact(),
+                        const SizedBox(height: 8),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: TextButton(
+                            onPressed: () {
+                              HapticFeedback.selectionClick();
+                              showWhoPaidSheet(context, ref);
+                            },
+                            child: Text(l10n.paidByFullEditor),
+                          ),
                         ),
                         const SizedBox(height: 8),
                         OutlinedButton.icon(

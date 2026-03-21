@@ -96,12 +96,15 @@ class DraftPaymentRepository {
   }
 
   Future<void> resetToFirstPayerFull(String ledgerId) async {
-    final draftTx = draftTransactionIdForLedger(ledgerId);
-    final totals = await draftLineTotalsByCurrency(ledgerId);
     final participants = await ParticipantRepository(_db).listParticipants(ledgerId);
     if (participants.isEmpty) return;
+    await setSinglePayerFull(ledgerId, participants.first.id);
+  }
 
-    final payerId = participants.first.id;
+  /// One participant pays the full line-total for each currency (no tax).
+  Future<void> setSinglePayerFull(String ledgerId, String participantId) async {
+    final draftTx = draftTransactionIdForLedger(ledgerId);
+    final totals = await draftLineTotalsByCurrency(ledgerId);
     final uuid = const Uuid();
     final rows = <TransactionPayment>[];
     for (final e in totals.entries) {
@@ -110,7 +113,7 @@ class DraftPaymentRepository {
         TransactionPayment(
           id: uuid.v4(),
           transactionId: draftTx,
-          participantId: payerId,
+          participantId: participantId,
           amountMinor: e.value,
           currencyCode: e.key,
         ),

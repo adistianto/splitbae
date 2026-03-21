@@ -478,6 +478,25 @@ class AppLocalizationsId extends AppLocalizations {
   String get whoPaidBillTotalLabel => 'Total tagihan';
 
   @override
+  String get paidByModeSingle => 'Satu orang';
+
+  @override
+  String get paidByModeSplit => 'Bagi';
+
+  @override
+  String get paidByMultiCurrencyHint =>
+      'Draf ini memakai lebih dari satu mata uang. Pakai editor lengkap untuk siapa bayar tiap mata uang.';
+
+  @override
+  String get paidByBalanced => 'Pas';
+
+  @override
+  String get paidByRemainingLabel => 'Sisa';
+
+  @override
+  String get paidByFullEditor => 'Editor lengkap';
+
+  @override
   String get postBillTitle => 'Posting tagihan';
 
   @override

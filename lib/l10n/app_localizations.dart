@@ -916,6 +916,42 @@ abstract class AppLocalizations {
   /// **'Bill total'**
   String get whoPaidBillTotalLabel;
 
+  /// Segment: single payer for the bill.
+  ///
+  /// In en, this message translates to:
+  /// **'One person'**
+  String get paidByModeSingle;
+
+  /// Segment: multiple people paid parts of the bill.
+  ///
+  /// In en, this message translates to:
+  /// **'Split'**
+  String get paidByModeSplit;
+
+  /// Shown when compact paid-by UI cannot cover multi-currency drafts.
+  ///
+  /// In en, this message translates to:
+  /// **'This draft uses more than one currency. Use the full editor to enter who paid each currency.'**
+  String get paidByMultiCurrencyHint;
+
+  /// Split payments add up to the bill total.
+  ///
+  /// In en, this message translates to:
+  /// **'Balanced'**
+  String get paidByBalanced;
+
+  /// Difference between bill total and entered payments.
+  ///
+  /// In en, this message translates to:
+  /// **'Remaining'**
+  String get paidByRemainingLabel;
+
+  /// Opens the full who-paid sheet (all currencies).
+  ///
+  /// In en, this message translates to:
+  /// **'Full editor'**
+  String get paidByFullEditor;
+
   /// Bottom sheet title when saving the draft bill to history.
   ///
   /// In en, this message translates to:

@@ -589,6 +589,30 @@
   "@whoPaidBillTotalLabel": {
     "description": "Label before the required total for a currency in who-paid."
   },
+  "paidByModeSingle": "One person",
+  "@paidByModeSingle": {
+    "description": "Segment: single payer for the bill."
+  },
+  "paidByModeSplit": "Split",
+  "@paidByModeSplit": {
+    "description": "Segment: multiple people paid parts of the bill."
+  },
+  "paidByMultiCurrencyHint": "This draft uses more than one currency. Use the full editor to enter who paid each currency.",
+  "@paidByMultiCurrencyHint": {
+    "description": "Shown when compact paid-by UI cannot cover multi-currency drafts."
+  },
+  "paidByBalanced": "Balanced",
+  "@paidByBalanced": {
+    "description": "Split payments add up to the bill total."
+  },
+  "paidByRemainingLabel": "Remaining",
+  "@paidByRemainingLabel": {
+    "description": "Difference between bill total and entered payments."
+  },
+  "paidByFullEditor": "Full editor",
+  "@paidByFullEditor": {
+    "description": "Opens the full who-paid sheet (all currencies)."
+  },
   "postBillTitle": "Post bill",
   "@postBillTitle": {
     "description": "Bottom sheet title when saving the draft bill to history."

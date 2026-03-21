@@ -474,6 +474,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get whoPaidBillTotalLabel => 'Bill total';
 
   @override
+  String get paidByModeSingle => 'One person';
+
+  @override
+  String get paidByModeSplit => 'Split';
+
+  @override
+  String get paidByMultiCurrencyHint =>
+      'This draft uses more than one currency. Use the full editor to enter who paid each currency.';
+
+  @override
+  String get paidByBalanced => 'Balanced';
+
+  @override
+  String get paidByRemainingLabel => 'Remaining';
+
+  @override
+  String get paidByFullEditor => 'Full editor';
+
+  @override
   String get postBillTitle => 'Post bill';
 
   @override
