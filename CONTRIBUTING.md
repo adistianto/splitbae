@@ -32,8 +32,8 @@ After changing **`rust/src/api/`** or FRB types, regenerate the bridge **before*
 - **Schema**: `lib/core/database/app_database.dart` (versioned migrations). Generated code: `app_database.g.dart` (do not hand-edit). **v2** adds indexes on `participants(ledger_id)` and `receipt_lines(ledger_id, created_at_ms)` for list/FK workloads.
 - **Prefs key**: `kEncryptDatabasePreferenceKey` in `lib/core/prefs_keys.dart` (shared by settings UI and `openAppDatabase`).
 - **Encryption**: optional, via **SQLCipher** (`sqflite_sqlcipher`). When **Encrypt local database** is on, the passphrase is stored in **Flutter Secure Storage** (`splitbae_sqlcipher_passphrase_v1`), generated with **256 bits** of `Random.secure()` entropy (Base64URL). Turning encryption **off** removes that key from secure storage after the DB files are deleted.
-- **Toggling encryption** in Settings shows a confirmation, then **persists the new flag**, **deletes** the SQLite files (including WAL/SHM), **reopens** the DB in the new mode, and **re-seeds** the default ledger. There is **no in-place re-key** yet—local bill data is intentionally wiped (secure-by-design: no mixed plain/encrypted file state).
-- **Runtime swap**: `AppDatabaseController` (`lib/core/providers/database_providers.dart`) holds the active `AppDatabase` so the process does not need a full app restart after a successful toggle.
+- **Toggling encryption** copies all rows into memory (`LocalDatabaseSnapshot`), recreates the on-disk file in the new mode (plain vs SQLCipher), imports rows back, then runs `ensureSeedData` only if needed (empty DB). On failure, files are cleared, the previous encryption flag is restored, and the snapshot is written back—users see a non-fatal snackbar if the switch rolled back.
+- **Runtime swap**: `AppDatabaseController.migrateEncryptionPreservingData` (`lib/core/providers/database_providers.dart`) holds the active `AppDatabase` so the app does not need a full restart after a successful toggle.
 
 ## Style
 

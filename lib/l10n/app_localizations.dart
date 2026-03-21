@@ -266,17 +266,23 @@ abstract class AppLocalizations {
   /// **'Change database encryption?'**
   String get settingsEncryptChangeTitle;
 
-  /// Warns that toggling encryption wipes local DB; MVP has no migrate-in-place.
+  /// Explains in-place migration when toggling SQLCipher; no server upload.
   ///
   /// In en, this message translates to:
-  /// **'To apply this, your local bill data will be erased and replaced with a fresh empty database. This cannot be undone.'**
+  /// **'Your ledgers, people, and line items will be copied into the new encrypted or plain database on this device. Nothing is uploaded. If something goes wrong, we restore your previous data and leave encryption as it was.'**
   String get settingsEncryptChangeBody;
 
-  /// Destructive confirmation to wipe local data and recreate the DB.
+  /// Confirm encryption migration (data preserved on device).
   ///
   /// In en, this message translates to:
-  /// **'Erase and continue'**
+  /// **'Continue'**
   String get settingsEncryptChangeConfirm;
+
+  /// Snack bar when migration failed but snapshot restore succeeded.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t switch encryption; your data is unchanged.'**
+  String get settingsEncryptMigrationRolledBack;
 
   /// Snack bar when DB recreate fails after encryption toggle.
   ///

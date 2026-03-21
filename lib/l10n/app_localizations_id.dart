@@ -98,10 +98,14 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get settingsEncryptChangeBody =>
-      'Untuk menerapkan ini, data tagihan lokal akan dihapus dan diganti basis data baru yang kosong. Tidak bisa dibatalkan.';
+      'Buku besar, orang, dan baris item akan disalin ke basis data terenkripsi atau biasa yang baru di perangkat ini. Tidak ada unggahan. Jika terjadi masalah, data Anda dikembalikan dan pengaturan enkripsi tetap seperti semula.';
 
   @override
-  String get settingsEncryptChangeConfirm => 'Hapus dan lanjutkan';
+  String get settingsEncryptChangeConfirm => 'Lanjutkan';
+
+  @override
+  String get settingsEncryptMigrationRolledBack =>
+      'Enkripsi tidak bisa diubah; data Anda tidak berubah.';
 
   @override
   String get settingsEncryptChangeError =>

@@ -112,13 +112,17 @@
   "@settingsEncryptChangeTitle": {
     "description": "Dialog title when toggling SQLCipher on or off."
   },
-  "settingsEncryptChangeBody": "To apply this, your local bill data will be erased and replaced with a fresh empty database. This cannot be undone.",
+  "settingsEncryptChangeBody": "Your ledgers, people, and line items will be copied into the new encrypted or plain database on this device. Nothing is uploaded. If something goes wrong, we restore your previous data and leave encryption as it was.",
   "@settingsEncryptChangeBody": {
-    "description": "Warns that toggling encryption wipes local DB; MVP has no migrate-in-place."
+    "description": "Explains in-place migration when toggling SQLCipher; no server upload."
   },
-  "settingsEncryptChangeConfirm": "Erase and continue",
+  "settingsEncryptChangeConfirm": "Continue",
   "@settingsEncryptChangeConfirm": {
-    "description": "Destructive confirmation to wipe local data and recreate the DB."
+    "description": "Confirm encryption migration (data preserved on device)."
+  },
+  "settingsEncryptMigrationRolledBack": "Couldn’t switch encryption; your data is unchanged.",
+  "@settingsEncryptMigrationRolledBack": {
+    "description": "Snack bar when migration failed but snapshot restore succeeded."
   },
   "settingsEncryptChangeError": "Could not update the database. Try again or restart the app.",
   "@settingsEncryptChangeError": {

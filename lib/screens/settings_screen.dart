@@ -68,7 +68,6 @@ Future<void> _onEncryptDatabaseToggle({
   );
   if (confirmed != true || !context.mounted) return;
 
-  final previous = current;
   showDialog<void>(
     context: context,
     barrierDismissible: false,
@@ -79,22 +78,26 @@ Future<void> _onEncryptDatabaseToggle({
   );
 
   try {
-    await ref.read(appSettingsProvider.notifier).setEncryptDatabase(requested);
-    await ref.read(appDatabaseProvider.notifier).resetLocalDatabase();
+    final ok = await ref.read(appDatabaseProvider.notifier).migrateEncryptionPreservingData(
+          persistNewEncryptionPreference: () =>
+              ref.read(appSettingsProvider.notifier).setEncryptDatabase(requested),
+          setEncryptionPreference: (encrypt) =>
+              ref.read(appSettingsProvider.notifier).setEncryptDatabase(encrypt),
+          previousEncryption: current,
+        );
     await ref.read(itemsProvider.notifier).reloadFromDatabase();
     await ref.read(participantsProvider.notifier).reloadFromDatabase();
+    if (!context.mounted) return;
+    if (!ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.settingsEncryptMigrationRolledBack)),
+      );
+    }
   } catch (_) {
-    await ref.read(appSettingsProvider.notifier).setEncryptDatabase(previous);
-    try {
-      await ref.read(appDatabaseProvider.notifier).resetLocalDatabase();
-      await ref.read(itemsProvider.notifier).reloadFromDatabase();
-      await ref.read(participantsProvider.notifier).reloadFromDatabase();
-    } catch (_) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.settingsEncryptChangeError)),
-        );
-      }
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.settingsEncryptChangeError)),
+      );
     }
   } finally {
     if (context.mounted) {

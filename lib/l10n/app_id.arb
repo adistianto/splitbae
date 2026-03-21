@@ -28,7 +28,8 @@
   "settingsEncryptDatabase": "Enkripsi basis data lokal",
   "settingsEncryptDatabaseSubtitle": "Sangat disarankan jika ponsel bisa hilang atau dicuri—melindungi nama dan nominal saat disimpan. Default: mati.",
   "settingsEncryptChangeTitle": "Ubah enkripsi basis data?",
-  "settingsEncryptChangeBody": "Untuk menerapkan ini, data tagihan lokal akan dihapus dan diganti basis data baru yang kosong. Tidak bisa dibatalkan.",
-  "settingsEncryptChangeConfirm": "Hapus dan lanjutkan",
+  "settingsEncryptChangeBody": "Buku besar, orang, dan baris item akan disalin ke basis data terenkripsi atau biasa yang baru di perangkat ini. Tidak ada unggahan. Jika terjadi masalah, data Anda dikembalikan dan pengaturan enkripsi tetap seperti semula.",
+  "settingsEncryptChangeConfirm": "Lanjutkan",
+  "settingsEncryptMigrationRolledBack": "Enkripsi tidak bisa diubah; data Anda tidak berubah.",
   "settingsEncryptChangeError": "Basis data tidak bisa diperbarui. Coba lagi atau mulai ulang aplikasi."
 }

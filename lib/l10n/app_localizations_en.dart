@@ -98,10 +98,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsEncryptChangeBody =>
-      'To apply this, your local bill data will be erased and replaced with a fresh empty database. This cannot be undone.';
+      'Your ledgers, people, and line items will be copied into the new encrypted or plain database on this device. Nothing is uploaded. If something goes wrong, we restore your previous data and leave encryption as it was.';
 
   @override
-  String get settingsEncryptChangeConfirm => 'Erase and continue';
+  String get settingsEncryptChangeConfirm => 'Continue';
+
+  @override
+  String get settingsEncryptMigrationRolledBack =>
+      'Couldn’t switch encryption; your data is unchanged.';
 
   @override
   String get settingsEncryptChangeError =>

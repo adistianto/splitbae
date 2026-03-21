@@ -53,8 +53,8 @@ Future<AppDatabase> openAppDatabase() async {
 /// Closes [current], removes on-disk files, drops the SQLCipher passphrase when
 /// switching to plain mode, and opens a new database matching current prefs.
 ///
-/// Call after persisting the new encryption flag. Destructive: local data is
-/// erased; callers should run [LedgerRepository.ensureSeedData] (or equivalent).
+/// Call after persisting the new encryption flag. On-disk files are removed;
+/// encryption migration captures rows in memory first, then re-imports after this.
 Future<AppDatabase> recreateAppDatabase(AppDatabase current) async {
   await current.close();
   await deleteAppDatabaseFiles();
