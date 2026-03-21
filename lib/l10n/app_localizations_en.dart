@@ -35,10 +35,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsAppearanceSubtitle =>
-      'Theme follows your choice; you can still use system-wide dark mode when set to device default.';
+      'Light, Dark, or follow your device (System default on Android; Automatic on iPhone and Mac).';
 
   @override
-  String get settingsThemeSystem => 'Device default';
+  String get settingsThemeFollowDeviceMaterial => 'System default';
+
+  @override
+  String get settingsThemeFollowDeviceMaterialShort => 'System';
+
+  @override
+  String get settingsThemeFollowDeviceApple => 'Automatic';
 
   @override
   String get settingsThemeLight => 'Light';
@@ -47,11 +53,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsThemeDark => 'Dark';
 
   @override
-  String get settingsMaterialYou => 'Material You colors';
+  String get settingsMaterialYou => 'Material You dynamic color';
 
   @override
   String get settingsMaterialYouSubtitle =>
-      'Uses your wallpaper palette on supported Android devices. Turn off to use SplitBae’s fixed teal theme.';
+      'Uses your wallpaper palette for the app theme on supported devices. Off by default; turn on for Material You colors, or leave off for SplitBae’s default teal look.';
 
   @override
   String get languageDevice => 'Use device language';

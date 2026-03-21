@@ -35,10 +35,16 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get settingsAppearanceSubtitle =>
-      'Tema mengikuti pilihan Anda; mode gelap sistem tetap dipakai jika Anda pilih default perangkat.';
+      'Terang, Gelap, atau ikuti perangkat (Default sistem di Android; Otomatis di iPhone dan Mac).';
 
   @override
-  String get settingsThemeSystem => 'Default perangkat';
+  String get settingsThemeFollowDeviceMaterial => 'Default sistem';
+
+  @override
+  String get settingsThemeFollowDeviceMaterialShort => 'Sistem';
+
+  @override
+  String get settingsThemeFollowDeviceApple => 'Otomatis';
 
   @override
   String get settingsThemeLight => 'Terang';
@@ -47,11 +53,11 @@ class AppLocalizationsId extends AppLocalizations {
   String get settingsThemeDark => 'Gelap';
 
   @override
-  String get settingsMaterialYou => 'Warna Material You';
+  String get settingsMaterialYou => 'Warna dinamis Material You';
 
   @override
   String get settingsMaterialYouSubtitle =>
-      'Memakai palet dari wallpaper di Android 12+. Matikan untuk tema teal tetap SplitBae.';
+      'Memakai palet wallpaper untuk tema aplikasi di perangkat yang mendukung. Default mati; aktifkan untuk Material You, atau biarkan mati untuk tampilan teal default SplitBae.';
 
   @override
   String get languageDevice => 'Ikuti bahasa perangkat';

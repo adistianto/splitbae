@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -85,8 +84,7 @@ class AppSettings {
       defaultCurrencyCode: p.getString(_kDefaultCurrency) ?? 'IDR',
       encryptDatabase: p.getBool(kEncryptDatabasePreferenceKey) ?? false,
       themeModeCode: theme,
-      useDynamicColor: p.getBool(_kUseDynamicColor) ??
-          (defaultTargetPlatform == TargetPlatform.android),
+      useDynamicColor: p.getBool(_kUseDynamicColor) ?? false,
     );
   }
 
@@ -110,7 +108,7 @@ class AppSettingsNotifier extends StateNotifier<AppSettings> {
           defaultCurrencyCode: 'IDR',
           encryptDatabase: false,
           themeModeCode: 'system',
-          useDynamicColor: defaultTargetPlatform == TargetPlatform.android,
+          useDynamicColor: false,
         ),
       ) {
     _hydrate();

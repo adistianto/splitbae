@@ -21,7 +21,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await configureSplitBaePlatform();
   await RustLib.init();
-  final dynamicColorSupported = await probeDynamicColorAvailable();
+  final dynamicColorSupported = await resolveDynamicColorSupported();
   final db = await openAppDatabase();
   await LedgerRepository(db).ensureSeedData();
   runApp(

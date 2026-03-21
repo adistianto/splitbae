@@ -146,40 +146,52 @@ abstract class AppLocalizations {
   /// **'Appearance'**
   String get settingsAppearance;
 
-  /// Short note under appearance section on Material settings.
+  /// Explains light/dark vs follow device; references OS naming.
   ///
   /// In en, this message translates to:
-  /// **'Theme follows your choice; you can still use system-wide dark mode when set to device default.'**
+  /// **'Light, Dark, or follow your device (System default on Android; Automatic on iPhone and Mac).'**
   String get settingsAppearanceSubtitle;
 
-  /// Follow OS light/dark appearance.
+  /// Material Design: follow OS light/dark (Android, Windows, Linux, web).
   ///
   /// In en, this message translates to:
-  /// **'Device default'**
-  String get settingsThemeSystem;
+  /// **'System default'**
+  String get settingsThemeFollowDeviceMaterial;
 
-  /// Force light theme.
+  /// Short label for segmented control (Material platforms).
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get settingsThemeFollowDeviceMaterialShort;
+
+  /// Apple HIG: follow system appearance (iOS, macOS), same term as system Settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic'**
+  String get settingsThemeFollowDeviceApple;
+
+  /// Always use light theme.
   ///
   /// In en, this message translates to:
   /// **'Light'**
   String get settingsThemeLight;
 
-  /// Force dark theme.
+  /// Always use dark theme.
   ///
   /// In en, this message translates to:
   /// **'Dark'**
   String get settingsThemeDark;
 
-  /// Android 12+ toggle: use wallpaper-derived dynamic colors.
+  /// Settings toggle: Material 3 dynamic color from wallpaper (Material You).
   ///
   /// In en, this message translates to:
-  /// **'Material You colors'**
+  /// **'Material You dynamic color'**
   String get settingsMaterialYou;
 
-  /// Explains dynamic color on Android.
+  /// Explains M3 dynamic color toggle; default off.
   ///
   /// In en, this message translates to:
-  /// **'Uses your wallpaper palette on supported Android devices. Turn off to use SplitBae’s fixed teal theme.'**
+  /// **'Uses your wallpaper palette for the app theme on supported devices. Off by default; turn on for Material You colors, or leave off for SplitBae’s default teal look.'**
   String get settingsMaterialYouSubtitle;
 
   /// Option to follow the system locale instead of a fixed app language.

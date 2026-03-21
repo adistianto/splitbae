@@ -106,6 +106,13 @@ _ThemeChoice _themeChoice(AppSettings s) {
   }
 }
 
+/// Follow-device row: Apple uses “Automatic”; Material platforms use “System default”.
+String _themeFollowDeviceLabel(AppLocalizations l10n) {
+  return hostPlatformIsApple()
+      ? l10n.settingsThemeFollowDeviceApple
+      : l10n.settingsThemeFollowDeviceMaterial;
+}
+
 class _ThemeChoiceSegment extends StatelessWidget {
   const _ThemeChoiceSegment({
     required this.selected,
@@ -124,7 +131,7 @@ class _ThemeChoiceSegment extends StatelessWidget {
         ButtonSegment<_ThemeChoice>(
           value: _ThemeChoice.system,
           icon: const Icon(Icons.brightness_auto_outlined),
-          label: Text(l10n.settingsThemeSystem),
+          label: Text(l10n.settingsThemeFollowDeviceMaterialShort),
         ),
         ButtonSegment<_ThemeChoice>(
           value: _ThemeChoice.light,
@@ -380,7 +387,7 @@ class SettingsScreen extends ConsumerWidget {
               )
             else ...[
               _ThemeTile(
-                label: l10n.settingsThemeSystem,
+                label: _themeFollowDeviceLabel(l10n),
                 selected: _themeChoice(settings) == _ThemeChoice.system,
                 onTap: () => notifier.setThemeMode(ThemeMode.system),
               ),
@@ -697,10 +704,23 @@ class _AppleLiquidSettingsBody extends StatelessWidget {
           ],
         ),
         sectionTitle(l10n.settingsAppearance),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(18, 0, 18, 8),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              l10n.settingsAppearanceSubtitle,
+              style: CupertinoTheme.of(context).textTheme.textStyle.copyWith(
+                    fontSize: 13,
+                    color: CupertinoColors.secondaryLabel.resolveFrom(context),
+                  ),
+            ),
+          ),
+        ),
         glassSection(
           children: [
             CupertinoListTile(
-              title: Text(l10n.settingsThemeSystem),
+              title: Text(_themeFollowDeviceLabel(l10n)),
               trailing: _themeChoice(settings) == _ThemeChoice.system
                   ? const Icon(CupertinoIcons.check_mark)
                   : null,

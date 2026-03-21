@@ -32,29 +32,37 @@
   "@settingsAppearance": {
     "description": "Section header for theme (light/dark) and related display options."
   },
-  "settingsAppearanceSubtitle": "Theme follows your choice; you can still use system-wide dark mode when set to device default.",
+  "settingsAppearanceSubtitle": "Light, Dark, or follow your device (System default on Android; Automatic on iPhone and Mac).",
   "@settingsAppearanceSubtitle": {
-    "description": "Short note under appearance section on Material settings."
+    "description": "Explains light/dark vs follow device; references OS naming."
   },
-  "settingsThemeSystem": "Device default",
-  "@settingsThemeSystem": {
-    "description": "Follow OS light/dark appearance."
+  "settingsThemeFollowDeviceMaterial": "System default",
+  "@settingsThemeFollowDeviceMaterial": {
+    "description": "Material Design: follow OS light/dark (Android, Windows, Linux, web)."
+  },
+  "settingsThemeFollowDeviceMaterialShort": "System",
+  "@settingsThemeFollowDeviceMaterialShort": {
+    "description": "Short label for segmented control (Material platforms)."
+  },
+  "settingsThemeFollowDeviceApple": "Automatic",
+  "@settingsThemeFollowDeviceApple": {
+    "description": "Apple HIG: follow system appearance (iOS, macOS), same term as system Settings."
   },
   "settingsThemeLight": "Light",
   "@settingsThemeLight": {
-    "description": "Force light theme."
+    "description": "Always use light theme."
   },
   "settingsThemeDark": "Dark",
   "@settingsThemeDark": {
-    "description": "Force dark theme."
+    "description": "Always use dark theme."
   },
-  "settingsMaterialYou": "Material You colors",
+  "settingsMaterialYou": "Material You dynamic color",
   "@settingsMaterialYou": {
-    "description": "Android 12+ toggle: use wallpaper-derived dynamic colors."
+    "description": "Settings toggle: Material 3 dynamic color from wallpaper (Material You)."
   },
-  "settingsMaterialYouSubtitle": "Uses your wallpaper palette on supported Android devices. Turn off to use SplitBae’s fixed teal theme.",
+  "settingsMaterialYouSubtitle": "Uses your wallpaper palette for the app theme on supported devices. Off by default; turn on for Material You colors, or leave off for SplitBae’s default teal look.",
   "@settingsMaterialYouSubtitle": {
-    "description": "Explains dynamic color on Android."
+    "description": "Explains M3 dynamic color toggle; default off."
   },
   "languageDevice": "Use device language",
   "@languageDevice": {
