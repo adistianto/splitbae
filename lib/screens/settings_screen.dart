@@ -102,6 +102,45 @@ Future<void> _onEncryptDatabaseToggle({
   }
 }
 
+void _showBlockingProgress(BuildContext context) {
+  showDialog<void>(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) => const PopScope(
+      canPop: false,
+      child: Center(child: CircularProgressIndicator()),
+    ),
+  );
+}
+
+void _dismissBlockingProgress(BuildContext context) {
+  if (context.mounted) {
+    Navigator.of(context, rootNavigator: true).pop();
+  }
+}
+
+Future<void> _exportBackup(BuildContext context, WidgetRef ref) async {
+  final l10n = AppLocalizations.of(context)!;
+  _showBlockingProgress(context);
+  try {
+    final svc = ref.read(backupServiceProvider);
+    final file = await svc.writeExportFile();
+    await svc.shareExportFile(file);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(l10n.backupExportSuccess)),
+    );
+  } catch (_) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.backupErrorExport)),
+      );
+    }
+  } finally {
+    _dismissBlockingProgress(context);
+  }
+}
+
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key, this.embedded = false});
 
@@ -218,6 +257,14 @@ class SettingsScreen extends ConsumerWidget {
               child: Text(
                 l10n.settingsBackup,
                 style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: FilledButton.icon(
+                icon: const Icon(Icons.upload_file_outlined),
+                label: Text(l10n.settingsBackupExport),
+                onPressed: () => _exportBackup(context, ref),
               ),
             ),
             ListTile(
