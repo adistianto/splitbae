@@ -67,7 +67,9 @@ class BackupService {
   Future<void> _importBytes(List<int> bytes) async {
     final raw = utf8.decode(bytes);
     final payload = BackupPayloadV1.fromJsonString(raw);
-    final snap = LocalDatabaseSnapshot.fromBackupPayload(payload);
+    final LocalDatabaseSnapshot snap = payload.formatVersion < 2
+        ? LocalDatabaseSnapshot.fromLegacyV1Payload(payload)
+        : LocalDatabaseSnapshot.fromBackupPayload(payload);
     await snap.replaceEntireDatabase(_db);
     await LedgerRepository(_db).ensureSeedData();
   }

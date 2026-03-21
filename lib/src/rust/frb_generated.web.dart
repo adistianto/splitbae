@@ -6,6 +6,7 @@
 // Static analysis wrongly picks the IO variant, thus ignore this
 // ignore_for_file: argument_type_not_assignable
 
+import 'api/settlement.dart';
 import 'api/simple.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -39,19 +40,31 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<AssignedReceiptLine> dco_decode_list_assigned_receipt_line(dynamic raw);
 
   @protected
+  List<NetBalance> dco_decode_list_net_balance(dynamic raw);
+
+  @protected
   List<ParticipantRef> dco_decode_list_participant_ref(dynamic raw);
 
   @protected
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
 
   @protected
+  List<SettlementEdge> dco_decode_list_settlement_edge(dynamic raw);
+
+  @protected
   List<SplitResult> dco_decode_list_split_result(dynamic raw);
+
+  @protected
+  NetBalance dco_decode_net_balance(dynamic raw);
 
   @protected
   ParticipantRef dco_decode_participant_ref(dynamic raw);
 
   @protected
   ReceiptItem dco_decode_receipt_item(dynamic raw);
+
+  @protected
+  SettlementEdge dco_decode_settlement_edge(dynamic raw);
 
   @protected
   SplitResult dco_decode_split_result(dynamic raw);
@@ -85,6 +98,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  List<NetBalance> sse_decode_list_net_balance(SseDeserializer deserializer);
+
+  @protected
   List<ParticipantRef> sse_decode_list_participant_ref(
     SseDeserializer deserializer,
   );
@@ -93,13 +109,24 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
 
   @protected
+  List<SettlementEdge> sse_decode_list_settlement_edge(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   List<SplitResult> sse_decode_list_split_result(SseDeserializer deserializer);
+
+  @protected
+  NetBalance sse_decode_net_balance(SseDeserializer deserializer);
 
   @protected
   ParticipantRef sse_decode_participant_ref(SseDeserializer deserializer);
 
   @protected
   ReceiptItem sse_decode_receipt_item(SseDeserializer deserializer);
+
+  @protected
+  SettlementEdge sse_decode_settlement_edge(SseDeserializer deserializer);
 
   @protected
   SplitResult sse_decode_split_result(SseDeserializer deserializer);
@@ -141,6 +168,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_net_balance(
+    List<NetBalance> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_participant_ref(
     List<ParticipantRef> self,
     SseSerializer serializer,
@@ -153,10 +186,19 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_settlement_edge(
+    List<SettlementEdge> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_split_result(
     List<SplitResult> self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_net_balance(NetBalance self, SseSerializer serializer);
 
   @protected
   void sse_encode_participant_ref(
@@ -166,6 +208,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_receipt_item(ReceiptItem self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_settlement_edge(
+    SettlementEdge self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_split_result(SplitResult self, SseSerializer serializer);

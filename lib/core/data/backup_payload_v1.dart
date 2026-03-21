@@ -4,6 +4,9 @@ import '../database/app_database.dart';
 
 /// On-disk JSON backup (`.sb_backup`). Plain UTF-8 JSON for MVP; store only
 /// where you trust (see Settings copy).
+///
+/// **Version 1**: ledgers, participants, receipt lines, assignments (no tx rows).
+/// **Version 2**: adds transactions and settlement-related tables for v0 parity.
 class BackupPayloadV1 {
   BackupPayloadV1({
     required this.exportedAtUtcMs,
@@ -11,16 +14,26 @@ class BackupPayloadV1 {
     required this.participants,
     required this.receiptLines,
     this.receiptLineAssignments = const [],
+    this.transactions = const [],
+    this.transactionParticipants = const [],
+    this.transactionPayments = const [],
+    this.settlementTransfers = const [],
+    this.formatVersion = 2,
   });
 
   static const String formatId = 'splitbae_backup';
-  static const int formatVersion = 1;
+  static const int latestFormatVersion = 2;
 
+  final int formatVersion;
   final int exportedAtUtcMs;
   final List<Ledger> ledgers;
   final List<Participant> participants;
   final List<ReceiptLine> receiptLines;
   final List<ReceiptLineAssignment> receiptLineAssignments;
+  final List<Transaction> transactions;
+  final List<TransactionParticipant> transactionParticipants;
+  final List<TransactionPayment> transactionPayments;
+  final List<SettlementTransfer> settlementTransfers;
 
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
@@ -32,6 +45,13 @@ class BackupPayloadV1 {
       'receiptLines': receiptLines.map((e) => e.toJson()).toList(),
       'receiptLineAssignments':
           receiptLineAssignments.map((e) => e.toJson()).toList(),
+      'transactions': transactions.map((e) => e.toJson()).toList(),
+      'transactionParticipants':
+          transactionParticipants.map((e) => e.toJson()).toList(),
+      'transactionPayments':
+          transactionPayments.map((e) => e.toJson()).toList(),
+      'settlementTransfers':
+          settlementTransfers.map((e) => e.toJson()).toList(),
     };
   }
 
@@ -43,7 +63,7 @@ class BackupPayloadV1 {
       throw FormatException('Not a SplitBae backup (wrong format field)');
     }
     final version = json['version'];
-    if (version is! int || version != formatVersion) {
+    if (version is! int || version < 1 || version > latestFormatVersion) {
       throw FormatException('Unsupported backup version: $version');
     }
     final exported = json['exportedAtUtcMs'];
@@ -59,6 +79,7 @@ class BackupPayloadV1 {
       throw FormatException('Invalid backup tables');
     }
     return BackupPayloadV1(
+      formatVersion: version,
       exportedAtUtcMs: exported,
       ledgers: ledgersJson
           .map((e) => Ledger.fromJson(Map<String, dynamic>.from(e as Map)))
@@ -70,6 +91,12 @@ class BackupPayloadV1 {
           .map((e) => ReceiptLine.fromJson(Map<String, dynamic>.from(e as Map)))
           .toList(),
       receiptLineAssignments: _parseAssignments(json['receiptLineAssignments']),
+      transactions: _parseTransactions(version, json['transactions']),
+      transactionParticipants:
+          _parseTxParticipants(version, json['transactionParticipants']),
+      transactionPayments: _parseTxPayments(version, json['transactionPayments']),
+      settlementTransfers:
+          _parseSettlementTransfers(version, json['settlementTransfers']),
     );
   }
 
@@ -79,6 +106,55 @@ class BackupPayloadV1 {
         .map(
           (e) =>
               ReceiptLineAssignment.fromJson(Map<String, dynamic>.from(e as Map)),
+        )
+        .toList();
+  }
+
+  static List<Transaction> _parseTransactions(int version, Object? raw) {
+    if (version < 2 || raw is! List) return const [];
+    return raw
+        .map((e) => Transaction.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList();
+  }
+
+  static List<TransactionParticipant> _parseTxParticipants(
+    int version,
+    Object? raw,
+  ) {
+    if (version < 2 || raw is! List) return const [];
+    return raw
+        .map(
+          (e) => TransactionParticipant.fromJson(
+            Map<String, dynamic>.from(e as Map),
+          ),
+        )
+        .toList();
+  }
+
+  static List<TransactionPayment> _parseTxPayments(
+    int version,
+    Object? raw,
+  ) {
+    if (version < 2 || raw is! List) return const [];
+    return raw
+        .map(
+          (e) => TransactionPayment.fromJson(
+            Map<String, dynamic>.from(e as Map),
+          ),
+        )
+        .toList();
+  }
+
+  static List<SettlementTransfer> _parseSettlementTransfers(
+    int version,
+    Object? raw,
+  ) {
+    if (version < 2 || raw is! List) return const [];
+    return raw
+        .map(
+          (e) => SettlementTransfer.fromJson(
+            Map<String, dynamic>.from(e as Map),
+          ),
         )
         .toList();
   }

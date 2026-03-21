@@ -13,6 +13,12 @@ High-performance, platform-adaptive bill splitting (“Splid + Splitty”). **Le
 
 ---
 
+## v0 workflow target (MVP scope)
+- **Follow** the Vercel/v0 **workflows** for **transaction history**, **categories**, **per-transaction payments**, and **settlements** (semantics and persistence)—implemented in **SQLite + Rust + Dart**, not the v0 React stack.
+- **Insights** (spending trends, streaks, etc.) are **explicitly not required for MVP**; ship when ready without blocking core flows.
+- **Strings**: **English-first** in `lib/l10n/app_en.arb` and identifiers; other locales layer on top.
+- **Forward compatibility**: Prefer **versioned migrations**, **nullable FKs** where a future feature (trips, sync IDs) may attach, **single DB access layer** (repositories), and **additive backup format** changes—avoid ad-hoc SQL and one-off columns that block **sync / CRDT / multi-ledger** later.
+
 ## Engineering principles
 - **Modular**: Features are isolated; **core** is dependency-free of product fluff. Prefer many small files over “god” widgets.
 - **Lean & fast**: No bundled LLM for OCR. Hot paths: **Rust** (math, settlement, merge rules) + **Flutter** (UI, I/O, platform APIs). Avoid redundant rebuilds; profile before micro-optimizing.
@@ -21,6 +27,15 @@ High-performance, platform-adaptive bill splitting (“Splid + Splitty”). **Le
 - **Rust owns the math**: No bill logic in Dart—no tax %, tip %, split totals, or minor-unit rules implemented as `total * 0.1` etc. in `lib/`. Put every calculation in `rust/src/api/` (e.g. `simple.rs` today), expose via **flutter_rust_bridge**, and call from Dart. Dart may only **format for display** (e.g. `intl` / `NumberFormat`) and **persist** values; amount encoding for SQLite goes through FRB helpers (see `amount_to_minor_units` / `minor_units_to_amount`).
 - **Native typography**: Do **not** set a global `ThemeData.fontFamily` that forces one typeface on both iOS and Android. Rely on Material 3 / Cupertino defaults so the OS supplies **San Francisco** on iOS and **Roboto** (or OEM default) on Android. Avoid micro-tweaks like custom `letterSpacing` on headlines unless there is a product-specific reason.
 - **Platform polish**: Prefer **adaptive** primitives (`showAdaptiveDialog`, `SwitchListTile.adaptive`, etc.) for parity with each OS; use **`dynamic_color`** on Android 12+ when theming; call **`configureSplitBaePlatform()`** for edge-to-edge; add **haptics** for primary navigation actions on mobile; reserve **keyboard shortcuts** for desktop (see `lib/core/platform/`). On **Apple** (`hostPlatformIsApple()` = iOS or macOS), narrow layouts use **`CupertinoPageScaffold`**; keep **Material** `Scaffold` + rail for wide layouts. **Do not** override **`MediaQuery` text scaler / bold / reduce-motion** from the engine—use **`splitBaeMaterialTheme`** + **`splitBaeAppBuilder`** and theme-relative **`TextStyle`**s instead of hard-coded font sizes.
+
+---
+
+## Platform-native presentation (v0 concept → Flutter)
+- **v0 role**: The Vercel/v0 prototype defines **information architecture, features, and user workflows** only—not widget shapes, corner radii, or web-only chrome. **Shipping UI** uses each platform’s patterns (Material 3 / Cupertino) and **adaptive** layouts for **phone, tablet, and desktop** on **both** iOS and Android.
+- **Color**: **Android** — M3 `ColorScheme` roles; **`dynamic_color`** on Android 12+ when theming. **Apple** — `CupertinoColors` / semantic dynamics for Cupertino surfaces; preserve **meaning** (primary, error, success) across platforms without copying a single v0 palette to both OSes.
+- **Typography**: **Android** — M3 type scale; default **Roboto/OEM**; optional **display** emphasis (e.g. serif, rounded sans) via **named `TextTheme` roles**, not one global `fontFamily`. **Apple** — **SF** for UI; **New York** or **SF Pro Rounded** only for **short, intentional** roles; **Dynamic Type** via theme-relative styles.
+- **Adaptive patterns**: **Phone** — OS-appropriate navigation (e.g. bottom bar / tab scaffold). **Tablet** — split view, rail, two-pane where appropriate. **Desktop** — shortcuts, menus, mouse affordances; **platform-appropriate** copy (e.g. **trackpad** vs **touchpad**) in tooltips via l10n or small platform branches.
+- **Animation**: Honor **`MediaQuery.disableAnimationsOf`** and reduce-motion. **Android** — Material motion and **predictive back** expectations. **iOS** — **Cupertino** transitions where the stack is Cupertino. **Haptics** for primary actions on mobile—tuned per platform, not identical on every control.
 
 ---
 
@@ -104,7 +119,7 @@ Goal: ship a **flawless offline tool** first. **Nextcloud / multi-device sync** 
 
 **Also in scope when capacity allows (same MVP spirit):** IDR-first flows, basic trip/group ledger, debt list + **Optimize** in Rust—**after** DB + backup + scan path are credible.
 
-**Out of MVP**: Nextcloud/WebDAV sync, CRDT, FX, LLM inside the app, Rive-heavy navigation shell (optional stretch).
+**Out of MVP**: Nextcloud/WebDAV sync, CRDT, FX, LLM inside the app, **insights/analytics** (v0-style trends until explicitly scheduled), Rive-heavy navigation shell (optional stretch).
 
 ---
 

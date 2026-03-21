@@ -22,10 +22,13 @@ void main() {
     final ledgers = await db2.select(db2.ledgers).get();
     final participants = await db2.select(db2.participants).get();
     final lines = await db2.select(db2.receiptLines).get();
+    final txs = await db2.select(db2.transactions).get();
 
     expect(ledgers, hasLength(1));
     expect(ledgers.single.id, kDefaultLedgerId);
     expect(participants, isEmpty);
     expect(lines, isEmpty);
+    expect(txs, hasLength(1));
+    expect(txs.single.id, draftTransactionIdForLedger(kDefaultLedgerId));
   });
 }

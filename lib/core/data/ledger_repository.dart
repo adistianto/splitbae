@@ -1,3 +1,5 @@
+import 'package:drift/drift.dart';
+
 import '../database/app_database.dart';
 import '../domain/ledger_ids.dart';
 
@@ -24,6 +26,19 @@ class LedgerRepository {
             LedgersCompanion.insert(
               id: kDefaultLedgerId,
               name: 'Default',
+              createdAtMs: now,
+              updatedAtMs: now,
+            ),
+          );
+      await _db.into(_db.transactions).insert(
+            TransactionsCompanion.insert(
+              id: draftTransactionIdForLedger(kDefaultLedgerId),
+              ledgerId: kDefaultLedgerId,
+              description: const Value(''),
+              category: const Value('other'),
+              taxAmountMinor: const Value(0),
+              currencyCode: const Value('IDR'),
+              kind: const Value('normal'),
               createdAtMs: now,
               updatedAtMs: now,
             ),

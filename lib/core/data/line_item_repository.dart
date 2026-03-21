@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 
 import '../database/app_database.dart';
+import '../domain/ledger_ids.dart';
 import '../domain/ledger_line_item.dart';
 import 'amount_minor.dart';
 import '../../src/rust/api/simple.dart' show ReceiptItem;
@@ -11,10 +12,16 @@ class LineItemRepository {
 
   final AppDatabase _db;
 
+  /// Lines for the ledger’s **draft** transaction (in-progress bill).
   Future<List<LedgerLineItem>> listLedgerLines(String ledgerId) async {
+    final draftTx = draftTransactionIdForLedger(ledgerId);
     final rows =
         await (_db.select(_db.receiptLines)
-              ..where((t) => t.ledgerId.equals(ledgerId))
+              ..where(
+                (t) =>
+                    t.ledgerId.equals(ledgerId) &
+                    t.transactionId.equals(draftTx),
+              )
               ..orderBy([(t) => OrderingTerm(expression: t.createdAtMs)]))
             .get();
     if (rows.isEmpty) return [];
@@ -57,6 +64,7 @@ class LineItemRepository {
           ReceiptLinesCompanion.insert(
             id: id,
             ledgerId: ledgerId,
+            transactionId: Value(draftTransactionIdForLedger(ledgerId)),
             label: label,
             amountMinor: minor,
             currencyCode: currencyCode,

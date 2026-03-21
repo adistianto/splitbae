@@ -3,6 +3,7 @@
 
 // ignore_for_file: unused_import, unused_element, unnecessary_import, duplicate_ignore, invalid_use_of_internal_member, annotate_overrides, non_constant_identifier_names, curly_braces_in_flow_control_structures, prefer_const_literals_to_create_immutables, unused_field
 
+import 'api/settlement.dart';
 import 'api/simple.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -66,7 +67,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.11.1';
 
   @override
-  int get rustContentHash => -1293851805;
+  int get rustContentHash => -1932472599;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -85,6 +86,10 @@ abstract class RustLibApi extends BaseApi {
   PlatformInt64 crateApiSimpleAmountToMinorUnits({
     required double amount,
     required String currencyCode,
+  });
+
+  List<SettlementEdge> crateApiSettlementCalculateMinimalSettlementEdges({
+    required List<NetBalance> balances,
   });
 
   List<SplitResult> crateApiSimpleCalculateSplitAssigned({
@@ -171,6 +176,35 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
+  List<SettlementEdge> crateApiSettlementCalculateMinimalSettlementEdges({
+    required List<NetBalance> balances,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_list_net_balance(balances, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 3)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_settlement_edge,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiSettlementCalculateMinimalSettlementEdgesConstMeta,
+        argValues: [balances],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta
+  get kCrateApiSettlementCalculateMinimalSettlementEdgesConstMeta =>
+      const TaskConstMeta(
+        debugName: "calculate_minimal_settlement_edges",
+        argNames: ["balances"],
+      );
+
+  @override
   List<SplitResult> crateApiSimpleCalculateSplitAssigned({
     required List<AssignedReceiptLine> lines,
     required List<ParticipantRef> participants,
@@ -181,7 +215,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_list_assigned_receipt_line(lines, serializer);
           sse_encode_list_participant_ref(participants, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 3)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 4)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_list_split_result,
@@ -207,7 +241,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(name, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 4)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 5)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -232,7 +266,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 5,
+            funcId: 6,
             port: port_,
           );
         },
@@ -261,7 +295,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_i_64(minor, serializer);
           sse_encode_String(currencyCode, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 6)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 7)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_f_64,
@@ -325,6 +359,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<NetBalance> dco_decode_list_net_balance(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_net_balance).toList();
+  }
+
+  @protected
   List<ParticipantRef> dco_decode_list_participant_ref(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_participant_ref).toList();
@@ -337,9 +377,28 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<SettlementEdge> dco_decode_list_settlement_edge(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_settlement_edge).toList();
+  }
+
+  @protected
   List<SplitResult> dco_decode_list_split_result(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_split_result).toList();
+  }
+
+  @protected
+  NetBalance dco_decode_net_balance(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return NetBalance(
+      participantId: dco_decode_String(arr[0]),
+      amountMinor: dco_decode_i_64(arr[1]),
+      currencyCode: dco_decode_String(arr[2]),
+    );
   }
 
   @protected
@@ -364,6 +423,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       name: dco_decode_String(arr[0]),
       price: dco_decode_f_64(arr[1]),
       currencyCode: dco_decode_String(arr[2]),
+    );
+  }
+
+  @protected
+  SettlementEdge dco_decode_settlement_edge(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return SettlementEdge(
+      fromParticipantId: dco_decode_String(arr[0]),
+      toParticipantId: dco_decode_String(arr[1]),
+      amountMinor: dco_decode_i_64(arr[2]),
+      currencyCode: dco_decode_String(arr[3]),
     );
   }
 
@@ -448,6 +521,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<NetBalance> sse_decode_list_net_balance(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <NetBalance>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_net_balance(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
   List<ParticipantRef> sse_decode_list_participant_ref(
     SseDeserializer deserializer,
   ) {
@@ -469,6 +554,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<SettlementEdge> sse_decode_list_settlement_edge(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <SettlementEdge>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_settlement_edge(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
   List<SplitResult> sse_decode_list_split_result(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -478,6 +577,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       ans_.add(sse_decode_split_result(deserializer));
     }
     return ans_;
+  }
+
+  @protected
+  NetBalance sse_decode_net_balance(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_participantId = sse_decode_String(deserializer);
+    var var_amountMinor = sse_decode_i_64(deserializer);
+    var var_currencyCode = sse_decode_String(deserializer);
+    return NetBalance(
+      participantId: var_participantId,
+      amountMinor: var_amountMinor,
+      currencyCode: var_currencyCode,
+    );
   }
 
   @protected
@@ -497,6 +609,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     return ReceiptItem(
       name: var_name,
       price: var_price,
+      currencyCode: var_currencyCode,
+    );
+  }
+
+  @protected
+  SettlementEdge sse_decode_settlement_edge(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_fromParticipantId = sse_decode_String(deserializer);
+    var var_toParticipantId = sse_decode_String(deserializer);
+    var var_amountMinor = sse_decode_i_64(deserializer);
+    var var_currencyCode = sse_decode_String(deserializer);
+    return SettlementEdge(
+      fromParticipantId: var_fromParticipantId,
+      toParticipantId: var_toParticipantId,
+      amountMinor: var_amountMinor,
       currencyCode: var_currencyCode,
     );
   }
@@ -587,6 +714,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_net_balance(
+    List<NetBalance> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_net_balance(item, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_list_participant_ref(
     List<ParticipantRef> self,
     SseSerializer serializer,
@@ -609,6 +748,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_settlement_edge(
+    List<SettlementEdge> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_settlement_edge(item, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_list_split_result(
     List<SplitResult> self,
     SseSerializer serializer,
@@ -618,6 +769,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     for (final item in self) {
       sse_encode_split_result(item, serializer);
     }
+  }
+
+  @protected
+  void sse_encode_net_balance(NetBalance self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.participantId, serializer);
+    sse_encode_i_64(self.amountMinor, serializer);
+    sse_encode_String(self.currencyCode, serializer);
   }
 
   @protected
@@ -635,6 +794,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_String(self.name, serializer);
     sse_encode_f_64(self.price, serializer);
+    sse_encode_String(self.currencyCode, serializer);
+  }
+
+  @protected
+  void sse_encode_settlement_edge(
+    SettlementEdge self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.fromParticipantId, serializer);
+    sse_encode_String(self.toParticipantId, serializer);
+    sse_encode_i_64(self.amountMinor, serializer);
     sse_encode_String(self.currencyCode, serializer);
   }
 
