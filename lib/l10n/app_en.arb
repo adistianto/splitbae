@@ -236,5 +236,25 @@
         "type": "String"
       }
     }
+  },
+  "addPersonSheetTitle": "Add someone to the split",
+  "@addPersonSheetTitle": {
+    "description": "Title of the bottom sheet for adding a participant by name."
+  },
+  "addPersonNameHint": "e.g. Adistianto",
+  "@addPersonNameHint": {
+    "description": "Placeholder example for the new participant name field."
+  },
+  "participantNameRequired": "Enter a name.",
+  "@participantNameRequired": {
+    "description": "Validation when the user tries to add a participant without a name."
+  },
+  "emptyParticipantsHint": "Add people to see how the bill splits.",
+  "@emptyParticipantsHint": {
+    "description": "Shown when there are no participants yet."
+  },
+  "emptyBillHint": "No receipt lines yet. Add an item to start.",
+  "@emptyBillHint": {
+    "description": "Shown when the bill has no line items."
   }
 }

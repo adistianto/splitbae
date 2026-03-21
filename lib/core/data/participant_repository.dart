@@ -27,6 +27,8 @@ class ParticipantRepository {
   }
 
   Future<void> addParticipant(String displayName) async {
+    final name = displayName.trim();
+    if (name.isEmpty) return;
     final now = DateTime.now().millisecondsSinceEpoch;
     final existing = await (_db.select(
       _db.participants,
@@ -39,7 +41,7 @@ class ParticipantRepository {
           ParticipantsCompanion.insert(
             id: const Uuid().v4(),
             ledgerId: kDefaultLedgerId,
-            displayName: displayName,
+            displayName: name,
             sortOrder: Value(sortOrder),
             createdAtMs: now,
           ),

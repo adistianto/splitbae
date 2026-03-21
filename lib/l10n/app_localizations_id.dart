@@ -194,4 +194,20 @@ class AppLocalizationsId extends AppLocalizations {
   String removeParticipantBody(String name) {
     return 'Hapus $name dari pembagian ini?';
   }
+
+  @override
+  String get addPersonSheetTitle => 'Tambah orang ke pembagian';
+
+  @override
+  String get addPersonNameHint => 'mis. Adistianto';
+
+  @override
+  String get participantNameRequired => 'Isi nama dulu.';
+
+  @override
+  String get emptyParticipantsHint =>
+      'Tambah orang untuk melihat pembagian tagihan.';
+
+  @override
+  String get emptyBillHint => 'Belum ada item. Tambah baris struk untuk mulai.';
 }

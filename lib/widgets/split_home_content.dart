@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:splitbae/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:splitbae/core/domain/ledger_line_item.dart';
+import 'package:splitbae/core/widgets/adaptive_app_bar.dart';
 import 'package:splitbae/money_format.dart';
 import 'package:splitbae/providers.dart';
 import 'package:splitbae/src/rust/api/simple.dart';
@@ -34,6 +35,7 @@ class SplitHomeContent extends ConsumerWidget {
     List<LedgerLineItem> items,
     Locale locale,
   ) {
+    final l10n = AppLocalizations.of(context)!;
     return items
         .map(
           (line) => Card(
@@ -72,8 +74,10 @@ class SplitHomeContent extends ConsumerWidget {
                       color: Theme.of(context).colorScheme.primary,
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline),
+                  splitBaeAdaptiveToolbarIcon(
+                    context: context,
+                    tooltip: l10n.deleteAction,
+                    icon: Icons.delete_outline,
                     onPressed: () => onConfirmDeleteLine(context, ref, line),
                   ),
                 ],
@@ -113,7 +117,7 @@ class SplitHomeContent extends ConsumerWidget {
               leading: CircleAvatar(
                 backgroundColor: Theme.of(context).colorScheme.primaryContainer,
                 child: Text(
-                  res.personName[0].toUpperCase(),
+                  splitBaeInitialGrapheme(res.personName),
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onPrimaryContainer,
                   ),
@@ -148,6 +152,7 @@ class SplitHomeContent extends ConsumerWidget {
     final splitAsync = ref.watch(splitProvider);
     final locale = Localizations.localeOf(context);
     final items = ref.watch(itemsProvider);
+    final participants = ref.watch(participantsProvider);
 
     final intro = Padding(
       padding: EdgeInsets.fromLTRB(horizontalPadding, 12, horizontalPadding, 4),
@@ -167,6 +172,16 @@ class SplitHomeContent extends ConsumerWidget {
       ),
     );
 
+    final emptyBill = Padding(
+      padding: EdgeInsets.fromLTRB(horizontalPadding, 0, horizontalPadding, 8),
+      child: Text(
+        l10n.emptyBillHint,
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
+      ),
+    );
+
     final lineCards = _lineCards(context, ref, items, locale);
 
     final perPersonHeader = Padding(
@@ -177,7 +192,24 @@ class SplitHomeContent extends ConsumerWidget {
       ),
     );
 
+    final emptyParticipants = Padding(
+      padding: EdgeInsets.fromLTRB(horizontalPadding, 0, horizontalPadding, 8),
+      child: Text(
+        l10n.emptyParticipantsHint,
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
+      ),
+    );
+
     Widget splitPane(AsyncValue<List<SplitResult>> async) {
+      if (participants.isEmpty) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [perPersonHeader, emptyParticipants],
+        );
+      }
       return async.when(
         data: (results) => Column(
           mainAxisSize: MainAxisSize.min,
@@ -195,10 +227,16 @@ class SplitHomeContent extends ConsumerWidget {
       );
     }
 
+    final billChildren = <Widget>[
+      intro,
+      billHeader,
+      if (items.isEmpty) emptyBill else ...lineCards,
+    ];
+
     if (!twoColumn) {
       return ListView(
         padding: const EdgeInsets.only(bottom: 88),
-        children: [intro, billHeader, ...lineCards, splitPane(splitAsync)],
+        children: [...billChildren, splitPane(splitAsync)],
       );
     }
 
@@ -209,24 +247,30 @@ class SplitHomeContent extends ConsumerWidget {
           child: Scrollbar(
             child: ListView(
               padding: const EdgeInsets.only(bottom: 24),
-              children: [intro, billHeader, ...lineCards],
+              children: billChildren,
             ),
           ),
         ),
         const VerticalDivider(width: 1),
         Expanded(
           child: Scrollbar(
-            child: splitAsync.when(
-              data: (results) => ListView(
-                padding: const EdgeInsets.only(bottom: 24),
-                children: [
-                  perPersonHeader,
-                  ..._splitCards(context, results, locale),
-                ],
-              ),
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, stack) => Center(child: Text('Error: $err')),
-            ),
+            child: participants.isEmpty
+                ? ListView(
+                    padding: const EdgeInsets.only(bottom: 24),
+                    children: [perPersonHeader, emptyParticipants],
+                  )
+                : splitAsync.when(
+                    data: (results) => ListView(
+                      padding: const EdgeInsets.only(bottom: 24),
+                      children: [
+                        perPersonHeader,
+                        ..._splitCards(context, results, locale),
+                      ],
+                    ),
+                    loading: () =>
+                        const Center(child: CircularProgressIndicator()),
+                    error: (err, stack) => Center(child: Text('Error: $err')),
+                  ),
           ),
         ),
       ],

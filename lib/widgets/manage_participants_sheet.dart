@@ -3,6 +3,7 @@ import 'package:splitbae/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:splitbae/core/domain/participant_entry.dart';
 import 'package:splitbae/core/platform/adaptive_confirm_dialog.dart';
+import 'package:splitbae/core/widgets/adaptive_app_bar.dart';
 import 'package:splitbae/providers.dart';
 
 Future<void> showManageParticipantsSheet(BuildContext context, WidgetRef ref) {
@@ -45,15 +46,17 @@ Future<void> showManageParticipantsSheet(BuildContext context, WidgetRef ref) {
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              IconButton(
+                              splitBaeAdaptiveToolbarIcon(
+                                context: context,
                                 tooltip: l10n.renameParticipantAction,
-                                icon: const Icon(Icons.edit_outlined),
+                                icon: Icons.edit_outlined,
                                 onPressed: () =>
                                     _showRenameDialog(context, r, e),
                               ),
-                              IconButton(
+                              splitBaeAdaptiveToolbarIcon(
+                                context: context,
                                 tooltip: l10n.deleteAction,
-                                icon: const Icon(Icons.person_remove_outlined),
+                                icon: Icons.person_remove_outlined,
                                 onPressed: () => _confirmRemove(context, r, e),
                               ),
                             ],

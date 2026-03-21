@@ -193,4 +193,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String removeParticipantBody(String name) {
     return 'Remove $name from this split?';
   }
+
+  @override
+  String get addPersonSheetTitle => 'Add someone to the split';
+
+  @override
+  String get addPersonNameHint => 'e.g. Adistianto';
+
+  @override
+  String get participantNameRequired => 'Enter a name.';
+
+  @override
+  String get emptyParticipantsHint => 'Add people to see how the bill splits.';
+
+  @override
+  String get emptyBillHint => 'No receipt lines yet. Add an item to start.';
 }

@@ -16,6 +16,9 @@ void main() {
     expect(rows, hasLength(1));
     expect(rows.single.id, kDefaultLedgerId);
 
+    expect(await db.select(db.participants).get(), isEmpty);
+    expect(await db.select(db.receiptLines).get(), isEmpty);
+
     await LedgerRepository(db).ensureSeedData();
     rows = await db.select(db.ledgers).get();
     expect(rows, hasLength(1));

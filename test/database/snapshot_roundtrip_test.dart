@@ -25,7 +25,7 @@ void main() {
 
     expect(ledgers, hasLength(1));
     expect(ledgers.single.id, kDefaultLedgerId);
-    expect(participants, hasLength(3));
-    expect(lines, hasLength(2));
+    expect(participants, isEmpty);
+    expect(lines, isEmpty);
   });
 }

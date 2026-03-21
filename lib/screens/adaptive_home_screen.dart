@@ -8,8 +8,10 @@ import 'package:splitbae/core/domain/ledger_line_item.dart';
 import 'package:splitbae/core/layout/app_breakpoints.dart';
 import 'package:splitbae/core/platform/adaptive_confirm_dialog.dart';
 import 'package:splitbae/core/platform/platform_capabilities.dart';
+import 'package:splitbae/core/widgets/adaptive_app_bar.dart';
 import 'package:splitbae/providers.dart';
 import 'package:splitbae/screens/settings_screen.dart';
+import 'package:splitbae/widgets/add_participant_sheet.dart';
 import 'package:splitbae/widgets/add_receipt_item_sheet.dart';
 import 'package:splitbae/widgets/manage_participants_sheet.dart';
 import 'package:splitbae/widgets/split_home_content.dart';
@@ -76,22 +78,26 @@ class _AdaptiveHomeScreenState extends ConsumerState<AdaptiveHomeScreen> {
               ? 720.0
               : double.infinity;
           return Scaffold(
-            appBar: AppBar(
-              title: Text(l10n.appTitle),
-              centerTitle: true,
+            appBar: splitBaeAdaptiveAppBar(
+              context: context,
+              title: l10n.appTitle,
               actions: [
-                IconButton(
+                splitBaeAdaptiveToolbarIcon(
+                  context: context,
                   tooltip: l10n.peopleTooltip,
+                  icon: Icons.group_outlined,
                   onPressed: () => showManageParticipantsSheet(context, ref),
-                  icon: const Icon(Icons.group_outlined),
                 ),
-                IconButton(
+                splitBaeAdaptiveToolbarIcon(
+                  context: context,
                   tooltip: l10n.addItemTooltip,
+                  icon: Icons.add_shopping_cart_outlined,
                   onPressed: () => showAddReceiptItemSheet(context, ref),
-                  icon: const Icon(Icons.add_shopping_cart_outlined),
                 ),
-                IconButton(
+                splitBaeAdaptiveToolbarIcon(
+                  context: context,
                   tooltip: _settingsTooltip(l10n.settings),
+                  icon: Icons.settings_outlined,
                   onPressed: () {
                     Navigator.of(context).push(
                       MaterialPageRoute<void>(
@@ -99,7 +105,6 @@ class _AdaptiveHomeScreenState extends ConsumerState<AdaptiveHomeScreen> {
                       ),
                     );
                   },
-                  icon: const Icon(Icons.settings_outlined),
                 ),
               ],
             ),
@@ -119,9 +124,7 @@ class _AdaptiveHomeScreenState extends ConsumerState<AdaptiveHomeScreen> {
             floatingActionButton: FloatingActionButton.extended(
               onPressed: () async {
                 HapticFeedback.mediumImpact();
-                await ref
-                    .read(participantsProvider.notifier)
-                    .addParticipant('New Friend');
+                await showAddParticipantSheet(context);
               },
               label: Text(l10n.addPerson),
               icon: const Icon(Icons.person_add),
@@ -159,22 +162,24 @@ class _AdaptiveHomeScreenState extends ConsumerState<AdaptiveHomeScreen> {
               Expanded(
                 child: _railIndex == 0
                     ? Scaffold(
-                        appBar: AppBar(
-                          title: Text(l10n.appTitle),
+                        appBar: splitBaeAdaptiveAppBar(
+                          context: context,
+                          title: l10n.appTitle,
+                          centerTitle: false,
                           actions: [
-                            IconButton(
+                            splitBaeAdaptiveToolbarIcon(
+                              context: context,
                               tooltip: l10n.peopleTooltip,
+                              icon: Icons.group_outlined,
                               onPressed: () =>
                                   showManageParticipantsSheet(context, ref),
-                              icon: const Icon(Icons.group_outlined),
                             ),
-                            IconButton(
+                            splitBaeAdaptiveToolbarIcon(
+                              context: context,
                               tooltip: l10n.addItemTooltip,
+                              icon: Icons.add_shopping_cart_outlined,
                               onPressed: () =>
                                   showAddReceiptItemSheet(context, ref),
-                              icon: const Icon(
-                                Icons.add_shopping_cart_outlined,
-                              ),
                             ),
                           ],
                         ),
@@ -189,9 +194,7 @@ class _AdaptiveHomeScreenState extends ConsumerState<AdaptiveHomeScreen> {
                         floatingActionButton: FloatingActionButton.extended(
                           onPressed: () async {
                             HapticFeedback.mediumImpact();
-                            await ref
-                                .read(participantsProvider.notifier)
-                                .addParticipant('New Friend');
+                            await showAddParticipantSheet(context);
                           },
                           label: Text(l10n.addPerson),
                           icon: const Icon(Icons.person_add),

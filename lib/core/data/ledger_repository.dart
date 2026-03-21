@@ -1,6 +1,3 @@
-import 'package:drift/drift.dart';
-import 'package:uuid/uuid.dart';
-
 import '../database/app_database.dart';
 import '../domain/ledger_ids.dart';
 
@@ -27,48 +24,6 @@ class LedgerRepository {
             LedgersCompanion.insert(
               id: kDefaultLedgerId,
               name: 'Default',
-              createdAtMs: now,
-              updatedAtMs: now,
-            ),
-          );
-
-      const seedPeople = ['Adistianto', 'Gemini', 'Nic'];
-      for (var i = 0; i < seedPeople.length; i++) {
-        await _db
-            .into(_db.participants)
-            .insert(
-              ParticipantsCompanion.insert(
-                id: const Uuid().v4(),
-                ledgerId: kDefaultLedgerId,
-                displayName: seedPeople[i],
-                sortOrder: Value(i),
-                createdAtMs: now,
-              ),
-            );
-      }
-
-      await _db
-          .into(_db.receiptLines)
-          .insert(
-            ReceiptLinesCompanion.insert(
-              id: const Uuid().v4(),
-              ledgerId: kDefaultLedgerId,
-              label: 'Nasi Goreng',
-              amountMinor: 45000,
-              currencyCode: 'IDR',
-              createdAtMs: now,
-              updatedAtMs: now,
-            ),
-          );
-      await _db
-          .into(_db.receiptLines)
-          .insert(
-            ReceiptLinesCompanion.insert(
-              id: const Uuid().v4(),
-              ledgerId: kDefaultLedgerId,
-              label: 'Es Teh',
-              amountMinor: 15000,
-              currencyCode: 'IDR',
               createdAtMs: now,
               updatedAtMs: now,
             ),

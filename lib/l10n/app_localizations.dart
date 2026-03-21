@@ -445,6 +445,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Remove {name} from this split?'**
   String removeParticipantBody(String name);
+
+  /// Title of the bottom sheet for adding a participant by name.
+  ///
+  /// In en, this message translates to:
+  /// **'Add someone to the split'**
+  String get addPersonSheetTitle;
+
+  /// Placeholder example for the new participant name field.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Adistianto'**
+  String get addPersonNameHint;
+
+  /// Validation when the user tries to add a participant without a name.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a name.'**
+  String get participantNameRequired;
+
+  /// Shown when there are no participants yet.
+  ///
+  /// In en, this message translates to:
+  /// **'Add people to see how the bill splits.'**
+  String get emptyParticipantsHint;
+
+  /// Shown when the bill has no line items.
+  ///
+  /// In en, this message translates to:
+  /// **'No receipt lines yet. Add an item to start.'**
+  String get emptyBillHint;
 }
 
 class _AppLocalizationsDelegate

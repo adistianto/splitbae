@@ -57,5 +57,10 @@
   "renameParticipantTitle": "Ganti nama",
   "participantDisplayNameLabel": "Nama",
   "removeParticipantTitle": "Hapus orang?",
-  "removeParticipantBody": "Hapus {name} dari pembagian ini?"
+  "removeParticipantBody": "Hapus {name} dari pembagian ini?",
+  "addPersonSheetTitle": "Tambah orang ke pembagian",
+  "addPersonNameHint": "mis. Adistianto",
+  "participantNameRequired": "Isi nama dulu.",
+  "emptyParticipantsHint": "Tambah orang untuk melihat pembagian tagihan.",
+  "emptyBillHint": "Belum ada item. Tambah baris struk untuk mulai."
 }

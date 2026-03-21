@@ -40,6 +40,7 @@ After changing **`rust/src/api/`** or FRB types, regenerate the bridge **before*
 
 - **Material You (Android 12+)**: `dynamic_color` feeds the OS accent into `ThemeData.colorScheme` when available; otherwise the app falls back to a seed palette.
 - **Edge-to-edge**: `configureSplitBaePlatform()` (`lib/core/platform/platform_bootstrap.dart`) enables `SystemUiMode.edgeToEdge` and transparent system bars on mobile—`Scaffold` / `SafeArea` handle insets.
+- **Adaptive chrome**: Use `splitBaeAdaptiveAppBar` / `splitBaeAdaptiveToolbarIcon` (`lib/core/widgets/adaptive_app_bar.dart`) for top bars and toolbar actions so **iOS** gets `CupertinoNavigationBar` + `CupertinoButton` instead of only Material `AppBar` / `IconButton`.
 - **Adaptive dialogs**: Use `showAdaptiveConfirmDialog` for yes/no flows so iOS gets a Cupertino-style presentation; keep plain `AlertDialog` when the content is a `TextField` or other non-adaptive body.
 - **Desktop**: `⌘,` / `Ctrl+,` opens Settings (`AdaptiveHomeScreen`); tooltips on the settings action hint the shortcut.
 - **Android predictive back**: `android:enableOnBackInvokedCallback="true"` on the main activity (API 33+).
