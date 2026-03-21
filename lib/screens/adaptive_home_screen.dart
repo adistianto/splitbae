@@ -1,3 +1,5 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/gestures.dart';
@@ -11,6 +13,7 @@ import 'package:splitbae/core/layout/app_breakpoints.dart';
 import 'package:splitbae/core/platform/adaptive_confirm_dialog.dart';
 import 'package:splitbae/core/platform/host_platform.dart';
 import 'package:splitbae/core/platform/platform_capabilities.dart';
+import 'package:splitbae/core/ocr/receipt_ocr_probe_provider.dart';
 import 'package:splitbae/core/widgets/adaptive_app_bar.dart';
 import 'package:splitbae/providers.dart';
 import 'package:splitbae/screens/settings_screen.dart';
@@ -48,6 +51,14 @@ class AdaptiveHomeScreen extends ConsumerStatefulWidget {
 
 class _AdaptiveHomeScreenState extends ConsumerState<AdaptiveHomeScreen> {
   int _railIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(ref.read(receiptOcrProbeProvider.future));
+    });
+  }
 
   void _openSettingsShortcut() {
     if (!mounted) return;

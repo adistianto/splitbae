@@ -4,6 +4,10 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>SplitBae needs camera access to scan text from receipt photos.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>SplitBae needs photo library access to scan text from receipt images.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

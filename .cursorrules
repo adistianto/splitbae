@@ -30,7 +30,7 @@ High-performance, platform-adaptive bill splitting (“Splid + Splitty”). **Le
 - `core/` — theme tokens, routing shells, shared extensions, **no feature imports**.
 - `features/<name>/` — `presentation/`, `application/` (providers), optional `data/` if feature-local only.
 - `l10n/` — `.arb` sources + generated `app_localizations*.dart` (crowdsourced translations via GitHub PRs to ARB files).
-- Platform-specific OCR lives behind a **single interface** (e.g. `ReceiptOcrPort`) with `android/` (ML Kit) and `ios/` (Vision) implementations—**not** duplicated parsing logic in Dart.
+- Platform-specific OCR: **`ReceiptOcrChannel`** + native `MethodChannel` (`lib/core/ocr/`), **Android** ML Kit in `MainActivity`, **iOS** Vision in `SceneDelegate`—**line parsing / heuristics** stay in Dart (`receipt_line_parse.dart`, `receipt_ocr_refiner.dart`); **`probe`** warms readiness early; OCR failures **must not** block manual entry (`runReceiptScanFlow`, add-item sheet). Money rules for persisted values stay in **Rust**.
 
 ### Rust (`rust/src/`)
 - `api/` — FRB-facing surface (`#[frb]` types and functions); keep thin.

@@ -54,6 +54,49 @@ class AppLocalizationsId extends AppLocalizations {
       'Nominal memakai mata uang yang Anda pilih di bawah.';
 
   @override
+  String get scanReceiptButton => 'Pindai struk';
+
+  @override
+  String get scanReceiptCamera => 'Ambil foto';
+
+  @override
+  String get scanReceiptGallery => 'Pilih dari galeri';
+
+  @override
+  String get scanReceiptEnterManually => 'Isi manual';
+
+  @override
+  String get scanReceiptEnterManuallySubtitle =>
+      'Pakai kolom nama dan jumlah di bawah';
+
+  @override
+  String get scanReceiptTimeout =>
+      'Pindaian terlalu lama. Coba foto lain atau isi item manual di bawah.';
+
+  @override
+  String get scanReceiptDegradedBody =>
+      'Pengenalan teks di perangkat tidak bisa dipastikan. Anda tetap bisa coba pindai, atau ketik nama item dan jumlah di bawah.';
+
+  @override
+  String get scanReceiptPickLine => 'Pilih baris yang dipakai';
+
+  @override
+  String get scanReceiptNoLines =>
+      'Tidak ada baris dengan nominal. Coba foto lebih jelas atau isi manual.';
+
+  @override
+  String get scanReceiptUnavailable =>
+      'Pindaian struk hanya di aplikasi Android dan iOS.';
+
+  @override
+  String get scanReceiptErrorGeneric => 'Tidak bisa membaca teks dari gambar.';
+
+  @override
+  String scanReceiptErrorDetail(String message) {
+    return 'Tidak bisa membaca struk: $message';
+  }
+
+  @override
   String get itemNameLabel => 'Nama item';
 
   @override

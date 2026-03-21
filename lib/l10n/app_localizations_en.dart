@@ -53,6 +53,49 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addItemSubtitle => 'Amount is in the currency you select below.';
 
   @override
+  String get scanReceiptButton => 'Scan receipt';
+
+  @override
+  String get scanReceiptCamera => 'Take photo';
+
+  @override
+  String get scanReceiptGallery => 'Choose from library';
+
+  @override
+  String get scanReceiptEnterManually => 'Enter manually';
+
+  @override
+  String get scanReceiptEnterManuallySubtitle =>
+      'Use the name and amount fields below';
+
+  @override
+  String get scanReceiptTimeout =>
+      'Scanning took too long. Try another photo or enter the item manually below.';
+
+  @override
+  String get scanReceiptDegradedBody =>
+      'On-device text recognition could not be verified. You can still try scanning, or type the item name and amount below.';
+
+  @override
+  String get scanReceiptPickLine => 'Pick a line to use';
+
+  @override
+  String get scanReceiptNoLines =>
+      'No lines with an amount were found. Try a clearer photo or enter the item manually.';
+
+  @override
+  String get scanReceiptUnavailable =>
+      'Receipt scanning is only available in the Android and iOS apps.';
+
+  @override
+  String get scanReceiptErrorGeneric => 'Could not read text from the image.';
+
+  @override
+  String scanReceiptErrorDetail(String message) {
+    return 'Could not read the receipt: $message';
+  }
+
+  @override
   String get itemNameLabel => 'Item name';
 
   @override

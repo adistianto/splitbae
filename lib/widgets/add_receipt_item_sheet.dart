@@ -9,7 +9,86 @@ import 'package:splitbae/core/data/amount_minor.dart';
 import 'package:splitbae/core/domain/ledger_line_item.dart';
 import 'package:splitbae/core/platform/host_platform.dart';
 import 'package:splitbae/currency_catalog.dart';
+import 'package:splitbae/core/ocr/receipt_ocr_probe_provider.dart';
 import 'package:splitbae/providers.dart';
+import 'package:splitbae/widgets/receipt_scan_flow.dart';
+
+Widget receiptOcrProbeBanner(
+  BuildContext context,
+  WidgetRef ref,
+  AppLocalizations l10n, {
+  required bool material,
+}) {
+  final probe = ref.watch(receiptOcrProbeProvider);
+  Widget card(String text) {
+    if (material) {
+      final scheme = Theme.of(context).colorScheme;
+      return Card(
+        margin: EdgeInsets.zero,
+        color: scheme.surfaceContainerHighest.withValues(alpha: 0.9),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.info_outline, color: scheme.primary, size: 22),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  text,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: CupertinoColors.secondarySystemFill.resolveFrom(context),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              CupertinoIcons.info,
+              size: 20,
+              color: CupertinoColors.systemOrange.resolveFrom(context),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                text,
+                style: CupertinoTheme.of(context).textTheme.textStyle.copyWith(
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  return probe.when(
+    data: (p) {
+      if (p.ready) return const SizedBox.shrink();
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: card(l10n.scanReceiptDegradedBody),
+      );
+    },
+    loading: () => const SizedBox.shrink(),
+    error: (_, _) => Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: card(l10n.scanReceiptDegradedBody),
+    ),
+  );
+}
 
 /// iOS: glass-style modal. Android: M3 bottom sheet.
 /// Pass [existingLine] to edit; omit to add a new line.
@@ -213,6 +292,31 @@ class _AddItemFormCupertinoState extends ConsumerState<_AddItemFormCupertino> {
             textAlign: TextAlign.center,
             style: CupertinoTheme.of(context).textTheme.textStyle.copyWith(
               color: CupertinoColors.secondaryLabel.resolveFrom(context),
+            ),
+          ),
+          const SizedBox(height: 12),
+          receiptOcrProbeBanner(context, ref, l10n, material: false),
+          CupertinoButton(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            onPressed: () => runReceiptScanFlow(
+              context: context,
+              nameController: _nameCtrl,
+              priceController: _priceCtrl,
+              currencyCode: _currencyCode,
+              onApplied: () => setState(() {}),
+              l10n: l10n,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  CupertinoIcons.doc_text_viewfinder,
+                  size: 22,
+                  color: CupertinoColors.activeBlue.resolveFrom(context),
+                ),
+                const SizedBox(width: 8),
+                Text(l10n.scanReceiptButton),
+              ],
             ),
           ),
           const SizedBox(height: 18),
@@ -460,6 +564,20 @@ class _AddItemFormMaterialState extends ConsumerState<_AddItemFormMaterial> {
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: scheme.onSurfaceVariant,
               ),
+            ),
+            const SizedBox(height: 16),
+            receiptOcrProbeBanner(context, ref, l10n, material: true),
+            OutlinedButton.icon(
+              onPressed: () => runReceiptScanFlow(
+                context: context,
+                nameController: _nameCtrl,
+                priceController: _priceCtrl,
+                currencyCode: _currencyCode,
+                onApplied: () => setState(() {}),
+                l10n: l10n,
+              ),
+              icon: const Icon(Icons.document_scanner_outlined),
+              label: Text(l10n.scanReceiptButton),
             ),
             const SizedBox(height: 24),
             TextFormField(

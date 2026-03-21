@@ -182,6 +182,78 @@ abstract class AppLocalizations {
   /// **'Amount is in the currency you select below.'**
   String get addItemSubtitle;
 
+  /// Starts camera/gallery OCR to fill item name and amount.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan receipt'**
+  String get scanReceiptButton;
+
+  /// Image source option for receipt scan.
+  ///
+  /// In en, this message translates to:
+  /// **'Take photo'**
+  String get scanReceiptCamera;
+
+  /// Image source option for receipt scan.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose from library'**
+  String get scanReceiptGallery;
+
+  /// Dismiss scan source sheet and type item fields instead.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter manually'**
+  String get scanReceiptEnterManually;
+
+  /// Explains manual path when OCR is skipped.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the name and amount fields below'**
+  String get scanReceiptEnterManuallySubtitle;
+
+  /// When native OCR exceeds the time limit.
+  ///
+  /// In en, this message translates to:
+  /// **'Scanning took too long. Try another photo or enter the item manually below.'**
+  String get scanReceiptTimeout;
+
+  /// Info when OCR probe fails; manual entry remains available.
+  ///
+  /// In en, this message translates to:
+  /// **'On-device text recognition could not be verified. You can still try scanning, or type the item name and amount below.'**
+  String get scanReceiptDegradedBody;
+
+  /// Header when OCR found multiple price lines.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a line to use'**
+  String get scanReceiptPickLine;
+
+  /// Snack bar when OCR text had no parseable lines.
+  ///
+  /// In en, this message translates to:
+  /// **'No lines with an amount were found. Try a clearer photo or enter the item manually.'**
+  String get scanReceiptNoLines;
+
+  /// When OCR is not supported (e.g. web/desktop).
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt scanning is only available in the Android and iOS apps.'**
+  String get scanReceiptUnavailable;
+
+  /// Generic OCR failure snack bar.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not read text from the image.'**
+  String get scanReceiptErrorGeneric;
+
+  /// OCR failure with native error message.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not read the receipt: {message}'**
+  String scanReceiptErrorDetail(String message);
+
   /// Form label for the line description (e.g. food name).
   ///
   /// In en, this message translates to:
