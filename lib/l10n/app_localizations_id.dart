@@ -12,6 +12,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get appTitle => 'SplitBae';
 
   @override
+  String get navHomeLabel => 'Beranda';
+
+  @override
   String get addItemTooltip => 'Tambah item';
 
   @override

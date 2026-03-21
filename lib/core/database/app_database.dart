@@ -54,14 +54,14 @@ class AppDatabase extends _$AppDatabase {
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-        onCreate: (Migrator m) async {
-          await m.createAll();
-        },
-        onUpgrade: (Migrator m, int from, int to) async {
-          if (from < 2) {
-            await m.createIndex(idxParticipantsLedgerId);
-            await m.createIndex(idxReceiptLinesLedgerCreated);
-          }
-        },
-      );
+    onCreate: (Migrator m) async {
+      await m.createAll();
+    },
+    onUpgrade: (Migrator m, int from, int to) async {
+      if (from < 2) {
+        await m.createIndex(idxParticipantsLedgerId);
+        await m.createIndex(idxReceiptLinesLedgerCreated);
+      }
+    },
+  );
 }

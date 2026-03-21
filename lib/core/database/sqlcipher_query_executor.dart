@@ -117,10 +117,15 @@ class SqlCipherQueryExecutor extends DelegatedDatabase {
     DatabaseCreator? creator,
     String? password,
   }) : super(
-          _SqlCipherDelegate(false, path,
-              singleInstance: singleInstance, creator: creator, password: password),
-          logStatements: logStatements,
-        );
+         _SqlCipherDelegate(
+           false,
+           path,
+           singleInstance: singleInstance,
+           creator: creator,
+           password: password,
+         ),
+         logStatements: logStatements,
+       );
 
   SqlCipherQueryExecutor.inDatabaseFolder({
     required String path,
@@ -129,10 +134,15 @@ class SqlCipherQueryExecutor extends DelegatedDatabase {
     DatabaseCreator? creator,
     String? password,
   }) : super(
-          _SqlCipherDelegate(true, path,
-              singleInstance: singleInstance, creator: creator, password: password),
-          logStatements: logStatements,
-        );
+         _SqlCipherDelegate(
+           true,
+           path,
+           singleInstance: singleInstance,
+           creator: creator,
+           password: password,
+         ),
+         logStatements: logStatements,
+       );
 
   sc.Database? get sqlCipherDb {
     final d = delegate as _SqlCipherDelegate;

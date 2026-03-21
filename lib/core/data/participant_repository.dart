@@ -11,14 +11,13 @@ class ParticipantRepository {
   final AppDatabase _db;
 
   Future<List<ParticipantEntry>> listParticipants(String ledgerId) async {
-    final rows = await (_db.select(_db.participants)
-          ..where((t) => t.ledgerId.equals(ledgerId))
-          ..orderBy([(t) => OrderingTerm(expression: t.sortOrder)]))
-        .get();
+    final rows =
+        await (_db.select(_db.participants)
+              ..where((t) => t.ledgerId.equals(ledgerId))
+              ..orderBy([(t) => OrderingTerm(expression: t.sortOrder)]))
+            .get();
     return rows
-        .map(
-          (r) => ParticipantEntry(id: r.id, displayName: r.displayName),
-        )
+        .map((r) => ParticipantEntry(id: r.id, displayName: r.displayName))
         .toList();
   }
 
@@ -29,12 +28,14 @@ class ParticipantRepository {
 
   Future<void> addParticipant(String displayName) async {
     final now = DateTime.now().millisecondsSinceEpoch;
-    final existing = await (_db.select(_db.participants)
-          ..where((t) => t.ledgerId.equals(kDefaultLedgerId)))
-        .get();
+    final existing = await (_db.select(
+      _db.participants,
+    )..where((t) => t.ledgerId.equals(kDefaultLedgerId))).get();
     final sortOrder = existing.length;
 
-    await _db.into(_db.participants).insert(
+    await _db
+        .into(_db.participants)
+        .insert(
           ParticipantsCompanion.insert(
             id: const Uuid().v4(),
             ledgerId: kDefaultLedgerId,
@@ -49,13 +50,14 @@ class ParticipantRepository {
     required String participantId,
     required String displayName,
   }) async {
-    await (_db.update(_db.participants)..where((t) => t.id.equals(participantId)))
+    await (_db.update(_db.participants)
+          ..where((t) => t.id.equals(participantId)))
         .write(ParticipantsCompanion(displayName: Value(displayName)));
   }
 
   Future<void> deleteParticipant(String participantId) async {
-    await (_db.delete(_db.participants)
-          ..where((t) => t.id.equals(participantId)))
-        .go();
+    await (_db.delete(
+      _db.participants,
+    )..where((t) => t.id.equals(participantId))).go();
   }
 }

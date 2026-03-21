@@ -1,6 +1,7 @@
 {
   "@@locale": "id",
   "appTitle": "SplitBae",
+  "navHomeLabel": "Beranda",
   "addItemTooltip": "Tambah item",
   "addPerson": "Tambah orang",
   "settings": "Pengaturan",

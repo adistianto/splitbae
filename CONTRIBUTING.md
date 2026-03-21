@@ -36,6 +36,14 @@ After changing **`rust/src/api/`** or FRB types, regenerate the bridge **before*
 - **Runtime swap**: `AppDatabaseController.migrateEncryptionPreservingData` (`lib/core/providers/database_providers.dart`) holds the active `AppDatabase` so the app does not need a full restart after a successful toggle.
 - **Manual backup**: `BackupService` + `BackupPayloadV1` (`lib/core/data/`) write UTF-8 JSON with `format: splitbae_backup`, `version: 1`. **Encrypted-at-rest `.sb_backup`** (e.g. age/minisign) is a future enhancement; today the UI warns that the export is readable by anyone with the file.
 
+## Platform UI (Flutter)
+
+- **Material You (Android 12+)**: `dynamic_color` feeds the OS accent into `ThemeData.colorScheme` when available; otherwise the app falls back to a seed palette.
+- **Edge-to-edge**: `configureSplitBaePlatform()` (`lib/core/platform/platform_bootstrap.dart`) enables `SystemUiMode.edgeToEdge` and transparent system bars on mobile—`Scaffold` / `SafeArea` handle insets.
+- **Adaptive dialogs**: Use `showAdaptiveConfirmDialog` for yes/no flows so iOS gets a Cupertino-style presentation; keep plain `AlertDialog` when the content is a `TextField` or other non-adaptive body.
+- **Desktop**: `⌘,` / `Ctrl+,` opens Settings (`AdaptiveHomeScreen`); tooltips on the settings action hint the shortcut.
+- **Android predictive back**: `android:enableOnBackInvokedCallback="true"` on the main activity (API 33+).
+
 ## Style
 
 - Match existing layout and naming; see `.cursorrules` → *Repository layout*.

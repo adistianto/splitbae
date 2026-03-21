@@ -20,6 +20,33 @@ List<SplitResult> calculateSplit({
   participants: participants,
 );
 
+/// Maps a decimal UI amount to integer minor units for persistence (e.g. SQLite).
+/// IDR/JPY/KRW: 1 minor = 1 unit; others: cents (10^-2).
+PlatformInt64 amountToMinorUnits({
+  required double amount,
+  required String currencyCode,
+}) => RustLib.instance.api.crateApiSimpleAmountToMinorUnits(
+  amount: amount,
+  currencyCode: currencyCode,
+);
+
+double minorUnitsToAmount({
+  required PlatformInt64 minor,
+  required String currencyCode,
+}) => RustLib.instance.api.crateApiSimpleMinorUnitsToAmount(
+  minor: minor,
+  currencyCode: currencyCode,
+);
+
+/// Plain string for amount text fields (add/edit line).
+String amountToInputText({
+  required double amount,
+  required String currencyCode,
+}) => RustLib.instance.api.crateApiSimpleAmountToInputText(
+  amount: amount,
+  currencyCode: currencyCode,
+);
+
 class ReceiptItem {
   final String name;
   final double price;

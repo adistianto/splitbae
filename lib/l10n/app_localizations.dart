@@ -104,6 +104,12 @@ abstract class AppLocalizations {
   /// **'SplitBae'**
   String get appTitle;
 
+  /// Navigation rail / primary destination: bill split home.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get navHomeLabel;
+
   /// Tooltip for the app bar button that opens the add-receipt-line flow.
   ///
   /// In en, this message translates to:

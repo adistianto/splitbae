@@ -9,20 +9,21 @@ class LedgerRepository {
 
   final AppDatabase _db;
 
-  Stream<List<Ledger>> watchLedgers() =>
-      _db.select(_db.ledgers).watch();
+  Stream<List<Ledger>> watchLedgers() => _db.select(_db.ledgers).watch();
 
   Future<void> ensureSeedData() async {
     final now = DateTime.now().millisecondsSinceEpoch;
     await _db.transaction(() async {
-      final existing = await (_db.select(_db.ledgers)
-            ..where((t) => t.id.equals(kDefaultLedgerId)))
-          .get();
+      final existing = await (_db.select(
+        _db.ledgers,
+      )..where((t) => t.id.equals(kDefaultLedgerId))).get();
       if (existing.isNotEmpty) {
         return;
       }
 
-      await _db.into(_db.ledgers).insert(
+      await _db
+          .into(_db.ledgers)
+          .insert(
             LedgersCompanion.insert(
               id: kDefaultLedgerId,
               name: 'Default',
@@ -33,7 +34,9 @@ class LedgerRepository {
 
       const seedPeople = ['Adistianto', 'Gemini', 'Nic'];
       for (var i = 0; i < seedPeople.length; i++) {
-        await _db.into(_db.participants).insert(
+        await _db
+            .into(_db.participants)
+            .insert(
               ParticipantsCompanion.insert(
                 id: const Uuid().v4(),
                 ledgerId: kDefaultLedgerId,
@@ -44,7 +47,9 @@ class LedgerRepository {
             );
       }
 
-      await _db.into(_db.receiptLines).insert(
+      await _db
+          .into(_db.receiptLines)
+          .insert(
             ReceiptLinesCompanion.insert(
               id: const Uuid().v4(),
               ledgerId: kDefaultLedgerId,
@@ -55,7 +60,9 @@ class LedgerRepository {
               updatedAtMs: now,
             ),
           );
-      await _db.into(_db.receiptLines).insert(
+      await _db
+          .into(_db.receiptLines)
+          .insert(
             ReceiptLinesCompanion.insert(
               id: const Uuid().v4(),
               ledgerId: kDefaultLedgerId,

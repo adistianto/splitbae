@@ -76,7 +76,9 @@ class AppDatabaseController extends StateNotifier<AppDatabase> {
         state = recovered;
         return false;
       } catch (e2, st2) {
-        debugPrint('migrateEncryptionPreservingData recovery failed: $e2\n$st2');
+        debugPrint(
+          'migrateEncryptionPreservingData recovery failed: $e2\n$st2',
+        );
         rethrow;
       }
     }
@@ -86,8 +88,8 @@ class AppDatabaseController extends StateNotifier<AppDatabase> {
 /// Injected from [main] after [openAppDatabase].
 final appDatabaseProvider =
     StateNotifierProvider<AppDatabaseController, AppDatabase>((ref) {
-  throw StateError('appDatabaseProvider must be overridden in main()');
-});
+      throw StateError('appDatabaseProvider must be overridden in main()');
+    });
 
 final ledgerRepositoryProvider = Provider<LedgerRepository>((ref) {
   return LedgerRepository(ref.watch(appDatabaseProvider));

@@ -55,8 +55,8 @@ class ItemsNotifier extends StateNotifier<List<LedgerLineItem>> {
 
 final itemsProvider =
     StateNotifierProvider<ItemsNotifier, List<LedgerLineItem>>((ref) {
-  return ItemsNotifier(ref);
-});
+      return ItemsNotifier(ref);
+    });
 
 class ParticipantsNotifier extends StateNotifier<List<ParticipantEntry>> {
   ParticipantsNotifier(this._ref) : super(const []) {
@@ -79,10 +79,9 @@ class ParticipantsNotifier extends StateNotifier<List<ParticipantEntry>> {
     required String id,
     required String displayName,
   }) async {
-    await _ref.read(participantRepositoryProvider).updateDisplayName(
-          participantId: id,
-          displayName: displayName,
-        );
+    await _ref
+        .read(participantRepositoryProvider)
+        .updateDisplayName(participantId: id, displayName: displayName);
     await _load();
   }
 
@@ -96,8 +95,8 @@ class ParticipantsNotifier extends StateNotifier<List<ParticipantEntry>> {
 
 final participantsProvider =
     StateNotifierProvider<ParticipantsNotifier, List<ParticipantEntry>>((ref) {
-  return ParticipantsNotifier(ref);
-});
+      return ParticipantsNotifier(ref);
+    });
 
 final splitProvider = FutureProvider<List<SplitResult>>((ref) async {
   final participants = ref.watch(participantsProvider);

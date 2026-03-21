@@ -18,6 +18,9 @@ High-performance, platform-adaptive bill splitting (“Splid + Splitty”). **Le
 - **Lean & fast**: No bundled LLM for OCR. Hot paths: **Rust** (math, settlement, merge rules) + **Flutter** (UI, I/O, platform APIs). Avoid redundant rebuilds; profile before micro-optimizing.
 - **Professional**: Code should read like a maintained product—clear names, minimal noise, no filler comments. Prefer explicit types at boundaries (FRB, storage, exports).
 - **Best tool for the job**: Rust for deterministic money and graph logic; Flutter for rendering and OS integration; native stacks for OCR (below); SQLite for structured local state; CRDT layer when sync ships—not before MVP storage is solid.
+- **Rust owns the math**: No bill logic in Dart—no tax %, tip %, split totals, or minor-unit rules implemented as `total * 0.1` etc. in `lib/`. Put every calculation in `rust/src/api/` (e.g. `simple.rs` today), expose via **flutter_rust_bridge**, and call from Dart. Dart may only **format for display** (e.g. `intl` / `NumberFormat`) and **persist** values; amount encoding for SQLite goes through FRB helpers (see `amount_to_minor_units` / `minor_units_to_amount`).
+- **Native typography**: Do **not** set a global `ThemeData.fontFamily` that forces one typeface on both iOS and Android. Rely on Material 3 / Cupertino defaults so the OS supplies **San Francisco** on iOS and **Roboto** (or OEM default) on Android. Avoid micro-tweaks like custom `letterSpacing` on headlines unless there is a product-specific reason.
+- **Platform polish**: Prefer **adaptive** primitives (`showAdaptiveDialog`, `SwitchListTile.adaptive`, etc.) for parity with each OS; use **`dynamic_color`** on Android 12+ when theming; call **`configureSplitBaePlatform()`** for edge-to-edge; add **haptics** for primary navigation actions on mobile; reserve **keyboard shortcuts** for desktop (see `lib/core/platform/`).
 
 ---
 

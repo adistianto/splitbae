@@ -71,14 +71,12 @@ Future<void> _showCupertinoGlassSheet(
       final isDark = brightness == Brightness.dark;
       final glassTint = isDark
           ? const Color(0xFF2C2C2E).withValues(alpha: 0.72)
-          : CupertinoColors.systemBackground.resolveFrom(ctx).withValues(alpha: 0.82);
+          : CupertinoColors.systemBackground
+                .resolveFrom(ctx)
+                .withValues(alpha: 0.82);
 
       return Padding(
-        padding: EdgeInsets.only(
-          left: 16,
-          right: 16,
-          bottom: 16 + bottomInset,
-        ),
+        padding: EdgeInsets.only(left: 16, right: 16, bottom: 16 + bottomInset),
         child: SafeArea(
           top: false,
           child: ClipRRect(
@@ -96,13 +94,15 @@ Future<void> _showCupertinoGlassSheet(
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.12),
+                      color: Colors.black.withValues(
+                        alpha: isDark ? 0.45 : 0.12,
+                      ),
                       blurRadius: 32,
                       offset: const Offset(0, 12),
                     ),
                   ],
                 ),
-                  child: CupertinoTheme(
+                child: CupertinoTheme(
                   data: CupertinoTheme.of(ctx).copyWith(
                     brightness: brightness,
                     primaryColor: CupertinoColors.activeBlue.resolveFrom(ctx),
@@ -187,8 +187,9 @@ class _AddItemFormCupertinoState extends ConsumerState<_AddItemFormCupertino> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final padding = const EdgeInsets.fromLTRB(20, 20, 20, 16);
-    final title =
-        widget.existingLine != null ? l10n.editItemTitle : l10n.addItemTitle;
+    final title = widget.existingLine != null
+        ? l10n.editItemTitle
+        : l10n.addItemTitle;
 
     return Padding(
       padding: padding,
@@ -199,10 +200,9 @@ class _AddItemFormCupertinoState extends ConsumerState<_AddItemFormCupertino> {
           Text(
             title,
             textAlign: TextAlign.center,
-            style: CupertinoTheme.of(context)
-                .textTheme
-                .navLargeTitleTextStyle
-                .copyWith(fontSize: 22),
+            style: CupertinoTheme.of(
+              context,
+            ).textTheme.navLargeTitleTextStyle.copyWith(fontSize: 22),
           ),
           const SizedBox(height: 8),
           Text(
@@ -245,7 +245,9 @@ class _AddItemFormCupertinoState extends ConsumerState<_AddItemFormCupertino> {
                     child: Text(
                       l10n.currencyLabel,
                       style: TextStyle(
-                        color: CupertinoColors.secondaryLabel.resolveFrom(context),
+                        color: CupertinoColors.secondaryLabel.resolveFrom(
+                          context,
+                        ),
                         fontSize: 15,
                       ),
                     ),
@@ -397,8 +399,9 @@ class _AddItemFormMaterialState extends ConsumerState<_AddItemFormMaterial> {
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(20),
-        borderSide:
-            BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.4)),
+        borderSide: BorderSide(
+          color: scheme.outlineVariant.withValues(alpha: 0.4),
+        ),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(20),
@@ -433,8 +436,9 @@ class _AddItemFormMaterialState extends ConsumerState<_AddItemFormMaterial> {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final title =
-        widget.existingLine != null ? l10n.editItemTitle : l10n.addItemTitle;
+    final title = widget.existingLine != null
+        ? l10n.editItemTitle
+        : l10n.addItemTitle;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 8, 24, 28),
@@ -448,7 +452,6 @@ class _AddItemFormMaterialState extends ConsumerState<_AddItemFormMaterial> {
               title,
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w600,
-                letterSpacing: -0.5,
               ),
             ),
             const SizedBox(height: 8),
@@ -480,16 +483,10 @@ class _AddItemFormMaterialState extends ConsumerState<_AddItemFormMaterial> {
               // Controlled selection; `value` remains the correct API until a stable replacement.
               // ignore: deprecated_member_use
               value: _currencyCode,
-              decoration: _fieldDecoration(
-                context,
-                label: l10n.currencyLabel,
-              ),
+              decoration: _fieldDecoration(context, label: l10n.currencyLabel),
               items: [
                 for (final code in kSupportedCurrencyCodes)
-                  DropdownMenuItem(
-                    value: code,
-                    child: Text(code),
-                  ),
+                  DropdownMenuItem(value: code, child: Text(code)),
               ],
               onChanged: (v) {
                 if (v != null) setState(() => _currencyCode = v);
@@ -498,7 +495,9 @@ class _AddItemFormMaterialState extends ConsumerState<_AddItemFormMaterial> {
             const SizedBox(height: 16),
             TextFormField(
               controller: _priceCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               decoration: _fieldDecoration(
                 context,
                 label: l10n.priceLabel,

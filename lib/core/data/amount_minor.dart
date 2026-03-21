@@ -1,26 +1,16 @@
-/// Maps a decimal UI amount to integer minor units for [currencyCode].
-/// IDR: 1 minor = 1 Rp. USD/EUR: minor = cents/centimes (10^-2).
+import 'package:splitbae/src/rust/api/simple.dart' as rust;
+
+/// Thin FRB wrappers — rules live in `rust/src/api/simple.rs`, not here.
+
 int amountToMinorUnits(double amount, String currencyCode) {
-  final c = currencyCode.toUpperCase();
-  if (c == 'IDR' || c == 'JPY' || c == 'KRW') {
-    return amount.round();
-  }
-  return (amount * 100).round();
+  final v = rust.amountToMinorUnits(amount: amount, currencyCode: currencyCode);
+  return int.parse(v.toString());
 }
 
 double minorUnitsToAmount(int minor, String currencyCode) {
-  final c = currencyCode.toUpperCase();
-  if (c == 'IDR' || c == 'JPY' || c == 'KRW') {
-    return minor.toDouble();
-  }
-  return minor / 100.0;
+  return rust.minorUnitsToAmount(minor: minor, currencyCode: currencyCode);
 }
 
-/// Text for add/edit amount fields (integer currencies vs two decimals).
 String amountToInputText(double amount, String currencyCode) {
-  final c = currencyCode.toUpperCase();
-  if (c == 'IDR' || c == 'JPY' || c == 'KRW') {
-    return amount.round().toString();
-  }
-  return amount.toStringAsFixed(2);
+  return rust.amountToInputText(amount: amount, currencyCode: currencyCode);
 }

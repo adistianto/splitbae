@@ -12,16 +12,14 @@ class LineItemRepository {
   final AppDatabase _db;
 
   Future<List<LedgerLineItem>> listLedgerLines(String ledgerId) async {
-    final rows = await (_db.select(_db.receiptLines)
-          ..where((t) => t.ledgerId.equals(ledgerId))
-          ..orderBy([(t) => OrderingTerm(expression: t.createdAtMs)]))
-        .get();
+    final rows =
+        await (_db.select(_db.receiptLines)
+              ..where((t) => t.ledgerId.equals(ledgerId))
+              ..orderBy([(t) => OrderingTerm(expression: t.createdAtMs)]))
+            .get();
     return rows
         .map(
-          (row) => LedgerLineItem(
-            id: row.id,
-            receiptItem: _toReceiptItem(row),
-          ),
+          (row) => LedgerLineItem(id: row.id, receiptItem: _toReceiptItem(row)),
         )
         .toList();
   }
@@ -34,7 +32,9 @@ class LineItemRepository {
   }) async {
     final now = DateTime.now().millisecondsSinceEpoch;
     final minor = amountToMinorUnits(amount, currencyCode);
-    await _db.into(_db.receiptLines).insert(
+    await _db
+        .into(_db.receiptLines)
+        .insert(
           ReceiptLinesCompanion.insert(
             id: const Uuid().v4(),
             ledgerId: ledgerId,
@@ -56,13 +56,13 @@ class LineItemRepository {
     final now = DateTime.now().millisecondsSinceEpoch;
     final minor = amountToMinorUnits(amount, currencyCode);
     await (_db.update(_db.receiptLines)..where((t) => t.id.equals(id))).write(
-          ReceiptLinesCompanion(
-            label: Value(label),
-            amountMinor: Value(minor),
-            currencyCode: Value(currencyCode),
-            updatedAtMs: Value(now),
-          ),
-        );
+      ReceiptLinesCompanion(
+        label: Value(label),
+        amountMinor: Value(minor),
+        currencyCode: Value(currencyCode),
+        updatedAtMs: Value(now),
+      ),
+    );
   }
 
   Future<void> deleteLine(String id) async {

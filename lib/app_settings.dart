@@ -43,8 +43,7 @@ class AppSettings {
     return AppSettings(
       followSystemLocale: followSystemLocale ?? this.followSystemLocale,
       appLocaleCode: appLocaleCode ?? this.appLocaleCode,
-      defaultCurrencyCode:
-          defaultCurrencyCode ?? this.defaultCurrencyCode,
+      defaultCurrencyCode: defaultCurrencyCode ?? this.defaultCurrencyCode,
       encryptDatabase: encryptDatabase ?? this.encryptDatabase,
     );
   }
@@ -70,14 +69,14 @@ class AppSettings {
 
 class AppSettingsNotifier extends StateNotifier<AppSettings> {
   AppSettingsNotifier()
-      : super(
-          const AppSettings(
-            followSystemLocale: true,
-            appLocaleCode: 'en',
-            defaultCurrencyCode: 'IDR',
-            encryptDatabase: false,
-          ),
-        ) {
+    : super(
+        const AppSettings(
+          followSystemLocale: true,
+          appLocaleCode: 'en',
+          defaultCurrencyCode: 'IDR',
+          encryptDatabase: false,
+        ),
+      ) {
     _hydrate();
   }
 
@@ -115,8 +114,8 @@ class AppSettingsNotifier extends StateNotifier<AppSettings> {
 
 final appSettingsProvider =
     StateNotifierProvider<AppSettingsNotifier, AppSettings>((ref) {
-  return AppSettingsNotifier();
-});
+      return AppSettingsNotifier();
+    });
 
 final defaultCurrencyProvider = Provider<String>((ref) {
   return ref.watch(appSettingsProvider).defaultCurrencyCode;

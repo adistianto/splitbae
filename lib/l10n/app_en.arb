@@ -4,6 +4,10 @@
   "@appTitle": {
     "description": "App name shown in the title bar. Keep short; do not translate the brand if policy says so."
   },
+  "navHomeLabel": "Home",
+  "@navHomeLabel": {
+    "description": "Navigation rail / primary destination: bill split home."
+  },
   "addItemTooltip": "Add item",
   "@addItemTooltip": {
     "description": "Tooltip for the app bar button that opens the add-receipt-line flow."

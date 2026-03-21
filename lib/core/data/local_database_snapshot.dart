@@ -68,4 +68,3 @@ class LocalDatabaseSnapshot {
     await restoreIntoEmpty(db);
   }
 }
-

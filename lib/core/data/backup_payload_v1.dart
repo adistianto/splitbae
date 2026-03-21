@@ -31,8 +31,7 @@ class BackupPayloadV1 {
     };
   }
 
-  String toJsonString() =>
-      const JsonEncoder.withIndent('  ').convert(toJson());
+  String toJsonString() => const JsonEncoder.withIndent('  ').convert(toJson());
 
   static BackupPayloadV1 fromJson(Map<String, dynamic> json) {
     final format = json['format'] as String?;
@@ -50,7 +49,9 @@ class BackupPayloadV1 {
     final ledgersJson = json['ledgers'];
     final participantsJson = json['participants'];
     final linesJson = json['receiptLines'];
-    if (ledgersJson is! List || participantsJson is! List || linesJson is! List) {
+    if (ledgersJson is! List ||
+        participantsJson is! List ||
+        linesJson is! List) {
       throw FormatException('Invalid backup tables');
     }
     return BackupPayloadV1(

@@ -12,6 +12,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appTitle => 'SplitBae';
 
   @override
+  String get navHomeLabel => 'Home';
+
+  @override
   String get addItemTooltip => 'Add item';
 
   @override

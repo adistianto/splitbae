@@ -57,3 +57,57 @@ pub fn calculate_split(items: Vec<ReceiptItem>, participants: Vec<String>) -> Ve
     });
     out
 }
+
+// --- Amount encoding (keep all numeric money rules in Rust; Dart calls FRB only.) ---
+
+/// Maps a decimal UI amount to integer minor units for persistence (e.g. SQLite).
+/// IDR/JPY/KRW: 1 minor = 1 unit; others: cents (10^-2).
+#[flutter_rust_bridge::frb(sync)]
+pub fn amount_to_minor_units(amount: f64, currency_code: String) -> i64 {
+    let c = currency_code.to_uppercase();
+    if matches!(c.as_str(), "IDR" | "JPY" | "KRW") {
+        amount.round() as i64
+    } else {
+        (amount * 100.0).round() as i64
+    }
+}
+
+#[flutter_rust_bridge::frb(sync)]
+pub fn minor_units_to_amount(minor: i64, currency_code: String) -> f64 {
+    let c = currency_code.to_uppercase();
+    if matches!(c.as_str(), "IDR" | "JPY" | "KRW") {
+        minor as f64
+    } else {
+        minor as f64 / 100.0
+    }
+}
+
+/// Plain string for amount text fields (add/edit line).
+#[flutter_rust_bridge::frb(sync)]
+pub fn amount_to_input_text(amount: f64, currency_code: String) -> String {
+    let c = currency_code.to_uppercase();
+    if matches!(c.as_str(), "IDR" | "JPY" | "KRW") {
+        amount.round().to_string()
+    } else {
+        format!("{amount:.2}")
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn minor_usd_round_trip() {
+        let m = amount_to_minor_units(10.50, "USD".into());
+        assert_eq!(m, 1050);
+        assert!((minor_units_to_amount(m, "USD".into()) - 10.50).abs() < 1e-9);
+    }
+
+    #[test]
+    fn minor_idr_integer() {
+        let m = amount_to_minor_units(45_000.0, "IDR".into());
+        assert_eq!(m, 45_000);
+        assert!((minor_units_to_amount(m, "IDR".into()) - 45_000.0).abs() < 1e-9);
+    }
+}
