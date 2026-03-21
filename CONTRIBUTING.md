@@ -7,6 +7,29 @@ SplitBae is licensed under the **[Apache License 2.0](LICENSE)**. Contributions 
 1. Read **[`.cursorrules`](.cursorrules)** — architecture, MVP scope, and style expectations are defined there.
 2. Prefer **small, vertical commits** (one logical change per commit) so history stays easy to bisect.
 
+## Quality Bar (what we expect)
+
+- Keep PRs focused and reviewable. Avoid drive-by refactors and unrelated churn.
+- Match existing naming and patterns. New UI must feel native-first (adaptive primitives, correct platform wrappers).
+- Prefer deterministic, unit-testable code for business logic. If a change affects calculations, it must be safe by construction and tested.
+
+## Rust-Logic Rule (non-negotiable)
+
+All business logic and currency math must stay in **Rust**.
+
+- The canonical implementation lives in `rust/src/api/simple.rs` and is exposed to Flutter via `flutter_rust_bridge`.
+- Flutter must not re-implement split logic, minor-unit encoding, or currency amount rules (for example, `amount_to_minor_units`, `minor_units_to_amount`, `amount_to_input_text`, and `calculate_split_assigned`).
+
+If you need new behavior, implement it in Rust first, export via FRB, then wire it into Flutter.
+
+## Native-First UI Rule (platform-adaptive)
+
+UI contributions must preserve the project’s “Native OCR / Native Feel” intent:
+
+- Use adaptive primitives for parity across OSes (for example `showAdaptiveConfirmDialog`, `SwitchListTile.adaptive`, and theme-relative `TextStyle`s).
+- When rendering platform-specific shells (Material vs Cupertino), follow the existing wrappers (`hostPlatformIsApple()` + Cupertino narrow shell, Material rail on wide layouts).
+- Do not add a cloud OCR / bundled LLM “upgrade” for the UI. OCR is native via `ReceiptOcrChannel` (native `MethodChannel` on Android and iOS); Flutter orchestrates scan-to-edit and keeps manual entry available.
+
 ## Trunk-based workflow
 
 - **`main`** is the integration branch; keep it **buildable** and **releasable**.
@@ -21,11 +44,32 @@ SplitBae is licensed under the **[Apache License 2.0](LICENSE)**. Contributions 
 | Localization codegen | `flutter gen-l10n` (or automatic with `flutter pub get` when ARBs change) |
 | Drift (SQLite) codegen | `dart run build_runner build --delete-conflicting-outputs` after editing `lib/core/database/app_database.dart` |
 | Unit tests (VM) | `flutter test` — DB smoke tests use `NativeDatabase.memory()` (plain SQLite, not SQLCipher) |
-| Rust ↔ Dart bridge | From repo root: `flutter_rust_bridge_codegen generate` |
+| Rust ↔ Dart bridge | From repo root: `flutter_rust_bridge_codegen generate` (after changing any `#[flutter_rust_bridge::frb]` API) |
 | Rust check | `cd rust && cargo check` |
 | Analyze | `dart analyze` / `flutter analyze` |
 
 After changing **`rust/src/api/`** or FRB types, regenerate the bridge **before** opening a PR.
+
+## Testing protocol (Flutter + Rust)
+
+### Rust layer
+
+- Run unit tests: `cd rust && cargo test`
+- Run a compile check: `cd rust && cargo check`
+
+Because Rust is the source of truth for money and splits, Rust tests must cover new behavior introduced in `rust/src/api/simple.rs`.
+
+### Flutter layer
+
+- Run widget/VM tests: `flutter test`
+- Run static analysis: `dart analyze` (or `flutter analyze`)
+
+If you touched Rust FRB APIs, the minimum safe loop is:
+
+1. Update Rust logic in `rust/src/api/simple.rs`
+2. Regenerate bindings: `flutter_rust_bridge_codegen generate`
+3. Run Rust tests (`cargo test`)
+4. Run Flutter analysis/tests (`dart analyze` / `flutter test`)
 
 ## Local database (Drift + SQLCipher)
 
