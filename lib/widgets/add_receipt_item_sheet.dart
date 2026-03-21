@@ -5,16 +5,23 @@ import 'package:flutter/material.dart';
 import 'package:splitbae/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:splitbae/app_settings.dart';
+import 'package:splitbae/core/data/amount_minor.dart';
+import 'package:splitbae/core/domain/ledger_line_item.dart';
 import 'package:splitbae/currency_catalog.dart';
 import 'package:splitbae/providers.dart';
 
 /// iOS: glass-style modal. Android: M3 bottom sheet.
-Future<void> showAddReceiptItemSheet(BuildContext context, WidgetRef ref) {
+/// Pass [existingLine] to edit; omit to add a new line.
+Future<void> showAddReceiptItemSheet(
+  BuildContext context,
+  WidgetRef ref, {
+  LedgerLineItem? existingLine,
+}) {
   final platform = Theme.of(context).platform;
   if (platform == TargetPlatform.iOS) {
-    return _showCupertinoGlassSheet(context, ref);
+    return _showCupertinoGlassSheet(context, ref, existingLine: existingLine);
   }
-  return _showMaterialExpressiveSheet(context, ref);
+  return _showMaterialExpressiveSheet(context, ref, existingLine: existingLine);
 }
 
 Future<void> _openCurrencyPicker({
@@ -50,7 +57,11 @@ Future<void> _openCurrencyPicker({
   );
 }
 
-Future<void> _showCupertinoGlassSheet(BuildContext context, WidgetRef ref) {
+Future<void> _showCupertinoGlassSheet(
+  BuildContext context,
+  WidgetRef ref, {
+  LedgerLineItem? existingLine,
+}) {
   return showCupertinoModalPopup<void>(
     context: context,
     barrierColor: Colors.black.withValues(alpha: 0.35),
@@ -91,12 +102,12 @@ Future<void> _showCupertinoGlassSheet(BuildContext context, WidgetRef ref) {
                     ),
                   ],
                 ),
-                child: CupertinoTheme(
+                  child: CupertinoTheme(
                   data: CupertinoTheme.of(ctx).copyWith(
                     brightness: brightness,
                     primaryColor: CupertinoColors.activeBlue.resolveFrom(ctx),
                   ),
-                  child: const _AddItemFormCupertino(),
+                  child: _AddItemFormCupertino(existingLine: existingLine),
                 ),
               ),
             ),
@@ -108,7 +119,9 @@ Future<void> _showCupertinoGlassSheet(BuildContext context, WidgetRef ref) {
 }
 
 class _AddItemFormCupertino extends ConsumerStatefulWidget {
-  const _AddItemFormCupertino();
+  const _AddItemFormCupertino({this.existingLine});
+
+  final LedgerLineItem? existingLine;
 
   @override
   ConsumerState<_AddItemFormCupertino> createState() =>
@@ -124,9 +137,15 @@ class _AddItemFormCupertinoState extends ConsumerState<_AddItemFormCupertino> {
   @override
   void initState() {
     super.initState();
-    _nameCtrl = TextEditingController();
-    _priceCtrl = TextEditingController();
-    _currencyCode = ref.read(defaultCurrencyProvider);
+    final existing = widget.existingLine;
+    final item = existing?.receiptItem;
+    _nameCtrl = TextEditingController(text: item?.name ?? '');
+    _priceCtrl = TextEditingController(
+      text: item != null
+          ? amountToInputText(item.price, item.currencyCode)
+          : '',
+    );
+    _currencyCode = item?.currencyCode ?? ref.read(defaultCurrencyProvider);
   }
 
   @override
@@ -149,7 +168,17 @@ class _AddItemFormCupertinoState extends ConsumerState<_AddItemFormCupertino> {
       setState(() => _error = l10n.errorPriceInvalid);
       return;
     }
-    await ref.read(itemsProvider.notifier).addItem(name, price, _currencyCode);
+    final notifier = ref.read(itemsProvider.notifier);
+    if (widget.existingLine != null) {
+      await notifier.updateItem(
+        id: widget.existingLine!.id,
+        name: name,
+        price: price,
+        currencyCode: _currencyCode,
+      );
+    } else {
+      await notifier.addItem(name, price, _currencyCode);
+    }
     if (!context.mounted) return;
     Navigator.of(context).pop();
   }
@@ -158,6 +187,8 @@ class _AddItemFormCupertinoState extends ConsumerState<_AddItemFormCupertino> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final padding = const EdgeInsets.fromLTRB(20, 20, 20, 16);
+    final title =
+        widget.existingLine != null ? l10n.editItemTitle : l10n.addItemTitle;
 
     return Padding(
       padding: padding,
@@ -166,7 +197,7 @@ class _AddItemFormCupertinoState extends ConsumerState<_AddItemFormCupertino> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            l10n.addItemTitle,
+            title,
             textAlign: TextAlign.center,
             style: CupertinoTheme.of(context)
                 .textTheme
@@ -285,7 +316,11 @@ class _AddItemFormCupertinoState extends ConsumerState<_AddItemFormCupertino> {
   }
 }
 
-Future<void> _showMaterialExpressiveSheet(BuildContext context, WidgetRef ref) {
+Future<void> _showMaterialExpressiveSheet(
+  BuildContext context,
+  WidgetRef ref, {
+  LedgerLineItem? existingLine,
+}) {
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
@@ -298,8 +333,8 @@ Future<void> _showMaterialExpressiveSheet(BuildContext context, WidgetRef ref) {
     builder: (ctx) {
       return Padding(
         padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(ctx).bottom),
-        child: const SingleChildScrollView(
-          child: _AddItemFormMaterial(),
+        child: SingleChildScrollView(
+          child: _AddItemFormMaterial(existingLine: existingLine),
         ),
       );
     },
@@ -307,7 +342,9 @@ Future<void> _showMaterialExpressiveSheet(BuildContext context, WidgetRef ref) {
 }
 
 class _AddItemFormMaterial extends ConsumerStatefulWidget {
-  const _AddItemFormMaterial();
+  const _AddItemFormMaterial({this.existingLine});
+
+  final LedgerLineItem? existingLine;
 
   @override
   ConsumerState<_AddItemFormMaterial> createState() =>
@@ -323,9 +360,15 @@ class _AddItemFormMaterialState extends ConsumerState<_AddItemFormMaterial> {
   @override
   void initState() {
     super.initState();
-    _nameCtrl = TextEditingController();
-    _priceCtrl = TextEditingController();
-    _currencyCode = ref.read(defaultCurrencyProvider);
+    final existing = widget.existingLine;
+    final item = existing?.receiptItem;
+    _nameCtrl = TextEditingController(text: item?.name ?? '');
+    _priceCtrl = TextEditingController(
+      text: item != null
+          ? amountToInputText(item.price, item.currencyCode)
+          : '',
+    );
+    _currencyCode = item?.currencyCode ?? ref.read(defaultCurrencyProvider);
   }
 
   @override
@@ -370,7 +413,17 @@ class _AddItemFormMaterialState extends ConsumerState<_AddItemFormMaterial> {
     final name = _nameCtrl.text.trim();
     final raw = _priceCtrl.text.trim().replaceAll(RegExp(r'[^\d.]'), '');
     final price = double.parse(raw);
-    await ref.read(itemsProvider.notifier).addItem(name, price, _currencyCode);
+    final notifier = ref.read(itemsProvider.notifier);
+    if (widget.existingLine != null) {
+      await notifier.updateItem(
+        id: widget.existingLine!.id,
+        name: name,
+        price: price,
+        currencyCode: _currencyCode,
+      );
+    } else {
+      await notifier.addItem(name, price, _currencyCode);
+    }
     if (!context.mounted) return;
     Navigator.of(context).pop();
   }
@@ -380,6 +433,8 @@ class _AddItemFormMaterialState extends ConsumerState<_AddItemFormMaterial> {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final title =
+        widget.existingLine != null ? l10n.editItemTitle : l10n.addItemTitle;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 8, 24, 28),
@@ -390,7 +445,7 @@ class _AddItemFormMaterialState extends ConsumerState<_AddItemFormMaterial> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              l10n.addItemTitle,
+              title,
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w600,
                 letterSpacing: -0.5,

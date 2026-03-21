@@ -84,6 +84,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Per person, grouped by currency (no FX conversion).';
 
   @override
+  String get perPersonTitle => 'Per person';
+
+  @override
   String get settingsDataPrivacy => 'Data & privacy';
 
   @override
@@ -149,4 +152,42 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get backupErrorExport => 'Could not create the backup file.';
+
+  @override
+  String get editItemTitle => 'Edit item';
+
+  @override
+  String get billItemsTitle => 'Bill items';
+
+  @override
+  String get deleteItemTitle => 'Remove item?';
+
+  @override
+  String get deleteItemBody => 'This line will be removed from the bill.';
+
+  @override
+  String get deleteAction => 'Delete';
+
+  @override
+  String get peopleTooltip => 'People';
+
+  @override
+  String get managePeopleTitle => 'People in this split';
+
+  @override
+  String get renameParticipantAction => 'Rename';
+
+  @override
+  String get renameParticipantTitle => 'Rename';
+
+  @override
+  String get participantDisplayNameLabel => 'Name';
+
+  @override
+  String get removeParticipantTitle => 'Remove person?';
+
+  @override
+  String removeParticipantBody(String name) {
+    return 'Remove $name from this split?';
+  }
 }

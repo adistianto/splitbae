@@ -24,6 +24,7 @@
   "errorPriceRequired": "Jumlah wajib diisi.",
   "errorPriceInvalid": "Masukkan nominal yang valid (positif).",
   "splitSubtitle": "Per orang, per mata uang (tanpa konversi kurs).",
+  "perPersonTitle": "Per orang",
   "settingsDataPrivacy": "Data & privasi",
   "settingsEncryptDatabase": "Enkripsi basis data lokal",
   "settingsEncryptDatabaseSubtitle": "Sangat disarankan jika ponsel bisa hilang atau dicuri—melindungi nama dan nominal saat disimpan. Default: mati.",
@@ -43,5 +44,17 @@
   "backupExportSuccess": "File cadangan siap.",
   "backupImportSuccess": "Cadangan dipulihkan.",
   "backupErrorInvalid": "File itu bukan cadangan SplitBae yang valid.",
-  "backupErrorExport": "Tidak bisa membuat file cadangan."
+  "backupErrorExport": "Tidak bisa membuat file cadangan.",
+  "editItemTitle": "Edit item",
+  "billItemsTitle": "Item tagihan",
+  "deleteItemTitle": "Hapus item?",
+  "deleteItemBody": "Baris ini akan dihapus dari tagihan.",
+  "deleteAction": "Hapus",
+  "peopleTooltip": "Orang",
+  "managePeopleTitle": "Orang dalam pembagian ini",
+  "renameParticipantAction": "Ganti nama",
+  "renameParticipantTitle": "Ganti nama",
+  "participantDisplayNameLabel": "Nama",
+  "removeParticipantTitle": "Hapus orang?",
+  "removeParticipantBody": "Hapus {name} dari pembagian ini?"
 }

@@ -15,3 +15,12 @@ double minorUnitsToAmount(int minor, String currencyCode) {
   }
   return minor / 100.0;
 }
+
+/// Text for add/edit amount fields (integer currencies vs two decimals).
+String amountToInputText(double amount, String currencyCode) {
+  final c = currencyCode.toUpperCase();
+  if (c == 'IDR' || c == 'JPY' || c == 'KRW') {
+    return amount.round().toString();
+  }
+  return amount.toStringAsFixed(2);
+}

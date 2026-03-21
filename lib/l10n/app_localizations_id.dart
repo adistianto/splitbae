@@ -84,6 +84,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get splitSubtitle => 'Per orang, per mata uang (tanpa konversi kurs).';
 
   @override
+  String get perPersonTitle => 'Per orang';
+
+  @override
   String get settingsDataPrivacy => 'Data & privasi';
 
   @override
@@ -150,4 +153,42 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get backupErrorExport => 'Tidak bisa membuat file cadangan.';
+
+  @override
+  String get editItemTitle => 'Edit item';
+
+  @override
+  String get billItemsTitle => 'Item tagihan';
+
+  @override
+  String get deleteItemTitle => 'Hapus item?';
+
+  @override
+  String get deleteItemBody => 'Baris ini akan dihapus dari tagihan.';
+
+  @override
+  String get deleteAction => 'Hapus';
+
+  @override
+  String get peopleTooltip => 'Orang';
+
+  @override
+  String get managePeopleTitle => 'Orang dalam pembagian ini';
+
+  @override
+  String get renameParticipantAction => 'Ganti nama';
+
+  @override
+  String get renameParticipantTitle => 'Ganti nama';
+
+  @override
+  String get participantDisplayNameLabel => 'Nama';
+
+  @override
+  String get removeParticipantTitle => 'Hapus orang?';
+
+  @override
+  String removeParticipantBody(String name) {
+    return 'Hapus $name dari pembagian ini?';
+  }
 }

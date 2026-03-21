@@ -242,6 +242,12 @@ abstract class AppLocalizations {
   /// **'Per person, grouped by currency (no FX conversion).'**
   String get splitSubtitle;
 
+  /// Section header above the split totals list.
+  ///
+  /// In en, this message translates to:
+  /// **'Per person'**
+  String get perPersonTitle;
+
   /// Section header for storage and encryption preferences.
   ///
   /// In en, this message translates to:
@@ -361,6 +367,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not create the backup file.'**
   String get backupErrorExport;
+
+  /// Title when editing an existing receipt line.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit item'**
+  String get editItemTitle;
+
+  /// Section header above the list of receipt lines.
+  ///
+  /// In en, this message translates to:
+  /// **'Bill items'**
+  String get billItemsTitle;
+
+  /// Alert title before deleting a receipt line.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove item?'**
+  String get deleteItemTitle;
+
+  /// Alert body for deleting a receipt line.
+  ///
+  /// In en, this message translates to:
+  /// **'This line will be removed from the bill.'**
+  String get deleteItemBody;
+
+  /// Destructive confirm button label.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get deleteAction;
+
+  /// App bar: open participant list.
+  ///
+  /// In en, this message translates to:
+  /// **'People'**
+  String get peopleTooltip;
+
+  /// Bottom sheet title for renaming/removing participants.
+  ///
+  /// In en, this message translates to:
+  /// **'People in this split'**
+  String get managePeopleTitle;
+
+  /// Button to rename a participant.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get renameParticipantAction;
+
+  /// Dialog title for participant rename.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get renameParticipantTitle;
+
+  /// Label for participant name field.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get participantDisplayNameLabel;
+
+  /// Alert before removing a participant.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove person?'**
+  String get removeParticipantTitle;
+
+  /// Alert body; {name} is the participant display name.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {name} from this split?'**
+  String removeParticipantBody(String name);
 }
 
 class _AppLocalizationsDelegate

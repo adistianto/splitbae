@@ -96,6 +96,10 @@
   "@splitSubtitle": {
     "description": "Explains the split list: one row per person per currency; no exchange rates."
   },
+  "perPersonTitle": "Per person",
+  "@perPersonTitle": {
+    "description": "Section header above the split totals list."
+  },
   "settingsDataPrivacy": "Data & privacy",
   "@settingsDataPrivacy": {
     "description": "Section header for storage and encryption preferences."
@@ -175,5 +179,58 @@
   "backupErrorExport": "Could not create the backup file.",
   "@backupErrorExport": {
     "description": "IO or share failure on export."
+  },
+  "editItemTitle": "Edit item",
+  "@editItemTitle": {
+    "description": "Title when editing an existing receipt line."
+  },
+  "billItemsTitle": "Bill items",
+  "@billItemsTitle": {
+    "description": "Section header above the list of receipt lines."
+  },
+  "deleteItemTitle": "Remove item?",
+  "@deleteItemTitle": {
+    "description": "Alert title before deleting a receipt line."
+  },
+  "deleteItemBody": "This line will be removed from the bill.",
+  "@deleteItemBody": {
+    "description": "Alert body for deleting a receipt line."
+  },
+  "deleteAction": "Delete",
+  "@deleteAction": {
+    "description": "Destructive confirm button label."
+  },
+  "peopleTooltip": "People",
+  "@peopleTooltip": {
+    "description": "App bar: open participant list."
+  },
+  "managePeopleTitle": "People in this split",
+  "@managePeopleTitle": {
+    "description": "Bottom sheet title for renaming/removing participants."
+  },
+  "renameParticipantAction": "Rename",
+  "@renameParticipantAction": {
+    "description": "Button to rename a participant."
+  },
+  "renameParticipantTitle": "Rename",
+  "@renameParticipantTitle": {
+    "description": "Dialog title for participant rename."
+  },
+  "participantDisplayNameLabel": "Name",
+  "@participantDisplayNameLabel": {
+    "description": "Label for participant name field."
+  },
+  "removeParticipantTitle": "Remove person?",
+  "@removeParticipantTitle": {
+    "description": "Alert before removing a participant."
+  },
+  "removeParticipantBody": "Remove {name} from this split?",
+  "@removeParticipantBody": {
+    "description": "Alert body; {name} is the participant display name.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   }
 }
