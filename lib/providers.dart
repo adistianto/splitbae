@@ -2,17 +2,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:splitbae/app_settings.dart';
 import 'package:splitbae/core/data/draft_bill_inclusion_repository.dart';
 import 'package:splitbae/core/data/draft_payment_repository.dart';
-import 'package:splitbae/core/data/bill_posting_repository.dart';
 import 'package:splitbae/core/data/ledger_settlement_service.dart';
 import 'package:splitbae/core/domain/ledger_line_item.dart';
 import 'package:splitbae/core/domain/participant_entry.dart';
-import 'package:splitbae/core/domain/posted_bill_summary.dart';
 import 'package:splitbae/core/domain/ledger_ids.dart';
 import 'package:splitbae/core/domain/transaction_detail_data.dart';
 import 'package:splitbae/core/providers/database_providers.dart';
+import 'package:splitbae/features/bills/application/bills_provider.dart';
 import 'package:splitbae/core/database/app_database.dart'
     show SettlementTransfer, TransactionPayment;
-import 'package:splitbae/src/rust/api/receipt_split.dart' show UserOwedMinor;
+import 'package:splitbae/src/rust/api/receipt_split.dart'
+    show ReceiptItem, UserOwedMinor;
 import 'package:splitbae/src/rust/api/simple.dart'
     show
         AssignedReceiptLine,
@@ -28,18 +28,14 @@ import 'package:splitbae/src/rust/api/settlement.dart'
 /// from those notifiers — it watches them and Riverpod throws [CircularDependencyError].
 final draftPaymentsDbRevisionProvider = StateProvider<int>((ref) => 0);
 
-/// Bumped when the posted-bills feed must refresh but [itemsProvider] may be unchanged.
-final postedBillsFeedRevisionProvider = StateProvider<int>((ref) => 0);
-
 /// True while [ItemsNotifier.postDraftBill] is running (UI: post / save affordances).
 final postBillInFlightProvider = StateProvider<bool>((ref) => false);
 
+/// When set, draft state is a working copy of this posted bill ([updatePostedBill] target).
+final editPostedTransactionIdProvider = StateProvider<String?>((ref) => null);
+
 void _bumpDraftPaymentsDbRevision(Ref ref) {
   ref.read(draftPaymentsDbRevisionProvider.notifier).state++;
-}
-
-void _bumpPostedBillsFeedRevision(Ref ref) {
-  ref.read(postedBillsFeedRevisionProvider.notifier).state++;
 }
 
 /// Bumped when draft “who’s splitting” inclusion changes (DB + payments).
@@ -71,19 +67,17 @@ class ItemsNotifier extends StateNotifier<List<LedgerLineItem>> {
       ledgerId: kDefaultLedgerId,
       defaultWhenNoLines: _ref.read(defaultCurrencyProvider),
     );
-    _draftBillCurrencyCode =
-        await repo.getDraftTransactionCurrencyCode(kDefaultLedgerId);
-    await DraftPaymentRepository(_ref.read(appDatabaseProvider))
-        .syncDraftPaymentsWithBill(kDefaultLedgerId);
+    _draftBillCurrencyCode = await repo.getDraftTransactionCurrencyCode(
+      kDefaultLedgerId,
+    );
+    await DraftPaymentRepository(
+      _ref.read(appDatabaseProvider),
+    ).syncDraftPaymentsWithBill(kDefaultLedgerId);
     _bumpDraftPaymentsDbRevision(_ref);
   }
 
   /// Returns the new line id (for assignment rows after insert).
-  Future<String> addItem(
-    String name,
-    double price, {
-    int quantity = 1,
-  }) async {
+  Future<String> addItem(String name, double price, {int quantity = 1}) async {
     final repo = _ref.read(lineItemRepositoryProvider);
     final id = await repo.addLine(
       ledgerId: kDefaultLedgerId,
@@ -151,7 +145,9 @@ class ItemsNotifier extends StateNotifier<List<LedgerLineItem>> {
   }) async {
     _ref.read(postBillInFlightProvider.notifier).state = true;
     try {
-      await _ref.read(billPostingRepositoryProvider).postDraftBill(
+      await _ref
+          .read(billPostingRepositoryProvider)
+          .postDraftBill(
             ledgerId: kDefaultLedgerId,
             description: description,
             splitOwedMinor: splitOwedMinor,
@@ -162,7 +158,41 @@ class ItemsNotifier extends StateNotifier<List<LedgerLineItem>> {
             receiptSourcePath: receiptSourcePath,
           );
       await _load();
-      _bumpPostedBillsFeedRevision(_ref);
+    } finally {
+      _ref.read(postBillInFlightProvider.notifier).state = false;
+    }
+  }
+
+  /// Persists draft edits onto the posted row; clears edit mode and reloads draft.
+  Future<void> updatePostedBill(
+    String description, {
+    required List<ReceiptItem> receiptItems,
+    required List<UserOwedMinor> splitOwedMinor,
+    required int taxAmountMinor,
+    required int tipAmountMinor,
+    String category = 'other',
+  }) async {
+    final postedId = _ref.read(editPostedTransactionIdProvider);
+    if (postedId == null) {
+      throw StateError('not_editing');
+    }
+    _ref.read(postBillInFlightProvider.notifier).state = true;
+    try {
+      await _ref
+          .read(billPostingRepositoryProvider)
+          .updatePostedBill(
+            ledgerId: kDefaultLedgerId,
+            postedTransactionId: postedId,
+            description: description,
+            receiptItems: receiptItems,
+            splitOwedMinor: splitOwedMinor,
+            taxAmountMinor: taxAmountMinor,
+            tipAmountMinor: tipAmountMinor,
+            category: category,
+          );
+      _ref.read(editPostedTransactionIdProvider.notifier).state = null;
+      await _load();
+      _ref.invalidate(transactionDetailProvider(postedId));
     } finally {
       _ref.read(postBillInFlightProvider.notifier).state = false;
     }
@@ -172,14 +202,15 @@ class ItemsNotifier extends StateNotifier<List<LedgerLineItem>> {
     await _ref
         .read(billPostingRepositoryProvider)
         .deletePostedTransaction(transactionId);
-    _bumpPostedBillsFeedRevision(_ref);
     _ref.invalidate(transactionDetailProvider(transactionId));
   }
 
   /// Replaces the current draft with a copy of a posted bill (lines, inclusion,
   /// payments, metadata). Used for v0-style “adjust in draft” without mutating history.
   Future<void> copyPostedBillToDraft(String postedTransactionId) async {
-    await _ref.read(billPostingRepositoryProvider).copyPostedTransactionToDraft(
+    await _ref
+        .read(billPostingRepositoryProvider)
+        .copyPostedTransactionToDraft(
           ledgerId: kDefaultLedgerId,
           postedTransactionId: postedTransactionId,
         );
@@ -211,8 +242,9 @@ class ParticipantsNotifier extends StateNotifier<List<ParticipantEntry>> {
   Future<void> _load() async {
     final repo = _ref.read(participantRepositoryProvider);
     state = await repo.listParticipants(kDefaultLedgerId);
-    await DraftPaymentRepository(_ref.read(appDatabaseProvider))
-        .syncDraftPaymentsWithBill(kDefaultLedgerId);
+    await DraftPaymentRepository(
+      _ref.read(appDatabaseProvider),
+    ).syncDraftPaymentsWithBill(kDefaultLedgerId);
     _bumpDraftPaymentsDbRevision(_ref);
   }
 
@@ -247,17 +279,19 @@ final participantsProvider =
 /// Ledger participants **on the current draft bill** (subset when toggled).
 final draftBillActiveParticipantsProvider =
     FutureProvider<List<ParticipantEntry>>((ref) async {
-  ref.watch(participantsProvider);
-  ref.watch(draftBillInclusionRevisionProvider);
-  final all = ref.read(participantsProvider);
-  final ids = await DraftBillInclusionRepository(
-    ref.read(appDatabaseProvider),
-  ).effectiveIncludedIds(kDefaultLedgerId, all);
-  return all.where((p) => ids.contains(p.id)).toList();
-});
+      ref.watch(participantsProvider);
+      ref.watch(draftBillInclusionRevisionProvider);
+      final all = ref.read(participantsProvider);
+      final ids = await DraftBillInclusionRepository(
+        ref.read(appDatabaseProvider),
+      ).effectiveIncludedIds(kDefaultLedgerId, all);
+      return all.where((p) => ids.contains(p.id)).toList();
+    });
 
 final splitProvider = FutureProvider<List<SplitResult>>((ref) async {
-  final participants = await ref.watch(draftBillActiveParticipantsProvider.future);
+  final participants = await ref.watch(
+    draftBillActiveParticipantsProvider.future,
+  );
   final items = ref.watch(itemsProvider);
   return calculateSplitAssigned(
     lines: items
@@ -269,9 +303,7 @@ final splitProvider = FutureProvider<List<SplitResult>>((ref) async {
         )
         .toList(),
     participants: participants
-        .map(
-          (e) => ParticipantRef(id: e.id, displayName: e.displayName),
-        )
+        .map((e) => ParticipantRef(id: e.id, displayName: e.displayName))
         .toList(),
   );
 });
@@ -279,89 +311,82 @@ final splitProvider = FutureProvider<List<SplitResult>>((ref) async {
 /// Recorded settlement rows (invalidated after [SettlementRepository.recordTransfer]).
 final settlementTransfersListProvider =
     FutureProvider.autoDispose<List<SettlementTransfer>>((ref) async {
-  final repo = ref.watch(settlementRepositoryProvider);
-  return repo.listForLedger(kDefaultLedgerId);
-});
+      final repo = ref.watch(settlementRepositoryProvider);
+      return repo.listForLedger(kDefaultLedgerId);
+    });
 
 /// Draft bill payment rows (per participant × currency), synced after items/participants load.
 final draftTransactionPaymentsProvider =
     FutureProvider.autoDispose<List<TransactionPayment>>((ref) async {
-  ref.watch(draftPaymentsDbRevisionProvider);
-  ref.watch(itemsProvider);
-  ref.watch(participantsProvider);
-  final db = ref.watch(appDatabaseProvider);
-  return DraftPaymentRepository(db).listForDraft(kDefaultLedgerId);
-});
+      ref.watch(draftPaymentsDbRevisionProvider);
+      ref.watch(itemsProvider);
+      ref.watch(participantsProvider);
+      final db = ref.watch(appDatabaseProvider);
+      return DraftPaymentRepository(db).listForDraft(kDefaultLedgerId);
+    });
 
 /// Posted bills for the default ledger (feed + detail), newest first.
-final postedBillSummariesProvider =
-    FutureProvider.autoDispose<List<PostedBillSummary>>((ref) async {
-  ref.watch(postedBillsFeedRevisionProvider);
-  ref.watch(itemsProvider);
-  final db = ref.watch(appDatabaseProvider);
-  return BillPostingRepository(db).listPostedBillSummaries(kDefaultLedgerId);
-});
+///
+/// Same source as [billsFeedProvider] (Drift watch on ledger transactions).
+final postedBillSummariesProvider = billsFeedProvider;
 
 /// Loads a single posted transaction for the detail screen.
-final transactionDetailProvider =
-    FutureProvider.autoDispose.family<TransactionDetailData?, String>((
-  ref,
-  transactionId,
-) async {
-  ref.watch(participantsProvider);
-  return ref.read(transactionDetailRepositoryProvider).loadDetail(
-        ledgerId: kDefaultLedgerId,
-        transactionId: transactionId,
-      );
-});
+final transactionDetailProvider = FutureProvider.autoDispose
+    .family<TransactionDetailData?, String>((ref, transactionId) async {
+      ref.watch(participantsProvider);
+      return ref
+          .read(transactionDetailRepositoryProvider)
+          .loadDetail(ledgerId: kDefaultLedgerId, transactionId: transactionId);
+    });
 
 /// Split math for a posted transaction (same rules as the draft bill).
-final postedTransactionSplitProvider =
-    Provider.autoDispose.family<List<SplitResult>, String>((ref, txId) {
-  final detailAsync = ref.watch(transactionDetailProvider(txId));
-  return detailAsync.when(
-    data: (d) {
-      if (d == null || d.lines.isEmpty) return [];
-      final refs = d.transactionParticipantIds
-          .map(
-            (id) => ParticipantRef(
-              id: id,
-              displayName: d.participantNames[id] ?? '',
-            ),
-          )
-          .toList();
-      return calculateSplitAssigned(
-        lines: d.lines
-            .map(
-              (e) => AssignedReceiptLine(
-                item: e.receiptItem,
-                assigneeIds: e.assignedParticipantIds,
-              ),
-            )
-            .toList(),
-        participants: refs,
+final postedTransactionSplitProvider = Provider.autoDispose
+    .family<List<SplitResult>, String>((ref, txId) {
+      final detailAsync = ref.watch(transactionDetailProvider(txId));
+      return detailAsync.when(
+        data: (d) {
+          if (d == null || d.lines.isEmpty) return [];
+          final refs = d.transactionParticipantIds
+              .map(
+                (id) => ParticipantRef(
+                  id: id,
+                  displayName: d.participantNames[id] ?? '',
+                ),
+              )
+              .toList();
+          return calculateSplitAssigned(
+            lines: d.lines
+                .map(
+                  (e) => AssignedReceiptLine(
+                    item: e.receiptItem,
+                    assigneeIds: e.assignedParticipantIds,
+                  ),
+                )
+                .toList(),
+            participants: refs,
+          );
+        },
+        loading: () => [],
+        error: (_, _) => [],
       );
-    },
-    loading: () => [],
-    error: (_, _) => [],
-  );
-});
+    });
 
 /// Rust minimal settlement edges from current ledger nets (items + participants + DB).
 final suggestedSettlementEdgesProvider =
     FutureProvider.autoDispose<List<SettlementEdge>>((ref) async {
-  ref.watch(itemsProvider);
-  ref.watch(participantsProvider);
-  ref.watch(draftBillInclusionRevisionProvider);
-  ref.watch(settlementTransfersListProvider);
-  ref.watch(draftTransactionPaymentsProvider);
-  final svc = LedgerSettlementService(ref.watch(appDatabaseProvider));
-  return svc.suggestedEdges(kDefaultLedgerId);
-});
+      ref.watch(itemsProvider);
+      ref.watch(participantsProvider);
+      ref.watch(draftBillInclusionRevisionProvider);
+      ref.watch(settlementTransfersListProvider);
+      ref.watch(draftTransactionPaymentsProvider);
+      final svc = LedgerSettlementService(ref.watch(appDatabaseProvider));
+      return svc.suggestedEdges(kDefaultLedgerId);
+    });
 
 /// Per-participant net balances by currency (draft + posted + settlements).
-final ledgerNetBalancesProvider =
-    FutureProvider.autoDispose<List<NetBalance>>((ref) async {
+final ledgerNetBalancesProvider = FutureProvider.autoDispose<List<NetBalance>>((
+  ref,
+) async {
   ref.watch(itemsProvider);
   ref.watch(participantsProvider);
   ref.watch(draftBillInclusionRevisionProvider);

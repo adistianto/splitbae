@@ -709,6 +709,26 @@
   "@postBillSuccess": {
     "description": "Snackbar after a successful post."
   },
+  "postBillSuccessUpdated": "Bill updated.",
+  "@postBillSuccessUpdated": {
+    "description": "Snackbar after saving edits to an existing posted bill."
+  },
+  "postBillTitleEdit": "Save changes",
+  "@postBillTitleEdit": {
+    "description": "Bottom sheet title when updating a posted bill from the draft editor."
+  },
+  "postBillSubtitleEdit": "This replaces the saved bill with your current lines, split, and payments.",
+  "@postBillSubtitleEdit": {
+    "description": "Explains updating an existing posted bill."
+  },
+  "postBillActionSaveChanges": "Save changes",
+  "@postBillActionSaveChanges": {
+    "description": "Primary button to commit edits to an existing posted bill."
+  },
+  "editPostedBillAction": "Edit bill",
+  "@editPostedBillAction": {
+    "description": "FAB on transaction detail to open the draft split editor with this bill loaded."
+  },
   "postBillErrorEmpty": "Add at least one line before posting.",
   "@postBillErrorEmpty": {
     "description": "Error when posting with no receipt lines."
@@ -938,6 +958,14 @@
   "billsFiltersAdjustHint": "Try adjusting filters or search.",
   "@billsFiltersAdjustHint": {
     "description": "Empty state when filters or search exclude all bills."
+  },
+  "billsFeedLoadError": "Could not load your bills.",
+  "@billsFeedLoadError": {
+    "description": "Bills dashboard when the local database stream fails."
+  },
+  "billsFeedRetry": "Retry",
+  "@billsFeedRetry": {
+    "description": "Retry loading the bills feed after an error."
   },
   "fabNewBill": "New Bill",
   "@fabNewBill": {

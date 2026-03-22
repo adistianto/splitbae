@@ -623,6 +623,22 @@ class AppLocalizationsId extends AppLocalizations {
   String get postBillSuccess => 'Tagihan tersimpan.';
 
   @override
+  String get postBillSuccessUpdated => 'Tagihan diperbarui.';
+
+  @override
+  String get postBillTitleEdit => 'Simpan perubahan';
+
+  @override
+  String get postBillSubtitleEdit =>
+      'Ini mengganti tagihan tersimpan dengan baris, pembagian, dan pembayaran saat ini.';
+
+  @override
+  String get postBillActionSaveChanges => 'Simpan perubahan';
+
+  @override
+  String get editPostedBillAction => 'Edit tagihan';
+
+  @override
   String get postBillErrorEmpty => 'Tambah minimal satu baris sebelum posting.';
 
   @override
@@ -808,6 +824,12 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get billsFiltersAdjustHint => 'Coba ubah filter atau pencarian.';
+
+  @override
+  String get billsFeedLoadError => 'Tidak dapat memuat tagihan.';
+
+  @override
+  String get billsFeedRetry => 'Coba lagi';
 
   @override
   String get fabNewBill => 'Tagihan baru';

@@ -1186,6 +1186,36 @@ abstract class AppLocalizations {
   /// **'Bill posted.'**
   String get postBillSuccess;
 
+  /// Snackbar after saving edits to an existing posted bill.
+  ///
+  /// In en, this message translates to:
+  /// **'Bill updated.'**
+  String get postBillSuccessUpdated;
+
+  /// Bottom sheet title when updating a posted bill from the draft editor.
+  ///
+  /// In en, this message translates to:
+  /// **'Save changes'**
+  String get postBillTitleEdit;
+
+  /// Explains updating an existing posted bill.
+  ///
+  /// In en, this message translates to:
+  /// **'This replaces the saved bill with your current lines, split, and payments.'**
+  String get postBillSubtitleEdit;
+
+  /// Primary button to commit edits to an existing posted bill.
+  ///
+  /// In en, this message translates to:
+  /// **'Save changes'**
+  String get postBillActionSaveChanges;
+
+  /// FAB on transaction detail to open the draft split editor with this bill loaded.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit bill'**
+  String get editPostedBillAction;
+
   /// Error when posting with no receipt lines.
   ///
   /// In en, this message translates to:
@@ -1521,6 +1551,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Try adjusting filters or search.'**
   String get billsFiltersAdjustHint;
+
+  /// Bills dashboard when the local database stream fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load your bills.'**
+  String get billsFeedLoadError;
+
+  /// Retry loading the bills feed after an error.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get billsFeedRetry;
 
   /// FAB speed dial: open compose flow.
   ///

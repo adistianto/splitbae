@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:splitbae/core/domain/ledger_ids.dart';
+import 'package:splitbae/core/providers/database_providers.dart';
 import 'package:splitbae/features/split/application/draft_split_provider.dart';
 import 'package:splitbae/l10n/app_localizations.dart';
 import 'package:splitbae/providers.dart';
@@ -28,7 +31,26 @@ class _PostBillSheetBody extends ConsumerStatefulWidget {
 }
 
 class _PostBillSheetBodyState extends ConsumerState<_PostBillSheetBody> {
-  final _controller = TextEditingController();
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController();
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _loadDraftDescription(),
+    );
+  }
+
+  Future<void> _loadDraftDescription() async {
+    final db = ref.read(appDatabaseProvider);
+    final draftTx = draftTransactionIdForLedger(kDefaultLedgerId);
+    final row = await (db.select(
+      db.transactions,
+    )..where((t) => t.id.equals(draftTx))).getSingle();
+    if (!mounted) return;
+    _controller.text = row.description;
+  }
 
   @override
   void dispose() {
@@ -45,6 +67,10 @@ class _PostBillSheetBodyState extends ConsumerState<_PostBillSheetBody> {
           return l10n.postBillErrorNoParticipants;
         case 'split_incomplete':
           return l10n.postBillErrorSplitIncomplete;
+        case 'receipt_mismatch':
+          return l10n.postBillErrorSplitIncomplete;
+        case 'not_editing':
+          return l10n.postBillErrorSplitIncomplete;
         default:
           break;
       }
@@ -56,6 +82,8 @@ class _PostBillSheetBodyState extends ConsumerState<_PostBillSheetBody> {
     final messenger = ScaffoldMessenger.of(widget.hostContext);
     final splitAsync = ref.read(splitResultProvider);
     final adj = ref.read(draftSplitNotifierProvider);
+    final receipt = ref.read(draftReceiptProvider);
+    final editingId = ref.read(editPostedTransactionIdProvider);
     await splitAsync.when(
       data: (split) async {
         if (split.isEmpty) {
@@ -65,16 +93,36 @@ class _PostBillSheetBodyState extends ConsumerState<_PostBillSheetBody> {
           return;
         }
         try {
-          await ref.read(itemsProvider.notifier).postDraftBill(
-                _controller.text.trim(),
-                splitOwedMinor: split,
-                taxAmountMinor: adj.taxAmountMinor,
-                tipAmountMinor: adj.tipAmountMinor,
-              );
+          if (editingId != null) {
+            await ref
+                .read(itemsProvider.notifier)
+                .updatePostedBill(
+                  _controller.text.trim(),
+                  receiptItems: receipt.items,
+                  splitOwedMinor: split,
+                  taxAmountMinor: adj.taxAmountMinor,
+                  tipAmountMinor: adj.tipAmountMinor,
+                );
+          } else {
+            await ref
+                .read(itemsProvider.notifier)
+                .postDraftBill(
+                  _controller.text.trim(),
+                  splitOwedMinor: split,
+                  taxAmountMinor: adj.taxAmountMinor,
+                  tipAmountMinor: adj.tipAmountMinor,
+                );
+          }
           if (!mounted) return;
           Navigator.of(context).pop();
           messenger.showSnackBar(
-            SnackBar(content: Text(l10n.postBillSuccess)),
+            SnackBar(
+              content: Text(
+                editingId != null
+                    ? l10n.postBillSuccessUpdated
+                    : l10n.postBillSuccess,
+              ),
+            ),
           );
         } catch (e) {
           if (!mounted) return;
@@ -99,6 +147,7 @@ class _PostBillSheetBodyState extends ConsumerState<_PostBillSheetBody> {
     final l10n = AppLocalizations.of(context)!;
     final bottom = MediaQuery.viewInsetsOf(context).bottom;
     final posting = ref.watch(postBillInFlightProvider);
+    final editing = ref.watch(editPostedTransactionIdProvider) != null;
     return Padding(
       padding: EdgeInsets.fromLTRB(24, 8, 24, 24 + bottom),
       child: Column(
@@ -106,15 +155,15 @@ class _PostBillSheetBodyState extends ConsumerState<_PostBillSheetBody> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            l10n.postBillTitle,
+            editing ? l10n.postBillTitleEdit : l10n.postBillTitle,
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: 8),
           Text(
-            l10n.postBillSubtitle,
+            editing ? l10n.postBillSubtitleEdit : l10n.postBillSubtitle,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: 16),
           TextField(
@@ -138,9 +187,11 @@ class _PostBillSheetBodyState extends ConsumerState<_PostBillSheetBody> {
                     height: 22,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Icon(Icons.check_circle_outline),
+                : Icon(PhosphorIconsRegular.checkCircle),
             onPressed: posting ? null : () => _submit(l10n),
-            label: Text(l10n.postBillAction),
+            label: Text(
+              editing ? l10n.postBillActionSaveChanges : l10n.postBillAction,
+            ),
           ),
         ],
       ),

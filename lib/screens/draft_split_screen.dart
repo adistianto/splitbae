@@ -40,28 +40,30 @@ class _PostBillTonalButton extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final posting = ref.watch(postBillInFlightProvider);
     return FilledButton.tonal(
-      onPressed: posting
-          ? null
-          : () {
-              HapticFeedback.mediumImpact();
-              showPostBillSheet(context, ref);
-            },
-      child: posting
-          ? Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-                const SizedBox(width: 10),
-                Text(label),
-              ],
-            )
-          : Text(label),
-    ).animate(target: posting ? 1 : 0).shimmer(
+          onPressed: posting
+              ? null
+              : () {
+                  HapticFeedback.mediumImpact();
+                  showPostBillSheet(context, ref);
+                },
+          child: posting
+              ? Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(label),
+                  ],
+                )
+              : Text(label),
+        )
+        .animate(target: posting ? 1 : 0)
+        .shimmer(
           duration: 950.ms,
           color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.28),
         );
@@ -76,7 +78,15 @@ void openDraftSplitScreen(
   final route = hostPlatformIsApple()
       ? CupertinoPageRoute<void>(builder: (_) => const DraftSplitScreen())
       : MaterialPageRoute<void>(builder: (_) => const DraftSplitScreen());
-  Navigator.of(context).push(route).then((_) {
+  Navigator.of(context).push(route).then((_) async {
+    final editId = ref.read(editPostedTransactionIdProvider);
+    if (editId != null) {
+      try {
+        await ref.read(itemsProvider.notifier).copyPostedBillToDraft(editId);
+      } finally {
+        ref.read(editPostedTransactionIdProvider.notifier).state = null;
+      }
+    }
     if (!context.mounted || !openAddItemSheetAfter) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!context.mounted) return;
@@ -131,9 +141,7 @@ class DraftSplitScreen extends ConsumerWidget {
             icon: PhosphorIconsRegular.gearSix,
             onPressed: () {
               Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => const SettingsScreen(),
-                ),
+                MaterialPageRoute<void>(builder: (_) => const SettingsScreen()),
               );
             },
           ),
@@ -189,31 +197,58 @@ class _DraftSplitBody extends ConsumerWidget {
 
     final billSlivers = <Widget>[
       SliverPadding(
-        padding: EdgeInsets.fromLTRB(horizontalPadding, 12, horizontalPadding, 4),
+        padding: EdgeInsets.fromLTRB(
+          horizontalPadding,
+          12,
+          horizontalPadding,
+          4,
+        ),
         sliver: SliverToBoxAdapter(
           child: Text(
             l10n.splitSubtitle,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
       ),
       if (items.isNotEmpty && ref.watch(participantsProvider).isNotEmpty)
         SliverPadding(
-          padding: EdgeInsets.fromLTRB(horizontalPadding, 8, horizontalPadding, 4),
+          padding: EdgeInsets.fromLTRB(
+            horizontalPadding,
+            8,
+            horizontalPadding,
+            4,
+          ),
           sliver: SliverToBoxAdapter(
-            child: _PostBillTonalButton(label: l10n.postBillAction),
+            child: _PostBillTonalButton(
+              label: ref.watch(editPostedTransactionIdProvider) != null
+                  ? l10n.postBillActionSaveChanges
+                  : l10n.postBillAction,
+            ),
           ),
         ),
       SliverPadding(
-        padding: EdgeInsets.fromLTRB(horizontalPadding, 12, horizontalPadding, 8),
+        padding: EdgeInsets.fromLTRB(
+          horizontalPadding,
+          12,
+          horizontalPadding,
+          8,
+        ),
         sliver: SliverToBoxAdapter(
-          child: Text(l10n.billItemsTitle, style: Theme.of(context).textTheme.titleMedium),
+          child: Text(
+            l10n.billItemsTitle,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
         ),
       ),
       SliverPadding(
-        padding: EdgeInsets.fromLTRB(horizontalPadding, 0, horizontalPadding, 8),
+        padding: EdgeInsets.fromLTRB(
+          horizontalPadding,
+          0,
+          horizontalPadding,
+          8,
+        ),
         sliver: SliverToBoxAdapter(
           child: _TaxTipRow(
             currencyCode: currency,
@@ -225,36 +260,47 @@ class _DraftSplitBody extends ConsumerWidget {
       ),
       if (items.isEmpty)
         SliverPadding(
-          padding: EdgeInsets.fromLTRB(horizontalPadding, 0, horizontalPadding, 8),
+          padding: EdgeInsets.fromLTRB(
+            horizontalPadding,
+            0,
+            horizontalPadding,
+            8,
+          ),
           sliver: SliverToBoxAdapter(
             child: Text(
               l10n.emptyBillHint,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
           ),
         )
       else
         SliverList(
-          delegate: SliverChildBuilderDelegate(
-            (context, index) {
-              final line = items[index];
-              return Padding(
-                padding: EdgeInsets.fromLTRB(horizontalPadding, 0, horizontalPadding, 8),
-                child: _DraftLineCard(
-                  line: line,
-                  horizontalPadding: horizontalPadding,
-                  locale: locale,
-                  onDelete: () => confirmDeleteLine(context, ref, line),
-                  onEdit: () => showAddReceiptItemSheet(context, ref, existingLine: line),
-                ),
-              );
-            },
-            childCount: items.length,
-          ),
+          delegate: SliverChildBuilderDelegate((context, index) {
+            final line = items[index];
+            return Padding(
+              padding: EdgeInsets.fromLTRB(
+                horizontalPadding,
+                0,
+                horizontalPadding,
+                8,
+              ),
+              child: _DraftLineCard(
+                line: line,
+                horizontalPadding: horizontalPadding,
+                locale: locale,
+                onDelete: () => confirmDeleteLine(context, ref, line),
+                onEdit: () =>
+                    showAddReceiptItemSheet(context, ref, existingLine: line),
+              ),
+            );
+          }, childCount: items.length),
         ),
-      SliverPadding(padding: scrollPad, sliver: const SliverToBoxAdapter(child: SizedBox.shrink())),
+      SliverPadding(
+        padding: scrollPad,
+        sliver: const SliverToBoxAdapter(child: SizedBox.shrink()),
+      ),
     ];
 
     final splitPane = _SplitSummaryPane(
@@ -269,15 +315,18 @@ class _DraftSplitBody extends ConsumerWidget {
           ? Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(
-                  child: CustomScrollView(slivers: billSlivers),
-                ),
+                Expanded(child: CustomScrollView(slivers: billSlivers)),
                 const VerticalDivider(width: 1),
                 Expanded(
                   child: CustomScrollView(
                     slivers: [
                       SliverPadding(
-                        padding: EdgeInsets.fromLTRB(horizontalPadding, 16, horizontalPadding, 8),
+                        padding: EdgeInsets.fromLTRB(
+                          horizontalPadding,
+                          16,
+                          horizontalPadding,
+                          8,
+                        ),
                         sliver: SliverToBoxAdapter(
                           child: Text(
                             l10n.perPersonTitle,
@@ -319,7 +368,11 @@ class _DraftSplitBody extends ConsumerWidget {
           LiquidGlass(
             width: w,
             height: summaryBarHeight,
-            position: const LiquidGlassOffsetPosition(left: 0, right: 0, bottom: 0),
+            position: const LiquidGlassOffsetPosition(
+              left: 0,
+              right: 0,
+              bottom: 0,
+            ),
             magnification: 1.03,
             refractionMode: LiquidGlassRefractionMode.shapeRefraction,
             distortion: 0.14,
@@ -349,10 +402,7 @@ class _DraftSplitBody extends ConsumerWidget {
 
     return Stack(
       alignment: Alignment.bottomCenter,
-      children: [
-        scrollOnly,
-        pinnedSummary,
-      ],
+      children: [scrollOnly, pinnedSummary],
     );
   }
 }
@@ -389,13 +439,20 @@ class _TaxTipRow extends StatelessWidget {
       color: m3e.colors.surfaceContainerLow,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: m3e.colors.outlineVariant.withValues(alpha: 0.45)),
+        side: BorderSide(
+          color: m3e.colors.outlineVariant.withValues(alpha: 0.45),
+        ),
       ),
       child: ListTile(
-        leading: Icon(PhosphorIconsRegular.receipt, color: Theme.of(context).colorScheme.primary),
+        leading: Icon(
+          PhosphorIconsRegular.receipt,
+          color: Theme.of(context).colorScheme.primary,
+        ),
         title: Text(
           '${l10n.draftSplitTaxFieldLabel} · ${l10n.draftSplitTipFieldLabel}',
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+          style: Theme.of(
+            context,
+          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
         ),
         subtitle: Text('$taxStr · $tipStr'),
         trailing: IconButton(
@@ -440,11 +497,16 @@ Future<void> _showTaxTipSheet(BuildContext context, WidgetRef ref) async {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(l10n.addTransactionTaxSummaryLine, style: Theme.of(ctx).textTheme.titleMedium),
+              Text(
+                l10n.addTransactionTaxSummaryLine,
+                style: Theme.of(ctx).textTheme.titleMedium,
+              ),
               const SizedBox(height: 12),
               TextField(
                 controller: taxCtrl,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 decoration: InputDecoration(
                   labelText: l10n.draftSplitTaxFieldLabel,
                   border: const OutlineInputBorder(),
@@ -453,7 +515,9 @@ Future<void> _showTaxTipSheet(BuildContext context, WidgetRef ref) async {
               const SizedBox(height: 12),
               TextField(
                 controller: tipCtrl,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 decoration: InputDecoration(
                   labelText: l10n.draftSplitTipFieldLabel,
                   border: const OutlineInputBorder(),
@@ -462,12 +526,18 @@ Future<void> _showTaxTipSheet(BuildContext context, WidgetRef ref) async {
               const SizedBox(height: 16),
               FilledButton(
                 onPressed: () {
-                  final tax = double.tryParse(taxCtrl.text.replaceAll(',', '.')) ?? 0;
-                  final tip = double.tryParse(tipCtrl.text.replaceAll(',', '.')) ?? 0;
-                  ref.read(draftSplitNotifierProvider.notifier).setTaxAmountMinor(
+                  final tax =
+                      double.tryParse(taxCtrl.text.replaceAll(',', '.')) ?? 0;
+                  final tip =
+                      double.tryParse(tipCtrl.text.replaceAll(',', '.')) ?? 0;
+                  ref
+                      .read(draftSplitNotifierProvider.notifier)
+                      .setTaxAmountMinor(
                         amt_minor.amountToMinorUnits(tax, currency),
                       );
-                  ref.read(draftSplitNotifierProvider.notifier).setTipAmountMinor(
+                  ref
+                      .read(draftSplitNotifierProvider.notifier)
+                      .setTipAmountMinor(
                         amt_minor.amountToMinorUnits(tip, currency),
                       );
                   Navigator.of(ctx).pop();
@@ -525,7 +595,9 @@ class _DraftLineCard extends ConsumerWidget {
         color: m3e.colors.surfaceContainerLow,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: m3e.colors.outlineVariant.withValues(alpha: 0.45)),
+          side: BorderSide(
+            color: m3e.colors.outlineVariant.withValues(alpha: 0.45),
+          ),
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
@@ -544,9 +616,8 @@ class _DraftLineCard extends ConsumerWidget {
                         Expanded(
                           child: Text(
                             line.receiptItem.name,
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                ),
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.w600),
                           ),
                         ),
                         splitBaeAdaptiveToolbarIcon(
@@ -590,8 +661,8 @@ class _DraftLineCard extends ConsumerWidget {
                       child: Text(
                         line.receiptItem.currencyCode,
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: scheme.onSurfaceVariant,
-                            ),
+                          color: scheme.onSurfaceVariant,
+                        ),
                       ),
                     ),
                   ],
@@ -606,7 +677,9 @@ class _DraftLineCard extends ConsumerWidget {
                   assigneeIds: line.assignedParticipantIds.toSet(),
                   dense: true,
                   onAssigneesChanged: (ids) {
-                    ref.read(itemsProvider.notifier).setLineAssignments(
+                    ref
+                        .read(itemsProvider.notifier)
+                        .setLineAssignments(
                           lineId: line.id,
                           selectedParticipantIds: ids,
                         );
@@ -645,20 +718,21 @@ class _DraftLineMetric extends StatelessWidget {
       children: [
         Text(
           label,
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: scheme.onSurfaceVariant,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.labelSmall?.copyWith(color: scheme.onSurfaceVariant),
         ),
         const SizedBox(height: 2),
         Text(
           value,
-          style: (emphasize
-                  ? Theme.of(context).textTheme.titleSmall
-                  : Theme.of(context).textTheme.bodyMedium)
-              ?.copyWith(
-                fontWeight: emphasize ? FontWeight.w800 : FontWeight.w600,
-                color: vc,
-              ),
+          style:
+              (emphasize
+                      ? Theme.of(context).textTheme.titleSmall
+                      : Theme.of(context).textTheme.bodyMedium)
+                  ?.copyWith(
+                    fontWeight: emphasize ? FontWeight.w800 : FontWeight.w600,
+                    color: vc,
+                  ),
         ),
       ],
     );
@@ -685,12 +759,17 @@ class _SplitSummaryPane extends StatelessWidget {
       data: (rows) {
         if (rows.isEmpty) {
           return Padding(
-            padding: EdgeInsets.fromLTRB(horizontalPadding, 0, horizontalPadding, 8),
+            padding: EdgeInsets.fromLTRB(
+              horizontalPadding,
+              0,
+              horizontalPadding,
+              8,
+            ),
             child: Text(
               AppLocalizations.of(context)!.emptyParticipantsHint,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
           );
         }
@@ -713,7 +792,9 @@ class _SplitSummaryPane extends StatelessWidget {
       ),
       error: (e, _) => Padding(
         padding: EdgeInsets.all(horizontalPadding),
-        child: Text('${AppLocalizations.of(context)!.draftSplitCalculateError} $e'),
+        child: Text(
+          '${AppLocalizations.of(context)!.draftSplitCalculateError} $e',
+        ),
       ),
     );
   }
@@ -749,7 +830,9 @@ class _OwedRow extends StatelessWidget {
         color: m3e.colors.surfaceContainerLow,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: m3e.colors.outlineVariant.withValues(alpha: 0.35)),
+          side: BorderSide(
+            color: m3e.colors.outlineVariant.withValues(alpha: 0.35),
+          ),
         ),
         child: ListTile(
           leading: CircleAvatar(
@@ -763,15 +846,20 @@ class _OwedRow extends StatelessWidget {
           ),
           title: Text(
             displayName,
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
           ),
-          subtitle: Text(owed.currencyCode, style: Theme.of(context).textTheme.bodySmall),
+          subtitle: Text(
+            owed.currencyCode,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
           trailing: Text(
             formatted,
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
+              fontWeight: FontWeight.w800,
+              color: Theme.of(context).colorScheme.primary,
+            ),
           ),
         ),
       ),
@@ -815,8 +903,8 @@ class _PinnedSplitSummaryBar extends StatelessWidget {
                 return Text(
                   title,
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
+                    color: scheme.onSurfaceVariant,
+                  ),
                 );
               }
               return Column(
@@ -826,48 +914,46 @@ class _PinnedSplitSummaryBar extends StatelessWidget {
                   Text(
                     title,
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: scheme.onSurfaceVariant,
-                        ),
+                      fontWeight: FontWeight.w700,
+                      color: scheme.onSurfaceVariant,
+                    ),
                   ),
                   const SizedBox(height: 6),
-                  ...rows.map(
-                    (owed) {
-                      final name = names[owed.userId] ?? owed.userId;
-                      final formatted = formatCurrencyAmount(
-                        amount: minorUnitsToAmount(
-                          minor: owed.amountMinor,
-                          currencyCode: owed.currencyCode,
-                        ),
+                  ...rows.map((owed) {
+                    final name = names[owed.userId] ?? owed.userId;
+                    final formatted = formatCurrencyAmount(
+                      amount: minorUnitsToAmount(
+                        minor: owed.amountMinor,
                         currencyCode: owed.currencyCode,
-                        locale: locale,
-                      );
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 2),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                name,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                              ),
+                      ),
+                      currencyCode: owed.currencyCode,
+                      locale: locale,
+                    );
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 2),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(fontWeight: FontWeight.w600),
                             ),
-                            Text(
-                              formatted,
-                              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                    fontWeight: FontWeight.w800,
-                                    color: scheme.primary,
-                                  ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
+                          ),
+                          Text(
+                            formatted,
+                            style: Theme.of(context).textTheme.titleSmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  color: scheme.primary,
+                                ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
                 ],
               );
             },
@@ -883,7 +969,9 @@ class _PinnedSplitSummaryBar extends StatelessWidget {
             ),
             error: (e, _) => Text(
               '$errorLabel $e',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: scheme.error),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: scheme.error),
             ),
           ),
         ),

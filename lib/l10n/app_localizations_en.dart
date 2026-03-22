@@ -619,6 +619,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get postBillSuccess => 'Bill posted.';
 
   @override
+  String get postBillSuccessUpdated => 'Bill updated.';
+
+  @override
+  String get postBillTitleEdit => 'Save changes';
+
+  @override
+  String get postBillSubtitleEdit =>
+      'This replaces the saved bill with your current lines, split, and payments.';
+
+  @override
+  String get postBillActionSaveChanges => 'Save changes';
+
+  @override
+  String get editPostedBillAction => 'Edit bill';
+
+  @override
   String get postBillErrorEmpty => 'Add at least one line before posting.';
 
   @override
@@ -802,6 +818,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get billsFiltersAdjustHint => 'Try adjusting filters or search.';
+
+  @override
+  String get billsFeedLoadError => 'Could not load your bills.';
+
+  @override
+  String get billsFeedRetry => 'Retry';
 
   @override
   String get fabNewBill => 'New Bill';

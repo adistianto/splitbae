@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:m3e_collection/m3e_collection.dart';
@@ -291,8 +292,20 @@ class _BillsScreenState extends ConsumerState<BillsScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final billsAsync = ref.watch(billsFeedProvider);
+    return billsAsync.when(
+      data: (all) => _buildBillsContent(context, l10n, all),
+      loading: () => _buildBillsLoading(context, l10n),
+      error: (err, stack) => _buildBillsError(context, l10n),
+    );
+  }
+
+  Widget _buildBillsContent(
+    BuildContext context,
+    AppLocalizations l10n,
+    List<PostedBillSummary> all,
+  ) {
     final locale = Localizations.localeOf(context);
-    final all = ref.watch(billsFeedProvider);
     final topPad = MediaQuery.paddingOf(context).top;
     final cs = Theme.of(context).colorScheme;
     final searchText = widget.v0ShellMode
@@ -400,9 +413,13 @@ class _BillsScreenState extends ConsumerState<BillsScreen> {
                           child: Column(
                             children: [
                               Icon(
-                                PhosphorIconsRegular.receipt,
+                                all.isEmpty
+                                    ? PhosphorIconsRegular.tray
+                                    : PhosphorIconsRegular.receipt,
                                 size: 48,
-                                color: cs.onSurfaceVariant,
+                                color: all.isEmpty
+                                    ? context.m3e.colors.onSurfaceVariant
+                                    : cs.onSurfaceVariant,
                               ),
                               const SizedBox(height: 12),
                               Text(
@@ -410,7 +427,10 @@ class _BillsScreenState extends ConsumerState<BillsScreen> {
                                     ? l10n.billsEmptyHeroTitle
                                     : l10n.billsSearchEmpty,
                                 textAlign: TextAlign.center,
-                                style: Theme.of(context).textTheme.titleMedium,
+                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                      color: context.m3e.colors.onSurface,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                               ),
                               if (all.isEmpty) ...[
                                 const SizedBox(height: 8),
@@ -419,9 +439,9 @@ class _BillsScreenState extends ConsumerState<BillsScreen> {
                                   textAlign: TextAlign.center,
                                   style: Theme.of(context)
                                       .textTheme
-                                      .bodySmall
+                                      .bodyMedium
                                       ?.copyWith(
-                                        color: cs.onSurfaceVariant,
+                                        color: context.m3e.colors.onSurfaceVariant,
                                       ),
                                 ),
                               ],
@@ -599,6 +619,244 @@ class _BillsScreenState extends ConsumerState<BillsScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildBillsLoading(BuildContext context, AppLocalizations l10n) {
+    final topPad = MediaQuery.paddingOf(context).top;
+    final cs = Theme.of(context).colorScheme;
+    final disableMotion = MediaQuery.disableAnimationsOf(context);
+    return Scaffold(
+      backgroundColor: cs.surface,
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              SplitBaeV0Layout.screenHorizontalPadding,
+              topPad + 8,
+              SplitBaeV0Layout.screenHorizontalPadding,
+              0,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  l10n.appTitle,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.5,
+                      ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  l10n.appTagline,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: cs.onSurfaceVariant,
+                      ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    IconButton.filledTonal(
+                      onPressed: null,
+                      icon: Icon(PhosphorIconsRegular.slidersHorizontal),
+                      tooltip: l10n.billsFiltersTitle,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                _BillsHeroSkeleton(disableMotion: disableMotion),
+                const SizedBox(height: 16),
+              ],
+            ),
+          ),
+          Expanded(
+            child: ListView(
+              padding: EdgeInsets.fromLTRB(
+                SplitBaeV0Layout.screenHorizontalPadding,
+                0,
+                SplitBaeV0Layout.screenHorizontalPadding,
+                SplitBaeV0Layout.listBottomInsetForShell,
+              ),
+              children: [
+                for (var i = 0; i < 6; i++)
+                  _PostedBillSkeletonRow(
+                    index: i,
+                    disableMotion: disableMotion,
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBillsError(BuildContext context, AppLocalizations l10n) {
+    final topPad = MediaQuery.paddingOf(context).top;
+    final cs = Theme.of(context).colorScheme;
+    final m3e = context.m3e;
+    return Scaffold(
+      backgroundColor: cs.surface,
+      body: Padding(
+        padding: EdgeInsets.fromLTRB(
+          SplitBaeV0Layout.screenHorizontalPadding,
+          topPad + 24,
+          SplitBaeV0Layout.screenHorizontalPadding,
+          24,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              l10n.appTitle,
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.5,
+                  ),
+            ),
+            const Spacer(),
+            Icon(
+              PhosphorIconsRegular.warningCircle,
+              size: 48,
+              color: cs.error,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              l10n.billsFeedLoadError,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: m3e.colors.onSurface,
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+            const SizedBox(height: 20),
+            FilledButton(
+              onPressed: () => ref.invalidate(billsFeedProvider),
+              child: Text(l10n.billsFeedRetry),
+            ),
+            const Spacer(),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BillsHeroSkeleton extends StatelessWidget {
+  const _BillsHeroSkeleton({required this.disableMotion});
+
+  final bool disableMotion;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final m3e = context.m3e;
+    final box = Container(
+      height: 132,
+      decoration: BoxDecoration(
+        borderRadius:
+            BorderRadius.circular(SplitBaeV0Layout.heroBorderRadius),
+        color: Color.lerp(
+          cs.primaryContainer,
+          cs.surfaceContainerHighest,
+          0.65,
+        ),
+      ),
+    );
+    if (disableMotion) return box;
+    return box
+        .animate(onPlay: (c) => c.repeat())
+        .shimmer(
+          duration: 1600.ms,
+          color: m3e.colors.onSurface.withValues(alpha: 0.12),
+        );
+  }
+}
+
+class _PostedBillSkeletonRow extends StatelessWidget {
+  const _PostedBillSkeletonRow({
+    required this.index,
+    required this.disableMotion,
+  });
+
+  final int index;
+  final bool disableMotion;
+
+  @override
+  Widget build(BuildContext context) {
+    final m3e = context.m3e;
+    final base = m3e.colors.surfaceContainerHighest;
+    final card = Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Material(
+        color: m3e.colors.surfaceContainerLow,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(
+            color: m3e.colors.outlineVariant.withValues(alpha: 0.45),
+          ),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: base,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      height: 14,
+                      decoration: BoxDecoration(
+                        color: base,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      height: 12,
+                      width: 120,
+                      decoration: BoxDecoration(
+                        color: base,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                width: 72,
+                height: 22,
+                decoration: BoxDecoration(
+                  color: base,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (disableMotion) return card;
+    return card
+        .animate(onPlay: (c) => c.repeat())
+        .shimmer(
+          duration: 1400.ms,
+          delay: (index * 70).ms,
+          color: m3e.colors.onSurface.withValues(alpha: 0.14),
+        );
   }
 }
 
