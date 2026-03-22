@@ -1865,6 +1865,54 @@ abstract class AppLocalizations {
     String toName,
     String formattedAmount,
   );
+
+  /// Placeholder row title on shell-only Bills preview (no business data).
+  ///
+  /// In en, this message translates to:
+  /// **'Sample bill'**
+  String get shellPlaceholderTransactionRow;
+
+  /// Subtitle on shell placeholder cards.
+  ///
+  /// In en, this message translates to:
+  /// **'UI shell — connect data later'**
+  String get shellPlaceholderSubtitle;
+
+  /// Insight chip on shell Bills placeholder.
+  ///
+  /// In en, this message translates to:
+  /// **'0 bills'**
+  String get shellPlaceholderChipBills;
+
+  /// Second insight chip label on shell Bills placeholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Trend'**
+  String get shellPlaceholderChipTrend;
+
+  /// Subtitle on shell Balances placeholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Settlement preview — shell only'**
+  String get shellPlaceholderBalancesSubtitle;
+
+  /// Fake person name on shell Balances placeholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Alex'**
+  String get shellPlaceholderPerson;
+
+  /// Fake balance line on shell Balances placeholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance —'**
+  String get shellPlaceholderBalance;
+
+  /// First settings row on shell Settings placeholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Preferences'**
+  String get shellPlaceholderSettingsRow;
 }
 
 class _AppLocalizationsDelegate

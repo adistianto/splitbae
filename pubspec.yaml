@@ -56,6 +56,11 @@ dependencies:
   permission_handler: ^11.4.0
   flutter_animate: ^4.5.2
   phosphor_flutter: ^2.1.0
+  m3e_design: ^0.2.1
+  m3e_collection: ^0.3.7
+  app_bar_m3e: ^0.1.2
+  tofu_expressive: ^0.0.3
+  liquid_glass_easy: ^1.1.1
 
 dev_dependencies:
   flutter_test:

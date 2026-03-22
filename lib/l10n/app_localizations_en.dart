@@ -1002,4 +1002,29 @@ class AppLocalizationsEn extends AppLocalizations {
   ) {
     return '$fromName to $toName, $formattedAmount';
   }
+
+  @override
+  String get shellPlaceholderTransactionRow => 'Sample bill';
+
+  @override
+  String get shellPlaceholderSubtitle => 'UI shell — connect data later';
+
+  @override
+  String get shellPlaceholderChipBills => '0 bills';
+
+  @override
+  String get shellPlaceholderChipTrend => 'Trend';
+
+  @override
+  String get shellPlaceholderBalancesSubtitle =>
+      'Settlement preview — shell only';
+
+  @override
+  String get shellPlaceholderPerson => 'Alex';
+
+  @override
+  String get shellPlaceholderBalance => 'Balance —';
+
+  @override
+  String get shellPlaceholderSettingsRow => 'Preferences';
 }

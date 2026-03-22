@@ -1,11 +1,10 @@
-import 'dart:ui' show ImageFilter;
-
 import 'package:flutter/material.dart';
 import 'package:splitbae/core/theme/splitbae_shell_tokens.dart';
 import 'package:splitbae/core/theme/splitbae_v0_ui_contract.dart';
 
-/// Floating circular shell control (search / profile) — **v0 layout**, native
-/// execution: **Material elevation** on Android, **Liquid Glass** on Apple.
+/// Floating circular shell control (search / profile) — **v0 layout**:
+/// **Material** on Android; on Apple, tinted surface without [BackdropFilter]
+/// (shell Liquid Glass is applied to tab bar / rail only).
 class SplitBaeShellChromeIconButton extends StatelessWidget {
   const SplitBaeShellChromeIconButton({
     super.key,
@@ -39,31 +38,13 @@ class SplitBaeShellChromeIconButton extends StatelessWidget {
     );
 
     final Widget body;
-    if (tokens.liquidGlassChrome && tokens.chromeBlurSigma > 0) {
-      body = ClipOval(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(
-            sigmaX: tokens.chromeBlurSigma,
-            sigmaY: tokens.chromeBlurSigma,
-          ),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: cs.surface.withValues(alpha: tokens.chromeTintAlpha),
-              border: Border.all(
-                color: cs.outline.withValues(alpha: tokens.chromeBorderOpacity),
-              ),
-              boxShadow: const [
-                BoxShadow(
-                  color: Colors.black26,
-                  blurRadius: 12,
-                  offset: Offset(0, 4),
-                ),
-              ],
-            ),
-            child: inner,
-          ),
-        ),
+    if (tokens.liquidGlassChrome) {
+      body = Material(
+        color: cs.surface.withValues(alpha: tokens.chromeTintAlpha),
+        shape: const CircleBorder(),
+        elevation: 3,
+        shadowColor: Colors.black26,
+        child: inner,
       );
     } else {
       body = Material(

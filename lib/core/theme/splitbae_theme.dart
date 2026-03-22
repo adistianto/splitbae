@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:m3e_design/m3e_design.dart';
 import 'package:splitbae/core/platform/host_platform.dart';
 import 'package:splitbae/core/theme/splitbae_material_expressive.dart';
 import 'package:splitbae/core/theme/splitbae_semantic_colors.dart';
@@ -13,7 +14,9 @@ import 'package:splitbae/core/theme/splitbae_shell_tokens.dart';
 /// toward the live scheme for a cohesive Material You look without recoloring
 /// pay/receive semantics.
 ///
-/// **Android**: [mergeMaterialExpressive] adds M3 expressive shapes + sheets.
+/// **Android**: [mergeMaterialExpressive] layers **Tofu Expressive** dialog/sheet
+/// subthemes; [withM3ETheme] installs [M3ETheme] tokens for **m3e_design** /
+/// **m3e_collection** components.
 /// **Apple**: [SplitBaeShellTokens.apple] enables Liquid Glass shell chrome
 /// (see [splitBaeAppBuilder] + frosted shell widgets).
 ThemeData splitBaeMaterialTheme({required ColorScheme colorScheme}) {
@@ -37,13 +40,6 @@ ThemeData splitBaeMaterialTheme({required ColorScheme colorScheme}) {
   final shellTokens =
       apple ? SplitBaeShellTokens.apple() : SplitBaeShellTokens.android();
 
-  final typo = Typography.material2021(
-    platform: apple ? TargetPlatform.iOS : TargetPlatform.android,
-  );
-  final navLabelStyle = (cs.brightness == Brightness.dark ? typo.white : typo.black)
-      .labelMedium
-      ?.copyWith(fontWeight: FontWeight.w600);
-
   var theme = ThemeData(
     useMaterial3: true,
     colorScheme: cs,
@@ -51,10 +47,6 @@ ThemeData splitBaeMaterialTheme({required ColorScheme colorScheme}) {
     extensions: <ThemeExtension<dynamic>>[semantic, shellTokens],
     visualDensity: VisualDensity.adaptivePlatformDensity,
     materialTapTargetSize: MaterialTapTargetSize.padded,
-    navigationBarTheme: NavigationBarThemeData(
-      indicatorColor: cs.primary.withValues(alpha: 0.15),
-      labelTextStyle: WidgetStateProperty.all(navLabelStyle),
-    ),
     typography: Typography.material2021(
       platform: apple ? TargetPlatform.iOS : TargetPlatform.android,
     ),
@@ -63,7 +55,7 @@ ThemeData splitBaeMaterialTheme({required ColorScheme colorScheme}) {
   if (!apple) {
     theme = mergeMaterialExpressive(theme);
   }
-  return theme;
+  return withM3ETheme(theme);
 }
 
 /// Root [MaterialApp.builder]: bridges [CupertinoTheme] on Apple platforms so

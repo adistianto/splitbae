@@ -15,7 +15,8 @@ import 'package:splitbae/core/theme/dynamic_color_support.dart';
 import 'package:splitbae/core/theme/splitbae_theme.dart';
 import 'package:splitbae/core/theme/splitbae_v0_theme.dart';
 import 'package:splitbae/src/rust/frb_generated.dart';
-import 'package:splitbae/screens/adaptive_home_screen.dart';
+import 'package:splitbae/core/shell/splitbae_app_shell.dart';
+import 'package:splitbae/core/scroll/splitbae_scroll_behavior.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -69,7 +70,8 @@ class _SplitBaeAppState extends ConsumerState<SplitBaeApp> {
     final settings = ref.watch(appSettingsProvider);
     final supported = ref.watch(dynamicColorSupportedProvider);
 
-    final useMaterialYou = defaultTargetPlatform == TargetPlatform.android &&
+    final useMaterialYou =
+        defaultTargetPlatform == TargetPlatform.android &&
         settings.useDynamicColor &&
         supported;
 
@@ -116,7 +118,8 @@ class _SplitBaeThemedApp extends StatelessWidget {
       theme: splitBaeMaterialTheme(colorScheme: lightScheme),
       darkTheme: splitBaeMaterialTheme(colorScheme: darkScheme),
       builder: splitBaeAppBuilder,
-      home: const AdaptiveHomeScreen(),
+      // UI shell only (v0 IA, M3E + Liquid Glass chrome). For full app: `AdaptiveHomeScreen` from `screens/adaptive_home_screen.dart`.
+      home: const SplitBaeAppShell(),
     );
   }
 }

@@ -291,5 +291,13 @@
   "semanticsDraftLineHint": "Ketuk dua kali untuk mengubah.",
   "semanticsSplitPersonRow": "{personName}, {formattedAmount}",
   "semanticsSettlementEdge": "{fromName} membayar {toName}, {formattedAmount}",
-  "semanticsRecordedSettlement": "{fromName} ke {toName}, {formattedAmount}"
+  "semanticsRecordedSettlement": "{fromName} ke {toName}, {formattedAmount}",
+  "shellPlaceholderTransactionRow": "Contoh tagihan",
+  "shellPlaceholderSubtitle": "Kerangka UI — data menyusul",
+  "shellPlaceholderChipBills": "0 tagihan",
+  "shellPlaceholderChipTrend": "Tren",
+  "shellPlaceholderBalancesSubtitle": "Pratinjau pelunasan — hanya kerangka",
+  "shellPlaceholderPerson": "Alex",
+  "shellPlaceholderBalance": "Saldo —",
+  "shellPlaceholderSettingsRow": "Preferensi"
 }

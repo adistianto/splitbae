@@ -1198,5 +1198,37 @@
       "toName": {"type": "String"},
       "formattedAmount": {"type": "String"}
     }
+  },
+  "shellPlaceholderTransactionRow": "Sample bill",
+  "@shellPlaceholderTransactionRow": {
+    "description": "Placeholder row title on shell-only Bills preview (no business data)."
+  },
+  "shellPlaceholderSubtitle": "UI shell — connect data later",
+  "@shellPlaceholderSubtitle": {
+    "description": "Subtitle on shell placeholder cards."
+  },
+  "shellPlaceholderChipBills": "0 bills",
+  "@shellPlaceholderChipBills": {
+    "description": "Insight chip on shell Bills placeholder."
+  },
+  "shellPlaceholderChipTrend": "Trend",
+  "@shellPlaceholderChipTrend": {
+    "description": "Second insight chip label on shell Bills placeholder."
+  },
+  "shellPlaceholderBalancesSubtitle": "Settlement preview — shell only",
+  "@shellPlaceholderBalancesSubtitle": {
+    "description": "Subtitle on shell Balances placeholder."
+  },
+  "shellPlaceholderPerson": "Alex",
+  "@shellPlaceholderPerson": {
+    "description": "Fake person name on shell Balances placeholder."
+  },
+  "shellPlaceholderBalance": "Balance —",
+  "@shellPlaceholderBalance": {
+    "description": "Fake balance line on shell Balances placeholder."
+  },
+  "shellPlaceholderSettingsRow": "Preferences",
+  "@shellPlaceholderSettingsRow": {
+    "description": "First settings row on shell Settings placeholder."
   }
 }

@@ -1,41 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:tofu_expressive/tofu_expressive.dart';
 
-/// Material 3 **Expressive** overlay for **Android** (and non-Apple targets):
-/// stronger shapes, tonal navigation affordances, consistent sheet/dialog radii.
+/// Layers **Tofu Expressive** (`flex_color_scheme`) dialog / sheet affordances onto
+/// the SplitBae base theme. Does **not** use plain `CardTheme` / `NavigationRailTheme`
+/// — navigation and surfaces come from **m3e_collection** widgets + [M3ETheme] tokens
+/// ([withM3ETheme] in [splitBaeMaterialTheme]).
 ///
-/// Apple hosts use [splitBaeMaterialTheme] without this merge so Liquid Glass
-/// shell tokens stay the differentiator on frosted chrome only.
+/// Apple hosts skip this merge ([splitBaeMaterialTheme] gates the call).
 ThemeData mergeMaterialExpressive(ThemeData base) {
   final cs = base.colorScheme;
-  final shape = RoundedRectangleBorder(
-    borderRadius: BorderRadius.circular(20),
-  );
+  final tofu = cs.brightness == Brightness.dark
+      ? TofuTheme.dark(seedColor: cs.primary)
+      : TofuTheme.light(seedColor: cs.primary);
   return base.copyWith(
-    filledButtonTheme: FilledButtonThemeData(
-      style: ButtonStyle(
-        padding: WidgetStateProperty.all(
-          const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-        ),
-        shape: WidgetStatePropertyAll(shape),
-      ),
-    ),
-    cardTheme: CardThemeData(
-      elevation: 0,
-      color: cs.surfaceContainerLow,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      clipBehavior: Clip.antiAlias,
-    ),
-    dialogTheme: DialogThemeData(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-    ),
-    bottomSheetTheme: BottomSheetThemeData(
-      shape: RoundedRectangleBorder(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      showDragHandle: true,
-      dragHandleColor: cs.onSurfaceVariant.withValues(alpha: 0.4),
-    ),
+    dialogTheme: tofu.dialogTheme,
+    bottomSheetTheme: tofu.bottomSheetTheme,
   );
 }

@@ -1,5 +1,3 @@
-import 'dart:ui' show ImageFilter;
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:splitbae/core/theme/splitbae_shell_tokens.dart';
@@ -7,7 +5,8 @@ import 'package:splitbae/core/theme/splitbae_shell_tokens.dart';
 /// Home shell bottom navigation — **v0** two-destination pill layout.
 ///
 /// **Android**: solid / translucent surface + top hairline (Material expressive).
-/// **Apple**: **Liquid Glass** scrim (backdrop blur) behind the same controls.
+/// **Apple**: tint only — **Liquid Glass Easy** refraction is provided by the shell
+/// ([splitBaeAppleLiquidGlassViewport]); do not use [BackdropFilter] here.
 class SplitBaeAdaptiveBottomNav extends StatelessWidget {
   const SplitBaeAdaptiveBottomNav({
     super.key,
@@ -56,26 +55,11 @@ class SplitBaeAdaptiveBottomNav extends StatelessWidget {
       ),
     );
 
-    if (tokens.liquidGlassChrome && tokens.bottomBarBlurSigma > 0) {
-      return ClipRect(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(
-            sigmaX: tokens.bottomBarBlurSigma,
-            sigmaY: tokens.bottomBarBlurSigma,
-          ),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: cs.surface.withValues(alpha: tokens.bottomBarTintAlpha),
-            ),
-            child: content,
-          ),
-        ),
-      );
-    }
-
     return Material(
       elevation: 0,
-      color: cs.surface.withValues(alpha: tokens.bottomBarTintAlpha),
+      color: tokens.liquidGlassChrome
+          ? Colors.transparent
+          : cs.surface.withValues(alpha: tokens.bottomBarTintAlpha),
       child: content,
     );
   }

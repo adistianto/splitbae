@@ -7,17 +7,19 @@ import 'package:flutter/material.dart';
 ///
 /// ## v0 reference
 /// Workflows and IA follow `vercel/SplitBae_v76_Vercel.v0/` (Bills · Balances,
-/// FAB, scan, sheets). Visuals use native primitives: M3 on Android, frosted
-/// translucency on Apple for **shell** surfaces only (bars, floating controls).
+/// FAB, scan, sheets). Visuals use native primitives: M3 on Android; on Apple,
+/// **Liquid Glass Easy** lenses on fixed tab bar / rail chrome — not
+/// [BackdropFilter] — for **shell** surfaces only (bars, floating controls).
 ///
 /// ## Android
 /// [liquidGlassChrome] is false; prefer elevation and solid/tonal surfaces.
 /// [searchFieldMaterialElevation] is non-zero for the floating search field.
 ///
 /// ## Apple (iPhone, iPad, macOS)
-/// [liquidGlassChrome] is true; [chromeBlurSigma] / [bottomBarBlurSigma] drive
-/// [BackdropFilter] in shell widgets. Content areas stay normal [Scaffold] /
-/// [CupertinoTheme] text — glass is for **chrome**, not every card.
+/// [liquidGlassChrome] is true; [chromeBlurSigma] / [bottomBarBlurSigma] are
+/// legacy tuning hints (tint / border strength). Shell refraction uses
+/// [splitBaeAppleLiquidGlassViewport] — content scrolls in the sampled
+/// background, not under a full-screen blur.
 ///
 /// Registered in [splitBaeMaterialTheme] next to [SplitBaeSemanticColors].
 @immutable
@@ -32,7 +34,7 @@ class SplitBaeShellTokens extends ThemeExtension<SplitBaeShellTokens> {
     required this.searchFieldMaterialElevation,
   });
 
-  /// When true (Apple hosts), shell widgets use frosted glass.
+  /// When true (Apple hosts), shell uses Liquid Glass Easy on tab bar / rail.
   final bool liquidGlassChrome;
 
   /// Floating header icon buttons and similar chrome.

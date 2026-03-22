@@ -1,15 +1,17 @@
 import 'dart:async' show unawaited;
-import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:liquid_glass_easy/liquid_glass_easy.dart';
+import 'package:m3e_collection/m3e_collection.dart';
 import 'package:splitbae/core/layout/app_breakpoints.dart';
 import 'package:splitbae/core/ocr/receipt_line_parse.dart';
 import 'package:splitbae/core/ocr/receipt_ocr_probe_provider.dart';
 import 'package:splitbae/core/platform/host_platform.dart';
 import 'package:splitbae/core/platform/platform_capabilities.dart';
+import 'package:splitbae/core/shell/splitbae_apple_liquid_glass.dart';
 import 'package:splitbae/core/theme/splitbae_shell_tokens.dart';
 import 'package:splitbae/l10n/app_localizations.dart';
 import 'package:splitbae/providers.dart';
@@ -30,7 +32,7 @@ import 'package:splitbae/widgets/splitbae_v0_user_menu.dart';
 /// ([SplitBaeShellTokens]).
 ///
 /// **Compact**: bottom nav + floating search/profile + FAB. **Expanded**: nav
-/// rail (+ optional frosted rail on Apple) + content + hinge-aware padding for
+/// rail (+ Liquid Glass Easy lens on Apple) + content + hinge-aware padding for
 /// foldables ([hingeAwarePadding]).
 class AdaptiveHomeScreen extends ConsumerStatefulWidget {
   const AdaptiveHomeScreen({super.key});
@@ -46,6 +48,8 @@ class _AdaptiveHomeScreenState extends ConsumerState<AdaptiveHomeScreen> {
   bool _shellSearchOpen = false;
   bool _scanOverlayOpen = false;
   late final TextEditingController _shellSearchController;
+  final LiquidGlassViewController _appleLiquidGlassController =
+      LiquidGlassViewController();
 
   bool _onShellScroll(ScrollNotification n) {
     if (n is! ScrollUpdateNotification) return false;
@@ -204,259 +208,323 @@ class _AdaptiveHomeScreenState extends ConsumerState<AdaptiveHomeScreen> {
           final filtersOpen = ref.watch(v0BillsFiltersSheetOpenProvider);
           final showFloatingChrome =
               _shellChromeVisible && !filtersOpen && !_scanOverlayOpen;
+          final appleLg = splitBaeAppleLiquidGlassChromeEnabled(context);
+
+          final bodyStack = Stack(
+            fit: StackFit.expand,
+            children: [
+              NotificationListener<ScrollNotification>(
+                onNotification: _onShellScroll,
+                child: IndexedStack(
+                  index: _bottomTabIndex,
+                  children: [
+                    Center(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(maxWidth: maxContent),
+                        child: Padding(
+                          padding: hinge,
+                          child: BillsScreen(
+                            v0ShellMode: true,
+                            onNewBill: _openNewBillSheet,
+                            onScanBillEntry: _openScanBill,
+                            onSwitchToBalances: () => setState(() {
+                              _bottomTabIndex = 1;
+                            }),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Center(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(maxWidth: maxContent),
+                        child: Padding(
+                          padding: hinge,
+                          child: const BalancesScreen(embedded: true),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (showFloatingChrome)
+                Positioned(
+                  top: topPad + 8,
+                  right: 16,
+                  child: AnimatedOpacity(
+                    opacity: 1,
+                    duration: const Duration(milliseconds: 220),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SplitBaeShellChromeIconButton(
+                          icon: _shellSearchOpen ? Icons.close : Icons.search,
+                          semanticLabel: _shellSearchOpen
+                              ? MaterialLocalizations.of(context)
+                                  .closeButtonLabel
+                              : l10n.billsSearchHint,
+                          onPressed: () {
+                            HapticFeedback.selectionClick();
+                            setState(() {
+                              _shellSearchOpen = !_shellSearchOpen;
+                              if (!_shellSearchOpen) {
+                                _shellSearchController.clear();
+                                ref
+                                    .read(v0ShellSearchQueryProvider.notifier)
+                                    .state = '';
+                              }
+                            });
+                          },
+                        ),
+                        const SizedBox(width: 8),
+                        SplitBaeShellChromeIconButton(
+                          icon: Icons.person_outline,
+                          semanticLabel: l10n.v0UserMenuTitle,
+                          onPressed: () {
+                            HapticFeedback.selectionClick();
+                            showSplitBaeV0UserMenu(context);
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              if (_shellSearchOpen && showFloatingChrome)
+                Positioned(
+                  top: topPad + 56,
+                  left: 16,
+                  right: 16,
+                  child: SplitBaeShellSearchField(
+                    controller: _shellSearchController,
+                    hintText: _bottomTabIndex == 0
+                        ? l10n.billsSearchHint
+                        : l10n.balancesSearchPeopleHint,
+                    onChanged: (_) => setState(() {}),
+                  ),
+                ),
+              SplitBaeFabMenu(
+                onNewBill: _openNewBillSheet,
+                onScanBill: _openScanBill,
+                onCreateReport: () => setState(() => _bottomTabIndex = 1),
+                visible: _shellChromeVisible && !_scanOverlayOpen,
+              ),
+              if (_scanOverlayOpen)
+                Positioned.fill(
+                  child: PopScope(
+                    canPop: false,
+                    onPopInvokedWithResult: (didPop, result) {
+                      if (!didPop) _closeScanOverlay();
+                    },
+                    child: Material(
+                      color: Theme.of(context).colorScheme.surface,
+                      child: Consumer(
+                        builder: (context, ref, _) => ScanReceiptScreen(
+                          currencyCode: ref.read(draftBillCurrencyProvider),
+                          openDraftAfterBatchAdd: true,
+                          onAddAllLines: (candidates) =>
+                              _addOcrLinesToDraft(ref, candidates),
+                          onDismiss: _closeScanOverlay,
+                          onNavigateToDraft: _openDraftAfterScanImport,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          );
+
+          final Widget body;
+          if (appleLg && !_scanOverlayOpen) {
+            final h = splitBaeAppleBottomBarLensHeight(context);
+            body = splitBaeAppleLiquidGlassViewport(
+              controller: _appleLiquidGlassController,
+              background: bodyStack,
+              lenses: [
+                splitBaeAppleBottomTabBarLens(
+                  width: width,
+                  height: h,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: SplitBaeAdaptiveBottomNav(
+                      selectedIndex: _bottomTabIndex,
+                      onDestinationSelected: (i) {
+                        HapticFeedback.selectionClick();
+                        setState(() {
+                          _bottomTabIndex = i;
+                          _shellSearchOpen = false;
+                          _shellSearchController.clear();
+                        });
+                        ref.read(v0ShellSearchQueryProvider.notifier).state =
+                            '';
+                      },
+                      destinations: [
+                        SplitBaeAdaptiveBottomNavDestination(
+                          icon: Icons.receipt_long_outlined,
+                          selectedIcon: Icons.receipt_long,
+                          label: l10n.navBillsTab,
+                        ),
+                        SplitBaeAdaptiveBottomNavDestination(
+                          icon: Icons.account_balance_wallet_outlined,
+                          selectedIcon: Icons.account_balance_wallet,
+                          label: l10n.balancesTitle,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            );
+          } else {
+            body = bodyStack;
+          }
 
           return Scaffold(
-            body: Stack(
-              fit: StackFit.expand,
-              children: [
-                NotificationListener<ScrollNotification>(
-                  onNotification: _onShellScroll,
-                  child: IndexedStack(
-                    index: _bottomTabIndex,
-                    children: [
-                      Center(
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(maxWidth: maxContent),
-                          child: Padding(
-                            padding: hinge,
-                            child: BillsScreen(
-                              v0ShellMode: true,
-                              onNewBill: _openNewBillSheet,
-                              onScanBillEntry: _openScanBill,
-                              onSwitchToBalances: () => setState(() {
-                                _bottomTabIndex = 1;
-                              }),
-                            ),
-                          ),
-                        ),
-                      ),
-                      Center(
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(maxWidth: maxContent),
-                          child: Padding(
-                            padding: hinge,
-                            child: const BalancesScreen(embedded: true),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (showFloatingChrome)
-                  Positioned(
-                    top: topPad + 8,
-                    right: 16,
-                    child: AnimatedOpacity(
-                      opacity: 1,
-                      duration: const Duration(milliseconds: 220),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          SplitBaeShellChromeIconButton(
-                            icon: _shellSearchOpen ? Icons.close : Icons.search,
-                            semanticLabel: _shellSearchOpen
-                                ? MaterialLocalizations.of(context)
-                                    .closeButtonLabel
-                                : l10n.billsSearchHint,
-                            onPressed: () {
-                              HapticFeedback.selectionClick();
-                              setState(() {
-                                _shellSearchOpen = !_shellSearchOpen;
-                                if (!_shellSearchOpen) {
-                                  _shellSearchController.clear();
-                                  ref
-                                      .read(v0ShellSearchQueryProvider.notifier)
-                                      .state = '';
-                                }
-                              });
-                            },
-                          ),
-                          const SizedBox(width: 8),
-                          SplitBaeShellChromeIconButton(
-                            icon: Icons.person_outline,
-                            semanticLabel: l10n.v0UserMenuTitle,
-                            onPressed: () {
-                              HapticFeedback.selectionClick();
-                              showSplitBaeV0UserMenu(context);
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                if (_shellSearchOpen && showFloatingChrome)
-                  Positioned(
-                    top: topPad + 56,
-                    left: 16,
-                    right: 16,
-                    child: SplitBaeShellSearchField(
-                      controller: _shellSearchController,
-                      hintText: _bottomTabIndex == 0
-                          ? l10n.billsSearchHint
-                          : l10n.balancesSearchPeopleHint,
-                      onChanged: (_) => setState(() {}),
-                    ),
-                  ),
-                SplitBaeFabMenu(
-                  onNewBill: _openNewBillSheet,
-                  onScanBill: _openScanBill,
-                  onCreateReport: () => setState(() => _bottomTabIndex = 1),
-                  visible: _shellChromeVisible && !_scanOverlayOpen,
-                ),
-                if (_scanOverlayOpen)
-                  Positioned.fill(
-                    child: PopScope(
-                      canPop: false,
-                      onPopInvokedWithResult: (didPop, result) {
-                        if (!didPop) _closeScanOverlay();
-                      },
-                      child: Material(
-                        color: Theme.of(context).colorScheme.surface,
-                        child: Consumer(
-                          builder: (context, ref, _) => ScanReceiptScreen(
-                            currencyCode: ref.read(draftBillCurrencyProvider),
-                            openDraftAfterBatchAdd: true,
-                            onAddAllLines: (candidates) =>
-                                _addOcrLinesToDraft(ref, candidates),
-                            onDismiss: _closeScanOverlay,
-                            onNavigateToDraft: _openDraftAfterScanImport,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
+            body: body,
             bottomNavigationBar: _scanOverlayOpen
                 ? null
-                : SplitBaeAdaptiveBottomNav(
-                    selectedIndex: _bottomTabIndex,
-                    onDestinationSelected: (i) {
-                      HapticFeedback.selectionClick();
-                      setState(() {
-                        _bottomTabIndex = i;
-                        _shellSearchOpen = false;
-                        _shellSearchController.clear();
-                      });
-                      ref.read(v0ShellSearchQueryProvider.notifier).state = '';
-                    },
-                    destinations: [
-                      SplitBaeAdaptiveBottomNavDestination(
-                        icon: Icons.receipt_long_outlined,
-                        selectedIcon: Icons.receipt_long,
-                        label: l10n.navBillsTab,
-                      ),
-                      SplitBaeAdaptiveBottomNavDestination(
-                        icon: Icons.account_balance_wallet_outlined,
-                        selectedIcon: Icons.account_balance_wallet,
-                        label: l10n.balancesTitle,
-                      ),
-                    ],
-                  ),
+                : (appleLg
+                    ? null
+                    : SplitBaeAdaptiveBottomNav(
+                        selectedIndex: _bottomTabIndex,
+                        onDestinationSelected: (i) {
+                          HapticFeedback.selectionClick();
+                          setState(() {
+                            _bottomTabIndex = i;
+                            _shellSearchOpen = false;
+                            _shellSearchController.clear();
+                          });
+                          ref.read(v0ShellSearchQueryProvider.notifier).state =
+                              '';
+                        },
+                        destinations: [
+                          SplitBaeAdaptiveBottomNavDestination(
+                            icon: Icons.receipt_long_outlined,
+                            selectedIcon: Icons.receipt_long,
+                            label: l10n.navBillsTab,
+                          ),
+                          SplitBaeAdaptiveBottomNavDestination(
+                            icon: Icons.account_balance_wallet_outlined,
+                            selectedIcon: Icons.account_balance_wallet,
+                            label: l10n.balancesTitle,
+                          ),
+                        ],
+                      )),
           );
         }
 
         final cs = Theme.of(context).colorScheme;
-        final tokens = Theme.of(context).extension<SplitBaeShellTokens>() ??
-            SplitBaeShellTokens.android();
-        final railBg = hostPlatformIsApple() && tokens.liquidGlassChrome
-            ? Colors.transparent
-            : null;
+        final m3e = context.m3e;
+        final appleLg = splitBaeAppleLiquidGlassChromeEnabled(context);
+        final railW =
+            splitBaeAppleRailLensWidth(context, expanded: railExtended);
 
-        final navRail = NavigationRail(
-          backgroundColor: railBg,
-          extended: railExtended,
+        final navRail = NavigationRailM3E(
+          type: railExtended
+              ? NavigationRailM3EType.alwaysExpand
+              : NavigationRailM3EType.alwaysCollapse,
+          modality: NavigationRailM3EModality.standard,
+          sections: [
+            NavigationRailM3ESection(
+              destinations: [
+                NavigationRailM3EDestination(
+                  icon: const Icon(Icons.receipt_long_outlined),
+                  selectedIcon: const Icon(Icons.receipt_long),
+                  label: l10n.navBillsTab,
+                ),
+                NavigationRailM3EDestination(
+                  icon: const Icon(Icons.account_balance_wallet_outlined),
+                  selectedIcon: const Icon(Icons.account_balance_wallet),
+                  label: l10n.balancesTitle,
+                ),
+                NavigationRailM3EDestination(
+                  icon: const Icon(Icons.settings_outlined),
+                  selectedIcon: const Icon(Icons.settings),
+                  label: l10n.settings,
+                ),
+              ],
+            ),
+          ],
           selectedIndex: _railIndex,
           onDestinationSelected: (i) {
             HapticFeedback.selectionClick();
             setState(() => _railIndex = i);
           },
-          labelType: railExtended
-              ? NavigationRailLabelType.all
-              : NavigationRailLabelType.selected,
-          destinations: [
-            NavigationRailDestination(
-              icon: const Icon(Icons.receipt_long_outlined),
-              selectedIcon: const Icon(Icons.receipt_long),
-              label: Text(l10n.navBillsTab),
+          labelBehavior: railExtended
+              ? NavigationRailM3ELabelBehavior.alwaysShow
+              : NavigationRailM3ELabelBehavior.onlySelected,
+          background: Colors.transparent,
+          scrollable: false,
+        );
+
+        final mainStack = Stack(
+          fit: StackFit.expand,
+          children: [
+            NotificationListener<ScrollNotification>(
+              onNotification: _onShellScroll,
+              child: _railIndex == 0
+                  ? Padding(
+                      padding: hinge,
+                      child: BillsScreen(
+                        onNewBill: _openNewBillSheet,
+                        onScanBillEntry: _openScanBill,
+                        onSwitchToBalances: () => setState(() {
+                          _railIndex = 1;
+                        }),
+                      ),
+                    )
+                  : _railIndex == 1
+                      ? Padding(
+                          padding: hinge,
+                          child: const BalancesScreen(embedded: true),
+                        )
+                      : const SafeArea(
+                          child: SettingsScreen(embedded: true),
+                        ),
             ),
-            NavigationRailDestination(
-              icon: const Icon(Icons.account_balance_wallet_outlined),
-              selectedIcon: const Icon(Icons.account_balance_wallet),
-              label: Text(l10n.balancesTitle),
-            ),
-            NavigationRailDestination(
-              icon: const Icon(Icons.settings_outlined),
-              selectedIcon: const Icon(Icons.settings),
-              label: Text(l10n.settings),
-            ),
+            if (_railIndex != 2)
+              SplitBaeFabMenu(
+                onNewBill: _openNewBillSheet,
+                onScanBill: _openScanBill,
+                onCreateReport: () => setState(() => _railIndex = 1),
+                visible: _shellChromeVisible,
+              ),
           ],
         );
 
-        final Widget railColumn;
-        if (hostPlatformIsApple() &&
-            tokens.liquidGlassChrome &&
-            tokens.bottomBarBlurSigma > 0) {
-          railColumn = ClipRect(
-            child: BackdropFilter(
-              filter: ImageFilter.blur(
-                sigmaX: tokens.bottomBarBlurSigma,
-                sigmaY: tokens.bottomBarBlurSigma,
+        if (appleLg) {
+          final h = constraints.maxHeight;
+          return Scaffold(
+            backgroundColor: cs.surface,
+            body: splitBaeAppleLiquidGlassViewport(
+              controller: _appleLiquidGlassController,
+              background: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SizedBox(width: railW),
+                  Container(width: 1, color: m3e.colors.outlineVariant),
+                  Expanded(child: mainStack),
+                ],
               ),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: cs.surface.withValues(alpha: 0.55),
+              lenses: [
+                splitBaeAppleNavigationRailLens(
+                  width: railW,
+                  height: h,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: navRail,
+                  ),
                 ),
-                child: navRail,
-              ),
+              ],
             ),
           );
-        } else {
-          railColumn = navRail;
         }
 
         return Scaffold(
+          backgroundColor: cs.surface,
           body: Row(
             children: [
-              railColumn,
-              const VerticalDivider(width: 1, thickness: 1),
-              Expanded(
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    NotificationListener<ScrollNotification>(
-                      onNotification: _onShellScroll,
-                      child: _railIndex == 0
-                          ? Padding(
-                              padding: hinge,
-                              child: BillsScreen(
-                                onNewBill: _openNewBillSheet,
-                                onScanBillEntry: _openScanBill,
-                                onSwitchToBalances: () => setState(() {
-                                  _railIndex = 1;
-                                }),
-                              ),
-                            )
-                          : _railIndex == 1
-                              ? Padding(
-                                  padding: hinge,
-                                  child: const BalancesScreen(embedded: true),
-                                )
-                              : const SafeArea(
-                                  child: SettingsScreen(embedded: true),
-                                ),
-                    ),
-                    if (_railIndex != 2)
-                      SplitBaeFabMenu(
-                        onNewBill: _openNewBillSheet,
-                        onScanBill: _openScanBill,
-                        onCreateReport: () =>
-                            setState(() => _railIndex = 1),
-                        visible: _shellChromeVisible,
-                      ),
-                  ],
-                ),
-              ),
+              navRail,
+              Container(width: 1, color: m3e.colors.outlineVariant),
+              Expanded(child: mainStack),
             ],
           ),
         );

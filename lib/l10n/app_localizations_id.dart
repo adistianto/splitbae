@@ -1007,4 +1007,29 @@ class AppLocalizationsId extends AppLocalizations {
   ) {
     return '$fromName ke $toName, $formattedAmount';
   }
+
+  @override
+  String get shellPlaceholderTransactionRow => 'Contoh tagihan';
+
+  @override
+  String get shellPlaceholderSubtitle => 'Kerangka UI — data menyusul';
+
+  @override
+  String get shellPlaceholderChipBills => '0 tagihan';
+
+  @override
+  String get shellPlaceholderChipTrend => 'Tren';
+
+  @override
+  String get shellPlaceholderBalancesSubtitle =>
+      'Pratinjau pelunasan — hanya kerangka';
+
+  @override
+  String get shellPlaceholderPerson => 'Alex';
+
+  @override
+  String get shellPlaceholderBalance => 'Saldo —';
+
+  @override
+  String get shellPlaceholderSettingsRow => 'Preferensi';
 }
