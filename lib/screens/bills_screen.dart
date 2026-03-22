@@ -13,7 +13,7 @@ import 'package:splitbae/app_settings.dart';
 import 'package:splitbae/providers.dart';
 import 'package:splitbae/screens/settings_screen.dart';
 import 'package:splitbae/widgets/posted_bill_expandable_card.dart';
-import 'package:splitbae/widgets/splitbae_fab_menu.dart';
+import 'package:splitbae/widgets/splitbae_v0_chrome.dart';
 
 /// Bills dashboard: v0 hero, insight chips, month groups, expandable cards, FAB speed dial.
 class BillsScreen extends ConsumerStatefulWidget {
@@ -22,11 +22,16 @@ class BillsScreen extends ConsumerStatefulWidget {
     required this.onNewBill,
     required this.onScanBillEntry,
     required this.onSwitchToBalances,
+    this.v0ShellMode = false,
   });
 
   final VoidCallback onNewBill;
   final VoidCallback onScanBillEntry;
   final VoidCallback onSwitchToBalances;
+
+  /// When true (phone shell), search + profile live on [AdaptiveHomeScreen] and
+  /// [v0ShellSearchQueryProvider] supplies the query string.
+  final bool v0ShellMode;
 
   @override
   ConsumerState<BillsScreen> createState() => _BillsScreenState();
@@ -38,7 +43,6 @@ class _BillsScreenState extends ConsumerState<BillsScreen> {
   final Set<String> _selectedCategories = {};
   final Set<String> _selectedParticipants = {};
   bool _headerChromeVisible = true;
-  bool _fabVisible = true;
 
   static const _categoryIds = <String>[
     'food',
@@ -88,31 +92,29 @@ class _BillsScreenState extends ConsumerState<BillsScreen> {
   }
 
   bool _handleScroll(ScrollNotification n) {
+    if (widget.v0ShellMode) return false;
     if (n is! ScrollUpdateNotification) return false;
     final d = n.scrollDelta ?? 0;
     final px = n.metrics.pixels;
     if (px < 16) {
-      if (!_headerChromeVisible || !_fabVisible) {
+      if (!_headerChromeVisible) {
         setState(() {
           _headerChromeVisible = true;
-          _fabVisible = true;
         });
       }
       return false;
     }
     if (d > 3) {
-      if (_headerChromeVisible || _fabVisible) {
+      if (_headerChromeVisible) {
         setState(() {
           _headerChromeVisible = false;
-          _fabVisible = false;
           _searchOpen = false;
         });
       }
     } else if (d < -3) {
-      if (!_headerChromeVisible || !_fabVisible) {
+      if (!_headerChromeVisible) {
         setState(() {
           _headerChromeVisible = true;
-          _fabVisible = true;
         });
       }
     }
@@ -143,6 +145,9 @@ class _BillsScreenState extends ConsumerState<BillsScreen> {
   Future<void> _openFiltersSheet() async {
     final l10n = AppLocalizations.of(context)!;
     final people = ref.read(participantsProvider);
+    if (widget.v0ShellMode) {
+      ref.read(v0BillsFiltersSheetOpenProvider.notifier).state = true;
+    }
     await showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
@@ -275,6 +280,9 @@ class _BillsScreenState extends ConsumerState<BillsScreen> {
         );
       },
     );
+    if (widget.v0ShellMode && mounted) {
+      ref.read(v0BillsFiltersSheetOpenProvider.notifier).state = false;
+    }
   }
 
   @override
@@ -284,6 +292,9 @@ class _BillsScreenState extends ConsumerState<BillsScreen> {
     final async = ref.watch(postedBillSummariesProvider);
     final topPad = MediaQuery.paddingOf(context).top;
     final cs = Theme.of(context).colorScheme;
+    final searchText = widget.v0ShellMode
+        ? ref.watch(v0ShellSearchQueryProvider)
+        : _searchCtrl.text;
 
     return Scaffold(
       backgroundColor: cs.surface,
@@ -294,7 +305,7 @@ class _BillsScreenState extends ConsumerState<BillsScreen> {
             emptyStateCurrencyCode: ref.watch(defaultCurrencyProvider),
           );
           final filtered =
-              _applyFiltersAndSearch(all, _searchCtrl.text);
+              _applyFiltersAndSearch(all, searchText);
           final groups = _groupByMonth(filtered);
           final keys = groups.keys.toList()..sort((a, b) => b.compareTo(a));
           final noMatches = filtered.isEmpty && all.isNotEmpty;
@@ -410,14 +421,23 @@ class _BillsScreenState extends ConsumerState<BillsScreen> {
                                     ),
                               ),
                               if (_hasActiveFilters ||
-                                  _searchCtrl.text.isNotEmpty) ...[
+                                  searchText.isNotEmpty) ...[
                                 const SizedBox(height: 12),
                                 TextButton(
                                   onPressed: () {
                                     setState(() {
                                       _selectedCategories.clear();
                                       _selectedParticipants.clear();
-                                      _searchCtrl.clear();
+                                      if (widget.v0ShellMode) {
+                                        ref
+                                            .read(
+                                              v0ShellSearchQueryProvider
+                                                  .notifier,
+                                            )
+                                            .state = '';
+                                      } else {
+                                        _searchCtrl.clear();
+                                      }
                                     });
                                   },
                                   child: Text(l10n.billsFiltersClearAll),
@@ -461,132 +481,103 @@ class _BillsScreenState extends ConsumerState<BillsScreen> {
                   ],
                 ),
               ),
-              Positioned(
-                top: topPad + 8,
-                right: 16,
-                child: AnimatedOpacity(
-                  opacity: _headerChromeVisible ? 1 : 0,
-                  duration: const Duration(milliseconds: 220),
-                  curve: Curves.easeOut,
-                  child: IgnorePointer(
-                    ignoring: !_headerChromeVisible,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _CircleChromeButton(
-                          icon: _searchOpen ? Icons.close : Icons.search,
-                          onPressed: () {
-                            HapticFeedback.selectionClick();
-                            setState(() {
-                              _searchOpen = !_searchOpen;
-                              if (!_searchOpen) {
-                                _searchCtrl.clear();
-                              }
-                            });
-                          },
-                        ),
-                        const SizedBox(width: 8),
-                        _CircleChromeButton(
-                          icon: Icons.person_outline,
-                          onPressed: () {
-                            HapticFeedback.selectionClick();
-                            Navigator.of(context).push(
-                              MaterialPageRoute<void>(
-                                builder: (_) => const SettingsScreen(),
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              if (_searchOpen)
+              if (!widget.v0ShellMode) ...[
                 Positioned(
-                  top: topPad + 56,
-                  left: 16,
+                  top: topPad + 8,
                   right: 16,
-                  child: Material(
-                    elevation: 8,
-                    borderRadius: BorderRadius.circular(16),
-                    color: cs.surface,
-                    child: TextField(
-                      controller: _searchCtrl,
-                      autofocus: true,
-                      onChanged: (_) => setState(() {}),
-                      decoration: InputDecoration(
-                        hintText: l10n.billsSearchHint,
-                        prefixIcon: const Icon(Icons.search, size: 22),
-                        suffixIcon: _searchCtrl.text.isEmpty
-                            ? null
-                            : IconButton(
-                                icon: const Icon(Icons.clear, size: 20),
-                                onPressed: () {
-                                  setState(() => _searchCtrl.clear());
-                                },
-                              ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(color: cs.outlineVariant),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(color: cs.outlineVariant),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(color: cs.primary, width: 2),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 14,
-                        ),
+                  child: AnimatedOpacity(
+                    opacity: _headerChromeVisible ? 1 : 0,
+                    duration: const Duration(milliseconds: 220),
+                    curve: Curves.easeOut,
+                    child: IgnorePointer(
+                      ignoring: !_headerChromeVisible,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SplitBaeV0CircleIconButton(
+                            icon: _searchOpen ? Icons.close : Icons.search,
+                            semanticLabel: _searchOpen
+                                ? MaterialLocalizations.of(context)
+                                    .closeButtonLabel
+                                : l10n.billsSearchHint,
+                            onPressed: () {
+                              HapticFeedback.selectionClick();
+                              setState(() {
+                                _searchOpen = !_searchOpen;
+                                if (!_searchOpen) {
+                                  _searchCtrl.clear();
+                                }
+                              });
+                            },
+                          ),
+                          const SizedBox(width: 8),
+                          SplitBaeV0CircleIconButton(
+                            icon: Icons.person_outline,
+                            semanticLabel: l10n.settings,
+                            onPressed: () {
+                              HapticFeedback.selectionClick();
+                              Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder: (_) => const SettingsScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
                       ),
                     ),
                   ),
                 ),
-              SplitBaeFabMenu(
-                onNewBill: widget.onNewBill,
-                onScanBill: widget.onScanBillEntry,
-                onCreateReport: widget.onSwitchToBalances,
-                visible: _fabVisible,
-              ),
+                if (_searchOpen)
+                  Positioned(
+                    top: topPad + 56,
+                    left: 16,
+                    right: 16,
+                    child: Material(
+                      elevation: 8,
+                      borderRadius: BorderRadius.circular(16),
+                      color: cs.surface,
+                      child: TextField(
+                        controller: _searchCtrl,
+                        autofocus: true,
+                        onChanged: (_) => setState(() {}),
+                        decoration: InputDecoration(
+                          hintText: l10n.billsSearchHint,
+                          prefixIcon: const Icon(Icons.search, size: 22),
+                          suffixIcon: _searchCtrl.text.isEmpty
+                              ? null
+                              : IconButton(
+                                  icon: const Icon(Icons.clear, size: 20),
+                                  onPressed: () {
+                                    setState(() => _searchCtrl.clear());
+                                  },
+                                ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(color: cs.outlineVariant),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(color: cs.outlineVariant),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(color: cs.primary, width: 2),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 14,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ],
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('$e')),
-      ),
-    );
-  }
-}
-
-class _CircleChromeButton extends StatelessWidget {
-  const _CircleChromeButton({
-    required this.icon,
-    required this.onPressed,
-  });
-
-  final IconData icon;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Material(
-      color: cs.surface.withValues(alpha: 0.95),
-      shape: const CircleBorder(),
-      elevation: 3,
-      shadowColor: Colors.black26,
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: onPressed,
-        child: SizedBox(
-          width: 44,
-          height: 44,
-          child: Icon(icon, size: 22, color: cs.onSurface),
-        ),
       ),
     );
   }

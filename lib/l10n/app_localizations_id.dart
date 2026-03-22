@@ -427,6 +427,69 @@ class AppLocalizationsId extends AppLocalizations {
   String get balancesTooltip => 'Saldo dan pelunasan';
 
   @override
+  String get balancesScreenSubtitle => 'Lihat siapa berhutang kepada siapa';
+
+  @override
+  String get balancesHeroToSettle => 'Yang harus dilunasi';
+
+  @override
+  String get balancesHeroStatus => 'Status';
+
+  @override
+  String get balancesHeroAllSettledTitle => 'Semua lunas!';
+
+  @override
+  String get balancesHeroEveryoneEven =>
+      'Semua sudah impas — tidak perlu transfer';
+
+  @override
+  String balancesHeroPaymentsNeeded(int count) {
+    return '$count pembayaran diperlukan';
+  }
+
+  @override
+  String get balancesTotalSpentLabel => 'Total pengeluaran';
+
+  @override
+  String get balancesAvgPerPersonLabel => 'Rata-rata / orang';
+
+  @override
+  String get balancesSectionIndividual => 'Saldo per orang';
+
+  @override
+  String get balancesInsightOwesMost => 'Paling banyak berhutang';
+
+  @override
+  String get balancesInsightOwedMost => 'Paling banyak ditagih';
+
+  @override
+  String get balancesNetGetsBack => 'Menerima kembali';
+
+  @override
+  String get balancesNetOwes => 'Berhutang';
+
+  @override
+  String get balancesNetSettled => 'Sudah impas';
+
+  @override
+  String balancesShowMore(int count) {
+    return 'Tampilkan $count lagi';
+  }
+
+  @override
+  String get balancesShowLess => 'Lebih sedikit';
+
+  @override
+  String get balancesShareSummary => 'Bagikan ringkasan';
+
+  @override
+  String get balancesEmptyTitle => 'Belum ada transaksi';
+
+  @override
+  String get balancesEmptySubtitle =>
+      'Tambah tagihan untuk melihat saldo dan siapa berhutang';
+
+  @override
   String get suggestedSettlementsTitle => 'Transfer yang disarankan';
 
   @override
@@ -643,6 +706,35 @@ class AppLocalizationsId extends AppLocalizations {
   String get billsSearchHint => 'Cari tagihan, item…';
 
   @override
+  String get balancesSearchPeopleHint => 'Cari orang…';
+
+  @override
+  String get v0UserMenuTitle => 'Pengaturan';
+
+  @override
+  String get v0UserMenuSubtitle => 'Kelola preferensi Anda';
+
+  @override
+  String get v0UserMenuJourney => 'Perjalanan Anda';
+
+  @override
+  String v0UserMenuMemberSince(String monthYear) {
+    return 'Anggota sejak $monthYear';
+  }
+
+  @override
+  String get v0UserMenuMemberSinceNew => 'Tambah tagihan pertama untuk memulai';
+
+  @override
+  String get v0UserMenuStatBills => 'Tagihan';
+
+  @override
+  String get v0UserMenuStatFriends => 'Teman';
+
+  @override
+  String get v0UserMenuOpenFullSettings => 'Buka pengaturan lengkap';
+
+  @override
   String get billsSearchEmpty => 'Tidak ada tagihan yang cocok';
 
   @override
@@ -800,6 +892,22 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get billCardDelete => 'Hapus';
+
+  @override
+  String get billCardAdjustDraft => 'Sesuaikan di draf';
+
+  @override
+  String get draftReplaceFromPostedTitle => 'Ganti draf yang sedang berjalan?';
+
+  @override
+  String get draftReplaceFromPostedBody =>
+      'Draf saat ini akan diganti salinan tagihan ini.';
+
+  @override
+  String get draftReplaceFromPostedAction => 'Ganti';
+
+  @override
+  String get billCopyToDraftFailed => 'Tidak bisa menyalin tagihan ke draf.';
 
   @override
   String get billDeleteConfirmTitle => 'Hapus tagihan ini?';

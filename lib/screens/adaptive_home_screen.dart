@@ -17,6 +17,10 @@ import 'package:splitbae/screens/bills_screen.dart';
 import 'package:splitbae/screens/scan_receipt_screen.dart';
 import 'package:splitbae/screens/settings_screen.dart';
 import 'package:splitbae/widgets/add_transaction_sheet.dart';
+import 'package:splitbae/widgets/splitbae_fab_menu.dart';
+import 'package:splitbae/widgets/splitbae_v0_bottom_nav.dart';
+import 'package:splitbae/widgets/splitbae_v0_chrome.dart';
+import 'package:splitbae/widgets/splitbae_v0_user_menu.dart';
 
 /// Phone: **Bills · Balances** (v0-style). Draft split opens as a pushed screen.
 /// Wide: rail **Bills · Balances · Settings**; compose opens [DraftSplitScreen] on a route.
@@ -30,13 +34,48 @@ class AdaptiveHomeScreen extends ConsumerStatefulWidget {
 class _AdaptiveHomeScreenState extends ConsumerState<AdaptiveHomeScreen> {
   int _railIndex = 0;
   int _bottomTabIndex = 0;
+  bool _shellChromeVisible = true;
+  bool _shellSearchOpen = false;
+  late final TextEditingController _shellSearchController;
+
+  bool _onShellScroll(ScrollNotification n) {
+    if (n is! ScrollUpdateNotification) return false;
+    final d = n.scrollDelta ?? 0;
+    final px = n.metrics.pixels;
+    if (px < 16) {
+      if (!_shellChromeVisible) setState(() => _shellChromeVisible = true);
+      return false;
+    }
+    if (d > 3) {
+      if (_shellChromeVisible) {
+        setState(() {
+          _shellChromeVisible = false;
+          _shellSearchOpen = false;
+        });
+      }
+    } else if (d < -3) {
+      if (!_shellChromeVisible) setState(() => _shellChromeVisible = true);
+    }
+    return false;
+  }
 
   @override
   void initState() {
     super.initState();
+    _shellSearchController = TextEditingController();
+    _shellSearchController.addListener(() {
+      ref.read(v0ShellSearchQueryProvider.notifier).state =
+          _shellSearchController.text;
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(ref.read(receiptOcrProbeProvider.future));
     });
+  }
+
+  @override
+  void dispose() {
+    _shellSearchController.dispose();
+    super.dispose();
   }
 
   Future<void> _addOcrLinesToDraft(
@@ -108,6 +147,11 @@ class _AdaptiveHomeScreenState extends ConsumerState<AdaptiveHomeScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    ref.listen<String>(v0ShellSearchQueryProvider, (prev, next) {
+      if (next.isEmpty && _shellSearchController.text.isNotEmpty) {
+        _shellSearchController.clear();
+      }
+    });
 
     Widget shell = LayoutBuilder(
       builder: (context, constraints) {
@@ -121,52 +165,173 @@ class _AdaptiveHomeScreenState extends ConsumerState<AdaptiveHomeScreen> {
           final maxContent = wc == AppWindowClass.medium
               ? 720.0
               : double.infinity;
+          final topPad = MediaQuery.paddingOf(context).top;
+          final filtersOpen = ref.watch(v0BillsFiltersSheetOpenProvider);
+          final showFloatingChrome =
+              _shellChromeVisible && !filtersOpen;
+          final cs = Theme.of(context).colorScheme;
 
           return Scaffold(
-            body: IndexedStack(
-              index: _bottomTabIndex,
+            body: Stack(
+              fit: StackFit.expand,
               children: [
-                Center(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: maxContent),
-                    child: Padding(
-                      padding: hinge,
-                      child: BillsScreen(
-                        onNewBill: _openNewBillSheet,
-                        onScanBillEntry: _openScanBill,
-                        onSwitchToBalances: () => setState(() {
-                          _bottomTabIndex = 1;
-                        }),
+                NotificationListener<ScrollNotification>(
+                  onNotification: _onShellScroll,
+                  child: IndexedStack(
+                    index: _bottomTabIndex,
+                    children: [
+                      Center(
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(maxWidth: maxContent),
+                          child: Padding(
+                            padding: hinge,
+                            child: BillsScreen(
+                              v0ShellMode: true,
+                              onNewBill: _openNewBillSheet,
+                              onScanBillEntry: _openScanBill,
+                              onSwitchToBalances: () => setState(() {
+                                _bottomTabIndex = 1;
+                              }),
+                            ),
+                          ),
+                        ),
+                      ),
+                      Center(
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(maxWidth: maxContent),
+                          child: Padding(
+                            padding: hinge,
+                            child: const BalancesScreen(embedded: true),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (showFloatingChrome)
+                  Positioned(
+                    top: topPad + 8,
+                    right: 16,
+                    child: AnimatedOpacity(
+                      opacity: 1,
+                      duration: const Duration(milliseconds: 220),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SplitBaeV0CircleIconButton(
+                            icon: _shellSearchOpen ? Icons.close : Icons.search,
+                            semanticLabel: _shellSearchOpen
+                                ? MaterialLocalizations.of(context)
+                                    .closeButtonLabel
+                                : l10n.billsSearchHint,
+                            onPressed: () {
+                              HapticFeedback.selectionClick();
+                              setState(() {
+                                _shellSearchOpen = !_shellSearchOpen;
+                                if (!_shellSearchOpen) {
+                                  _shellSearchController.clear();
+                                  ref
+                                      .read(v0ShellSearchQueryProvider.notifier)
+                                      .state = '';
+                                }
+                              });
+                            },
+                          ),
+                          const SizedBox(width: 8),
+                          SplitBaeV0CircleIconButton(
+                            icon: Icons.person_outline,
+                            semanticLabel: l10n.v0UserMenuTitle,
+                            onPressed: () {
+                              HapticFeedback.selectionClick();
+                              showSplitBaeV0UserMenu(context);
+                            },
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                ),
-                Center(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: maxContent),
-                    child: Padding(
-                      padding: hinge,
-                      child: const BalancesScreen(embedded: true),
+                if (_shellSearchOpen && showFloatingChrome)
+                  Positioned(
+                    top: topPad + 56,
+                    left: 16,
+                    right: 16,
+                    child: Material(
+                      elevation: 8,
+                      borderRadius: BorderRadius.circular(16),
+                      color: cs.surface,
+                      child: TextField(
+                        controller: _shellSearchController,
+                        autofocus: true,
+                        onChanged: (_) => setState(() {}),
+                        decoration: InputDecoration(
+                          hintText: _bottomTabIndex == 0
+                              ? l10n.billsSearchHint
+                              : l10n.balancesSearchPeopleHint,
+                          prefixIcon: const Icon(Icons.search, size: 22),
+                          suffixIcon: _shellSearchController.text.isEmpty
+                              ? null
+                              : IconButton(
+                                  icon: const Icon(Icons.clear, size: 20),
+                                  onPressed: () {
+                                    setState(() {
+                                      _shellSearchController.clear();
+                                      ref
+                                          .read(
+                                            v0ShellSearchQueryProvider.notifier,
+                                          )
+                                          .state = '';
+                                    });
+                                  },
+                                ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(color: cs.outlineVariant),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(color: cs.outlineVariant),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide:
+                                BorderSide(color: cs.primary, width: 2),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 14,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
+                SplitBaeFabMenu(
+                  onNewBill: _openNewBillSheet,
+                  onScanBill: _openScanBill,
+                  onCreateReport: () => setState(() => _bottomTabIndex = 1),
+                  visible: _shellChromeVisible,
                 ),
               ],
             ),
-            bottomNavigationBar: NavigationBar(
+            bottomNavigationBar: SplitBaeV0BottomNav(
               selectedIndex: _bottomTabIndex,
               onDestinationSelected: (i) {
                 HapticFeedback.selectionClick();
-                setState(() => _bottomTabIndex = i);
+                setState(() {
+                  _bottomTabIndex = i;
+                  _shellSearchOpen = false;
+                  _shellSearchController.clear();
+                });
+                ref.read(v0ShellSearchQueryProvider.notifier).state = '';
               },
               destinations: [
-                NavigationDestination(
-                  icon: const Icon(Icons.receipt_long_outlined),
-                  selectedIcon: const Icon(Icons.receipt_long),
+                SplitBaeV0BottomNavDestination(
+                  icon: Icons.receipt_long_outlined,
+                  selectedIcon: Icons.receipt_long,
                   label: l10n.navBillsTab,
                 ),
-                NavigationDestination(
-                  icon: const Icon(Icons.account_balance_wallet_outlined),
-                  selectedIcon: const Icon(Icons.account_balance_wallet),
+                SplitBaeV0BottomNavDestination(
+                  icon: Icons.account_balance_wallet_outlined,
+                  selectedIcon: Icons.account_balance_wallet,
                   label: l10n.balancesTitle,
                 ),
               ],
@@ -207,23 +372,41 @@ class _AdaptiveHomeScreenState extends ConsumerState<AdaptiveHomeScreen> {
               ),
               const VerticalDivider(width: 1, thickness: 1),
               Expanded(
-                child: _railIndex == 0
-                    ? Padding(
-                        padding: hinge,
-                        child: BillsScreen(
-                          onNewBill: _openNewBillSheet,
-                          onScanBillEntry: _openScanBill,
-                          onSwitchToBalances: () => setState(() {
-                            _railIndex = 1;
-                          }),
-                        ),
-                      )
-                    : _railIndex == 1
-                        ? Padding(
-                            padding: hinge,
-                            child: const BalancesScreen(embedded: true),
-                          )
-                        : const SafeArea(child: SettingsScreen(embedded: true)),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    NotificationListener<ScrollNotification>(
+                      onNotification: _onShellScroll,
+                      child: _railIndex == 0
+                          ? Padding(
+                              padding: hinge,
+                              child: BillsScreen(
+                                onNewBill: _openNewBillSheet,
+                                onScanBillEntry: _openScanBill,
+                                onSwitchToBalances: () => setState(() {
+                                  _railIndex = 1;
+                                }),
+                              ),
+                            )
+                          : _railIndex == 1
+                              ? Padding(
+                                  padding: hinge,
+                                  child: const BalancesScreen(embedded: true),
+                                )
+                              : const SafeArea(
+                                  child: SettingsScreen(embedded: true),
+                                ),
+                    ),
+                    if (_railIndex != 2)
+                      SplitBaeFabMenu(
+                        onNewBill: _openNewBillSheet,
+                        onScanBill: _openScanBill,
+                        onCreateReport: () =>
+                            setState(() => _railIndex = 1),
+                        visible: _shellChromeVisible,
+                      ),
+                  ],
+                ),
               ),
             ],
           ),

@@ -18,7 +18,8 @@ import 'package:splitbae/src/rust/api/simple.dart'
         ParticipantRef,
         SplitResult,
         calculateSplitAssigned;
-import 'package:splitbae/src/rust/api/settlement.dart' show SettlementEdge;
+import 'package:splitbae/src/rust/api/settlement.dart'
+    show NetBalance, SettlementEdge;
 
 /// Bumped after [DraftPaymentRepository.syncDraftPaymentsWithBill] changes
 /// `transaction_payments` without necessarily updating [itemsProvider] /
@@ -39,6 +40,12 @@ void _bumpPostedBillsFeedRevision(Ref ref) {
 
 /// Bumped when draft “who’s splitting” inclusion changes (DB + payments).
 final draftBillInclusionRevisionProvider = StateProvider<int>((ref) => 0);
+
+/// Phone shell: shared search query for Bills + Balances (v0 [page.tsx]).
+final v0ShellSearchQueryProvider = StateProvider<String>((ref) => '');
+
+/// True while the Bills filter bottom sheet is open — hides shell search/profile (v0).
+final v0BillsFiltersSheetOpenProvider = StateProvider<bool>((ref) => false);
 
 class ItemsNotifier extends StateNotifier<List<LedgerLineItem>> {
   ItemsNotifier(this._ref) : super(const []) {
@@ -151,6 +158,18 @@ class ItemsNotifier extends StateNotifier<List<LedgerLineItem>> {
         .deletePostedTransaction(transactionId);
     _bumpPostedBillsFeedRevision(_ref);
     _ref.invalidate(transactionDetailProvider(transactionId));
+  }
+
+  /// Replaces the current draft with a copy of a posted bill (lines, inclusion,
+  /// payments, metadata). Used for v0-style “adjust in draft” without mutating history.
+  Future<void> copyPostedBillToDraft(String postedTransactionId) async {
+    await _ref.read(billPostingRepositoryProvider).copyPostedTransactionToDraft(
+          ledgerId: kDefaultLedgerId,
+          postedTransactionId: postedTransactionId,
+        );
+    _ref.read(draftBillInclusionRevisionProvider.notifier).state++;
+    _bumpDraftPaymentsDbRevision(_ref);
+    await _load();
   }
 }
 
@@ -322,4 +341,16 @@ final suggestedSettlementEdgesProvider =
   ref.watch(draftTransactionPaymentsProvider);
   final svc = LedgerSettlementService(ref.watch(appDatabaseProvider));
   return svc.suggestedEdges(kDefaultLedgerId);
+});
+
+/// Per-participant net balances by currency (draft + posted + settlements).
+final ledgerNetBalancesProvider =
+    FutureProvider.autoDispose<List<NetBalance>>((ref) async {
+  ref.watch(itemsProvider);
+  ref.watch(participantsProvider);
+  ref.watch(draftBillInclusionRevisionProvider);
+  ref.watch(settlementTransfersListProvider);
+  ref.watch(draftTransactionPaymentsProvider);
+  final svc = LedgerSettlementService(ref.watch(appDatabaseProvider));
+  return svc.computeNetBalances(kDefaultLedgerId);
 });

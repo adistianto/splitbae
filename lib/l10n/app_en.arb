@@ -528,6 +528,38 @@
   "@balancesTooltip": {
     "description": "Toolbar or navigation tooltip for opening balances."
   },
+  "balancesScreenSubtitle": "See who owes what",
+  "@balancesScreenSubtitle": {
+    "description": "Subtitle under Balances title (v0 parity)."
+  },
+  "balancesHeroToSettle": "To settle",
+  "balancesHeroStatus": "Status",
+  "balancesHeroAllSettledTitle": "All settled!",
+  "balancesHeroEveryoneEven": "Everyone is even — no payments needed",
+  "balancesHeroPaymentsNeeded": "{count} payments needed",
+  "@balancesHeroPaymentsNeeded": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "balancesTotalSpentLabel": "Total spent",
+  "balancesAvgPerPersonLabel": "Avg / person",
+  "balancesSectionIndividual": "Individual balances",
+  "balancesInsightOwesMost": "Owes most",
+  "balancesInsightOwedMost": "Owed most",
+  "balancesNetGetsBack": "Gets back",
+  "balancesNetOwes": "Owes",
+  "balancesNetSettled": "Settled up",
+  "balancesShowMore": "Show {count} more",
+  "@balancesShowMore": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "balancesShowLess": "Show less",
+  "balancesShareSummary": "Share summary",
+  "balancesEmptyTitle": "No transactions yet",
+  "balancesEmptySubtitle": "Add a bill to see balances and who owes whom",
   "suggestedSettlementsTitle": "Suggested transfers",
   "@suggestedSettlementsTitle": {
     "description": "Section header for Rust-computed minimal settlement edges."
@@ -810,6 +842,23 @@
   "@billsSearchHint": {
     "description": "Placeholder in the Bills search field."
   },
+  "balancesSearchPeopleHint": "Search people…",
+  "@balancesSearchPeopleHint": {
+    "description": "Placeholder in the shell search field when Balances tab is active (v0)."
+  },
+  "v0UserMenuTitle": "Settings",
+  "v0UserMenuSubtitle": "Manage your preferences",
+  "v0UserMenuJourney": "Your journey",
+  "v0UserMenuMemberSince": "Member since {monthYear}",
+  "@v0UserMenuMemberSince": {
+    "placeholders": {
+      "monthYear": { "type": "String" }
+    }
+  },
+  "v0UserMenuMemberSinceNew": "Add your first bill to get started",
+  "v0UserMenuStatBills": "Bills",
+  "v0UserMenuStatFriends": "Friends",
+  "v0UserMenuOpenFullSettings": "Open full settings",
   "billsSearchEmpty": "No matching bills",
   "@billsSearchEmpty": {
     "description": "When search/filter returns nothing but bills exist."
@@ -1027,6 +1076,26 @@
   "billCardDelete": "Delete",
   "@billCardDelete": {
     "description": "Delete a posted bill from history."
+  },
+  "billCardAdjustDraft": "Adjust in draft",
+  "@billCardAdjustDraft": {
+    "description": "Copy a posted bill into the in-progress draft for editing."
+  },
+  "draftReplaceFromPostedTitle": "Replace in-progress bill?",
+  "@draftReplaceFromPostedTitle": {
+    "description": "Title when copying a posted bill would overwrite the current draft."
+  },
+  "draftReplaceFromPostedBody": "Your current draft will be replaced with a copy of this bill.",
+  "@draftReplaceFromPostedBody": {
+    "description": "Body for replace-draft confirmation."
+  },
+  "draftReplaceFromPostedAction": "Replace",
+  "@draftReplaceFromPostedAction": {
+    "description": "Confirm replacing the draft with a copy of a posted bill."
+  },
+  "billCopyToDraftFailed": "Couldn’t copy this bill into draft.",
+  "@billCopyToDraftFailed": {
+    "description": "Shown when copying a posted bill to the draft fails."
   },
   "billDeleteConfirmTitle": "Delete this bill?",
   "@billDeleteConfirmTitle": {

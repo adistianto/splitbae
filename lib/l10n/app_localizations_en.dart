@@ -423,6 +423,69 @@ class AppLocalizationsEn extends AppLocalizations {
   String get balancesTooltip => 'Balances and settlements';
 
   @override
+  String get balancesScreenSubtitle => 'See who owes what';
+
+  @override
+  String get balancesHeroToSettle => 'To settle';
+
+  @override
+  String get balancesHeroStatus => 'Status';
+
+  @override
+  String get balancesHeroAllSettledTitle => 'All settled!';
+
+  @override
+  String get balancesHeroEveryoneEven =>
+      'Everyone is even — no payments needed';
+
+  @override
+  String balancesHeroPaymentsNeeded(int count) {
+    return '$count payments needed';
+  }
+
+  @override
+  String get balancesTotalSpentLabel => 'Total spent';
+
+  @override
+  String get balancesAvgPerPersonLabel => 'Avg / person';
+
+  @override
+  String get balancesSectionIndividual => 'Individual balances';
+
+  @override
+  String get balancesInsightOwesMost => 'Owes most';
+
+  @override
+  String get balancesInsightOwedMost => 'Owed most';
+
+  @override
+  String get balancesNetGetsBack => 'Gets back';
+
+  @override
+  String get balancesNetOwes => 'Owes';
+
+  @override
+  String get balancesNetSettled => 'Settled up';
+
+  @override
+  String balancesShowMore(int count) {
+    return 'Show $count more';
+  }
+
+  @override
+  String get balancesShowLess => 'Show less';
+
+  @override
+  String get balancesShareSummary => 'Share summary';
+
+  @override
+  String get balancesEmptyTitle => 'No transactions yet';
+
+  @override
+  String get balancesEmptySubtitle =>
+      'Add a bill to see balances and who owes whom';
+
+  @override
   String get suggestedSettlementsTitle => 'Suggested transfers';
 
   @override
@@ -636,6 +699,35 @@ class AppLocalizationsEn extends AppLocalizations {
   String get billsSearchHint => 'Search bills, items…';
 
   @override
+  String get balancesSearchPeopleHint => 'Search people…';
+
+  @override
+  String get v0UserMenuTitle => 'Settings';
+
+  @override
+  String get v0UserMenuSubtitle => 'Manage your preferences';
+
+  @override
+  String get v0UserMenuJourney => 'Your journey';
+
+  @override
+  String v0UserMenuMemberSince(String monthYear) {
+    return 'Member since $monthYear';
+  }
+
+  @override
+  String get v0UserMenuMemberSinceNew => 'Add your first bill to get started';
+
+  @override
+  String get v0UserMenuStatBills => 'Bills';
+
+  @override
+  String get v0UserMenuStatFriends => 'Friends';
+
+  @override
+  String get v0UserMenuOpenFullSettings => 'Open full settings';
+
+  @override
   String get billsSearchEmpty => 'No matching bills';
 
   @override
@@ -795,6 +887,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get billCardDelete => 'Delete';
+
+  @override
+  String get billCardAdjustDraft => 'Adjust in draft';
+
+  @override
+  String get draftReplaceFromPostedTitle => 'Replace in-progress bill?';
+
+  @override
+  String get draftReplaceFromPostedBody =>
+      'Your current draft will be replaced with a copy of this bill.';
+
+  @override
+  String get draftReplaceFromPostedAction => 'Replace';
+
+  @override
+  String get billCopyToDraftFailed => 'Couldn’t copy this bill into draft.';
 
   @override
   String get billDeleteConfirmTitle => 'Delete this bill?';

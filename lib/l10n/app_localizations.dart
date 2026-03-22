@@ -828,6 +828,120 @@ abstract class AppLocalizations {
   /// **'Balances and settlements'**
   String get balancesTooltip;
 
+  /// Subtitle under Balances title (v0 parity).
+  ///
+  /// In en, this message translates to:
+  /// **'See who owes what'**
+  String get balancesScreenSubtitle;
+
+  /// No description provided for @balancesHeroToSettle.
+  ///
+  /// In en, this message translates to:
+  /// **'To settle'**
+  String get balancesHeroToSettle;
+
+  /// No description provided for @balancesHeroStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get balancesHeroStatus;
+
+  /// No description provided for @balancesHeroAllSettledTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'All settled!'**
+  String get balancesHeroAllSettledTitle;
+
+  /// No description provided for @balancesHeroEveryoneEven.
+  ///
+  /// In en, this message translates to:
+  /// **'Everyone is even — no payments needed'**
+  String get balancesHeroEveryoneEven;
+
+  /// No description provided for @balancesHeroPaymentsNeeded.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} payments needed'**
+  String balancesHeroPaymentsNeeded(int count);
+
+  /// No description provided for @balancesTotalSpentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Total spent'**
+  String get balancesTotalSpentLabel;
+
+  /// No description provided for @balancesAvgPerPersonLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Avg / person'**
+  String get balancesAvgPerPersonLabel;
+
+  /// No description provided for @balancesSectionIndividual.
+  ///
+  /// In en, this message translates to:
+  /// **'Individual balances'**
+  String get balancesSectionIndividual;
+
+  /// No description provided for @balancesInsightOwesMost.
+  ///
+  /// In en, this message translates to:
+  /// **'Owes most'**
+  String get balancesInsightOwesMost;
+
+  /// No description provided for @balancesInsightOwedMost.
+  ///
+  /// In en, this message translates to:
+  /// **'Owed most'**
+  String get balancesInsightOwedMost;
+
+  /// No description provided for @balancesNetGetsBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Gets back'**
+  String get balancesNetGetsBack;
+
+  /// No description provided for @balancesNetOwes.
+  ///
+  /// In en, this message translates to:
+  /// **'Owes'**
+  String get balancesNetOwes;
+
+  /// No description provided for @balancesNetSettled.
+  ///
+  /// In en, this message translates to:
+  /// **'Settled up'**
+  String get balancesNetSettled;
+
+  /// No description provided for @balancesShowMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Show {count} more'**
+  String balancesShowMore(int count);
+
+  /// No description provided for @balancesShowLess.
+  ///
+  /// In en, this message translates to:
+  /// **'Show less'**
+  String get balancesShowLess;
+
+  /// No description provided for @balancesShareSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Share summary'**
+  String get balancesShareSummary;
+
+  /// No description provided for @balancesEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No transactions yet'**
+  String get balancesEmptyTitle;
+
+  /// No description provided for @balancesEmptySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a bill to see balances and who owes whom'**
+  String get balancesEmptySubtitle;
+
   /// Section header for Rust-computed minimal settlement edges.
   ///
   /// In en, this message translates to:
@@ -1210,6 +1324,60 @@ abstract class AppLocalizations {
   /// **'Search bills, items…'**
   String get billsSearchHint;
 
+  /// Placeholder in the shell search field when Balances tab is active (v0).
+  ///
+  /// In en, this message translates to:
+  /// **'Search people…'**
+  String get balancesSearchPeopleHint;
+
+  /// No description provided for @v0UserMenuTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get v0UserMenuTitle;
+
+  /// No description provided for @v0UserMenuSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage your preferences'**
+  String get v0UserMenuSubtitle;
+
+  /// No description provided for @v0UserMenuJourney.
+  ///
+  /// In en, this message translates to:
+  /// **'Your journey'**
+  String get v0UserMenuJourney;
+
+  /// No description provided for @v0UserMenuMemberSince.
+  ///
+  /// In en, this message translates to:
+  /// **'Member since {monthYear}'**
+  String v0UserMenuMemberSince(String monthYear);
+
+  /// No description provided for @v0UserMenuMemberSinceNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Add your first bill to get started'**
+  String get v0UserMenuMemberSinceNew;
+
+  /// No description provided for @v0UserMenuStatBills.
+  ///
+  /// In en, this message translates to:
+  /// **'Bills'**
+  String get v0UserMenuStatBills;
+
+  /// No description provided for @v0UserMenuStatFriends.
+  ///
+  /// In en, this message translates to:
+  /// **'Friends'**
+  String get v0UserMenuStatFriends;
+
+  /// No description provided for @v0UserMenuOpenFullSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open full settings'**
+  String get v0UserMenuOpenFullSettings;
+
   /// When search/filter returns nothing but bills exist.
   ///
   /// In en, this message translates to:
@@ -1509,6 +1677,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Delete'**
   String get billCardDelete;
+
+  /// Copy a posted bill into the in-progress draft for editing.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust in draft'**
+  String get billCardAdjustDraft;
+
+  /// Title when copying a posted bill would overwrite the current draft.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace in-progress bill?'**
+  String get draftReplaceFromPostedTitle;
+
+  /// Body for replace-draft confirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Your current draft will be replaced with a copy of this bill.'**
+  String get draftReplaceFromPostedBody;
+
+  /// Confirm replacing the draft with a copy of a posted bill.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace'**
+  String get draftReplaceFromPostedAction;
+
+  /// Shown when copying a posted bill to the draft fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t copy this bill into draft.'**
+  String get billCopyToDraftFailed;
 
   /// Title for delete confirmation dialog.
   ///

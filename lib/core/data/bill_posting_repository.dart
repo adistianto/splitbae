@@ -248,6 +248,141 @@ class BillPostingRepository {
     return lines.first.receiptItem.currencyCode;
   }
 
+  /// Copies a **posted** bill into the ledger’s **draft** row (replacing any
+  /// in-progress draft). Receipt image is re-copied into app documents so the
+  /// draft is independent of the posted row’s file lifecycle.
+  ///
+  /// Restores line assignments, “who’s splitting”, and payment rows from the
+  /// posted transaction. Throws if the bill has no lines or no participants.
+  Future<void> copyPostedTransactionToDraft({
+    required String ledgerId,
+    required String postedTransactionId,
+  }) async {
+    final draftTx = draftTransactionIdForLedger(ledgerId);
+    if (postedTransactionId == draftTx) {
+      throw StateError('cannot_copy_draft');
+    }
+
+    final posted = await (_db.select(_db.transactions)
+          ..where((t) => t.id.equals(postedTransactionId)))
+        .getSingleOrNull();
+    if (posted == null || posted.ledgerId != ledgerId) {
+      throw StateError('missing_transaction');
+    }
+    if (posted.kind != 'normal') {
+      throw StateError('not_splittable_transaction');
+    }
+
+    final tpRows = await (_db.select(_db.transactionParticipants)
+          ..where((x) => x.transactionId.equals(postedTransactionId)))
+        .get();
+    final postedParticipantIds = tpRows.map((e) => e.participantId).toSet();
+    if (postedParticipantIds.isEmpty) {
+      throw StateError('no_participants');
+    }
+
+    final lineRows = await (_db.select(_db.receiptLines)
+          ..where((t) => t.ledgerId.equals(ledgerId))
+          ..where((t) => t.transactionId.equals(postedTransactionId))
+          ..orderBy([(t) => OrderingTerm(expression: t.createdAtMs)]))
+        .get();
+    if (lineRows.isEmpty) {
+      throw StateError('no_lines');
+    }
+
+    final paymentRows = await (_db.select(_db.transactionPayments)
+          ..where((t) => t.transactionId.equals(postedTransactionId)))
+        .get();
+
+    final persistedReceipt = await persistReceiptImageFromPath(posted.receiptImagePath);
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final uuid = const Uuid();
+
+    await _db.transaction(() async {
+      await (_db.delete(_db.receiptLines)
+            ..where((t) => t.ledgerId.equals(ledgerId))
+            ..where((t) => t.transactionId.equals(draftTx)))
+          .go();
+
+      await (_db.delete(_db.transactionPayments)
+            ..where((t) => t.transactionId.equals(draftTx)))
+          .go();
+
+      await (_db.update(_db.transactions)..where((t) => t.id.equals(draftTx)))
+          .write(
+        TransactionsCompanion(
+          description: Value(posted.description),
+          category: Value(posted.category),
+          taxAmountMinor: Value(posted.taxAmountMinor),
+          currencyCode: Value(posted.currencyCode),
+          receiptImagePath: Value(persistedReceipt),
+          updatedAtMs: Value(now),
+        ),
+      );
+
+      final lineIdMap = <String, String>{};
+      for (final r in lineRows) {
+        final newId = uuid.v4();
+        lineIdMap[r.id] = newId;
+        await _db.into(_db.receiptLines).insert(
+              ReceiptLinesCompanion.insert(
+                id: newId,
+                ledgerId: ledgerId,
+                transactionId: Value(draftTx),
+                label: r.label,
+                amountMinor: r.amountMinor,
+                quantity: Value(r.quantity),
+                currencyCode: r.currencyCode,
+                createdAtMs: now,
+                updatedAtMs: now,
+              ),
+            );
+      }
+
+      final oldLineIds = lineRows.map((e) => e.id).toList();
+      final assigns = await (_db.select(_db.receiptLineAssignments)
+            ..where((a) => a.lineId.isIn(oldLineIds)))
+          .get();
+
+      for (final a in assigns) {
+        final newLineId = lineIdMap[a.lineId];
+        if (newLineId == null) continue;
+        await _db.into(_db.receiptLineAssignments).insert(
+              ReceiptLineAssignmentsCompanion.insert(
+                lineId: newLineId,
+                participantId: a.participantId,
+              ),
+            );
+      }
+    });
+
+    await DraftBillInclusionRepository(
+      _db,
+    ).setIncludedParticipants(ledgerId, postedParticipantIds);
+
+    final rebuilt = <TransactionPayment>[];
+    for (final p in paymentRows) {
+      rebuilt.add(
+        TransactionPayment(
+          id: uuid.v4(),
+          transactionId: draftTx,
+          participantId: p.participantId,
+          amountMinor: p.amountMinor,
+          currencyCode: p.currencyCode,
+        ),
+      );
+    }
+    await DraftPaymentRepository(_db).replaceDraftPayments(
+      ledgerId: ledgerId,
+      rows: rebuilt,
+    );
+
+    await LineItemRepository(_db).syncDraftTransactionRecordingCurrency(
+      ledgerId: ledgerId,
+      defaultWhenNoLines: posted.currencyCode,
+    );
+  }
+
   /// Removes a posted transaction and dependent rows; deletes receipt file if any.
   Future<void> deletePostedTransaction(String transactionId) async {
     final row = await (_db.select(_db.transactions)

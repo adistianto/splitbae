@@ -14,6 +14,7 @@ import 'package:splitbae/l10n/app_localizations.dart';
 import 'package:splitbae/money_format.dart';
 import 'package:splitbae/providers.dart';
 import 'package:splitbae/screens/transaction_detail_screen.dart';
+import 'package:splitbae/widgets/add_transaction_sheet.dart';
 import 'package:splitbae/widgets/transaction_detail_tab_views.dart';
 
 /// v0-style expandable bill row: header + optional Items / Persons / Payments.
@@ -71,6 +72,50 @@ class _PostedBillExpandableCardState extends ConsumerState<PostedBillExpandableC
     await SharePlus.instance.share(
       ShareParams(text: text, subject: title),
     );
+  }
+
+  Future<bool?> _confirmReplaceDraft(BuildContext context, AppLocalizations l10n) {
+    return showAdaptiveDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog.adaptive(
+        title: Text(l10n.draftReplaceFromPostedTitle),
+        content: Text(l10n.draftReplaceFromPostedBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.draftReplaceFromPostedAction),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _copyPostedToDraftAndOpenSheet(
+    BuildContext context,
+    AppLocalizations l10n,
+  ) async {
+    final hasDraft = ref.read(itemsProvider).isNotEmpty;
+    if (hasDraft) {
+      final ok = await _confirmReplaceDraft(context, l10n);
+      if (ok != true || !context.mounted) return;
+    }
+    try {
+      await ref
+          .read(itemsProvider.notifier)
+          .copyPostedBillToDraft(widget.summary.transaction.id);
+      if (!context.mounted) return;
+      HapticFeedback.mediumImpact();
+      showAddTransactionSheet(context);
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.billCopyToDraftFailed)),
+      );
+    }
   }
 
   Future<bool?> _confirmDelete(BuildContext context, AppLocalizations l10n) {
@@ -227,7 +272,9 @@ class _PostedBillExpandableCardState extends ConsumerState<PostedBillExpandableC
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(4, 0, 4, 4),
-            child: Row(
+            child: Wrap(
+              spacing: 4,
+              runSpacing: 4,
               children: [
                 TextButton.icon(
                   onPressed: () {
@@ -236,6 +283,14 @@ class _PostedBillExpandableCardState extends ConsumerState<PostedBillExpandableC
                   },
                   icon: const Icon(Icons.share_outlined, size: 18),
                   label: Text(l10n.billCardShare),
+                ),
+                TextButton.icon(
+                  onPressed: () {
+                    HapticFeedback.selectionClick();
+                    _copyPostedToDraftAndOpenSheet(context, l10n);
+                  },
+                  icon: const Icon(Icons.edit_note_outlined, size: 18),
+                  label: Text(l10n.billCardAdjustDraft),
                 ),
                 TextButton.icon(
                   onPressed: () {

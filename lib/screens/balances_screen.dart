@@ -2,7 +2,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:share_plus/share_plus.dart' show ShareParams, SharePlus;
+import 'package:splitbae/app_settings.dart';
 import 'package:splitbae/core/data/amount_minor.dart';
+import 'package:splitbae/core/domain/bills_insights.dart';
 import 'package:splitbae/core/domain/ledger_ids.dart';
 import 'package:splitbae/core/platform/adaptive_confirm_dialog.dart';
 import 'package:splitbae/core/platform/host_platform.dart';
@@ -13,6 +16,8 @@ import 'package:splitbae/l10n/app_localizations.dart';
 import 'package:splitbae/money_format.dart';
 import 'package:splitbae/providers.dart';
 import 'package:splitbae/src/rust/api/settlement.dart' show SettlementEdge;
+
+part 'balances_embedded_part.dart';
 
 /// Suggested settlement edges (Rust) + recorded settlement transfer rows.
 class BalancesScreen extends ConsumerStatefulWidget {
@@ -183,7 +188,7 @@ class _BalancesScreenState extends ConsumerState<BalancesScreen> {
     );
 
     if (widget.embedded) {
-      return SingleChildScrollView(child: content);
+      return const _BalancesEmbeddedV0();
     }
 
     return Scaffold(

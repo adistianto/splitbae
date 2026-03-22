@@ -68,9 +68,11 @@ class _SplitBaeFabMenuState extends State<SplitBaeFabMenu> {
                     if (_open) ...[
                       _FabPill(
                         label: l10n.fabCreateReport,
-                        background: cs.secondaryContainer,
-                        foreground: cs.onSecondaryContainer,
+                        background: _fabVioletBg(context),
+                        foreground: _fabVioletFg(context),
                         icon: Icons.description_outlined,
+                        open: _open,
+                        staggerIndex: 0,
                         onTap: () {
                           HapticFeedback.selectionClick();
                           _closeAnd(widget.onCreateReport);
@@ -79,9 +81,11 @@ class _SplitBaeFabMenuState extends State<SplitBaeFabMenu> {
                       const SizedBox(height: 12),
                       _FabPill(
                         label: l10n.fabScanBill,
-                        background: cs.tertiaryContainer,
-                        foreground: cs.onTertiaryContainer,
+                        background: _fabAmberBg(context),
+                        foreground: _fabAmberFg(context),
                         icon: Icons.photo_camera_outlined,
+                        open: _open,
+                        staggerIndex: 1,
                         onTap: () {
                           HapticFeedback.selectionClick();
                           _closeAnd(widget.onScanBill);
@@ -90,9 +94,11 @@ class _SplitBaeFabMenuState extends State<SplitBaeFabMenu> {
                       const SizedBox(height: 12),
                       _FabPill(
                         label: l10n.fabNewBill,
-                        background: cs.primaryContainer,
-                        foreground: cs.onPrimaryContainer,
+                        background: _fabTealBg(context),
+                        foreground: _fabTealFg(context),
                         icon: Icons.receipt_long_outlined,
+                        open: _open,
+                        staggerIndex: 2,
                         onTap: () {
                           HapticFeedback.selectionClick();
                           _closeAnd(widget.onNewBill);
@@ -148,6 +154,36 @@ class _SplitBaeFabMenuState extends State<SplitBaeFabMenu> {
   }
 }
 
+Color _fabTealBg(BuildContext context) =>
+    Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFF134E4A)
+        : const Color(0xFFCCFBF1);
+
+Color _fabTealFg(BuildContext context) =>
+    Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFF5EEAD4)
+        : const Color(0xFF0F766E);
+
+Color _fabAmberBg(BuildContext context) =>
+    Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFF78350F)
+        : const Color(0xFFFEF3C7);
+
+Color _fabAmberFg(BuildContext context) =>
+    Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFFFCD34D)
+        : const Color(0xFFB45309);
+
+Color _fabVioletBg(BuildContext context) =>
+    Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFF4C1D95)
+        : const Color(0xFFEDE9FE);
+
+Color _fabVioletFg(BuildContext context) =>
+    Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFFC4B5FD)
+        : const Color(0xFF5B21B6);
+
 class _FabPill extends StatelessWidget {
   const _FabPill({
     required this.label,
@@ -155,6 +191,8 @@ class _FabPill extends StatelessWidget {
     required this.foreground,
     required this.icon,
     required this.onTap,
+    required this.open,
+    required this.staggerIndex,
   });
 
   final String label;
@@ -162,31 +200,43 @@ class _FabPill extends StatelessWidget {
   final Color foreground;
   final IconData icon;
   final VoidCallback onTap;
+  final bool open;
+  final int staggerIndex;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      elevation: 4,
-      borderRadius: BorderRadius.circular(28),
-      color: background,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(28),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 22, color: foreground),
-              const SizedBox(width: 10),
-              Text(
-                label,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: foreground,
-                      fontWeight: FontWeight.w600,
-                    ),
+    return AnimatedSlide(
+      duration: Duration(milliseconds: 240 + staggerIndex * 55),
+      curve: const Cubic(0.34, 1.56, 0.64, 1),
+      offset: open ? Offset.zero : const Offset(0.2, 0),
+      child: AnimatedOpacity(
+        duration: Duration(milliseconds: 200 + staggerIndex * 55),
+        opacity: open ? 1 : 0,
+        child: Material(
+          elevation: 4,
+          borderRadius: BorderRadius.circular(28),
+          color: background,
+          shadowColor: Colors.black.withValues(alpha: 0.08),
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(28),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(icon, size: 22, color: foreground),
+                  const SizedBox(width: 10),
+                  Text(
+                    label,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          color: foreground,
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
