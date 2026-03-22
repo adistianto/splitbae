@@ -96,6 +96,7 @@ class _AdaptiveHomeScreenState extends ConsumerState<AdaptiveHomeScreen> {
     WidgetRef ref,
     List<ReceiptLineCandidate> candidates,
   ) async {
+    final l10n = AppLocalizations.of(context)!;
     final currency = ref.read(draftBillCurrencyProvider);
     final participants =
         await ref.read(draftBillActiveParticipantsProvider.future);
@@ -103,7 +104,10 @@ class _AdaptiveHomeScreenState extends ConsumerState<AdaptiveHomeScreen> {
     final notifier = ref.read(itemsProvider.notifier);
     for (final c in candidates) {
       final id = await notifier.addItem(
-        c.label,
+        resolvedReceiptLineLabel(
+          c,
+          l10n.scanReceiptUnknownOcrItemName,
+        ),
         minorUnitsToAmount(c.amountMinor, currency),
         quantity: c.quantity ?? 1,
       );

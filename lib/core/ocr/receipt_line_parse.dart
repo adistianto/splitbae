@@ -9,6 +9,7 @@ class ReceiptLineCandidate {
     required this.label,
     required this.amountMinor,
     this.quantity,
+    this.namePlaceholder = false,
   });
 
   final String label;
@@ -19,15 +20,20 @@ class ReceiptLineCandidate {
   /// When parsed from a qty column; otherwise null (treat as 1 for display math).
   final int? quantity;
 
+  /// Spatial/heuristic parse: show [unknownItemLabel] in UI instead of [label].
+  final bool namePlaceholder;
+
   ReceiptLineCandidate copyWith({
     String? label,
     int? amountMinor,
     int? quantity,
+    bool? namePlaceholder,
   }) {
     return ReceiptLineCandidate(
       label: label ?? this.label,
       amountMinor: amountMinor ?? this.amountMinor,
       quantity: quantity ?? this.quantity,
+      namePlaceholder: namePlaceholder ?? this.namePlaceholder,
     );
   }
 
@@ -51,6 +57,65 @@ int? _doubleToMinor(double? amt, String? currencyCode) {
   final cc = currencyCode?.trim();
   if (cc == null || cc.isEmpty) return null;
   return amountToMinorUnits(amt, cc);
+}
+
+/// Parses one OCR money token (digits + `.`/`,` separators; optional OCR digit fixes).
+/// Used by spatial row parsing and tests.
+int? tryParseMoneyTokenToMinorUnits(String rawToken, String? currencyCode) {
+  var numStr = rawToken
+      .replaceAll(RegExp(r'[$€£]'), '')
+      .replaceAll('O', '0')
+      .replaceAll('o', '0')
+      .replaceAll('l', '1')
+      .replaceAll('I', '1')
+      .replaceAll('|', '1')
+      .trim();
+  if (numStr.isEmpty) return null;
+  final amt = _normalizeAndParseAmount(numStr, currencyCode);
+  return _doubleToMinor(amt, currencyCode);
+}
+
+/// UI / persistence: localized label when [ReceiptLineCandidate.namePlaceholder] is set.
+String resolvedReceiptLineLabel(
+  ReceiptLineCandidate candidate,
+  String unknownItemLabel,
+) {
+  if (candidate.namePlaceholder) return unknownItemLabel;
+  return candidate.label;
+}
+
+/// Phone / date / merchant tax-id style rows (spatial full-line filter).
+bool isReceiptMetadataOrFooterRow(String line) {
+  final t = line.trim();
+  if (t.length < 4) return false;
+  if (_looksLikePhoneOrOrderLine(t.toLowerCase())) return true;
+  if (RegExp(r'\b(npwp|nib)\b', caseSensitive: false).hasMatch(t)) {
+    return true;
+  }
+  if (RegExp(
+    r'\d{2}\.\d{3}\.\d{3}\.\d-\d{3}\.\d{3}',
+  ).hasMatch(t.replaceAll(' ', ''))) {
+    return true;
+  }
+  return false;
+}
+
+/// Fuzzy match for OCR garbling of TOTAL / SUBTOTAL / TAX (same visual row).
+bool isLikelySummaryTaxTotalRow(String line) {
+  final raw = line.toLowerCase().trim();
+  if (raw.isEmpty) return false;
+  final ocr = raw.replaceAll('0', 'o').replaceAll('1', 'l');
+
+  if (RegExp(r'^\s*(subtotal|sub-total|sub\s+total)\b').hasMatch(raw)) {
+    return true;
+  }
+  if (RegExp(r'^\s*(grand\s+)?total\b').hasMatch(raw)) return true;
+  if (RegExp(r'^\s*(sub)?total\b').hasMatch(ocr)) return true;
+  if (RegExp(r'^\s*(amount|balance)\s+due\b').hasMatch(raw)) return true;
+  if (RegExp(r'^\s*(gst|vat|ppn)\b').hasMatch(raw)) return true;
+  if (RegExp(r'^\s*tax\b').hasMatch(raw)) return true;
+  if (RegExp(r'^\s*sales\s+tax\b').hasMatch(raw)) return true;
+  return false;
 }
 
 /// Parses [ocrText] into line items. [currencyCode] refines numeric tails (e.g. IDR uses `.` as thousands).
@@ -305,7 +370,8 @@ List<ReceiptLineCandidate> _parseHeuristicTrailingAmount(
   return out.length > 20 ? out.sublist(0, 20) : out;
 }
 
-bool _shouldRejectHeuristicLine(String label, double? amount) {
+/// Shared noise filter for plain-line heuristics and spatial row text.
+bool isHeuristicReceiptNoiseLine(String label, double? amount) {
   final l = label.toLowerCase().trim();
 
   if (RegExp(
@@ -360,6 +426,10 @@ bool _shouldRejectHeuristicLine(String label, double? amount) {
   }
 
   return false;
+}
+
+bool _shouldRejectHeuristicLine(String label, double? amount) {
+  return isHeuristicReceiptNoiseLine(label, amount);
 }
 
 bool _looksLikePhoneOrOrderLine(String l) {

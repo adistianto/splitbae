@@ -173,6 +173,10 @@
   "@scanReceiptOcrReviewHint": {
     "description": "Shown above editable OCR chips after multi-line scan."
   },
+  "scanReceiptUnknownOcrItemName": "Unknown item",
+  "@scanReceiptUnknownOcrItemName": {
+    "description": "Placeholder label when OCR found a price but the item name was unreadable; user can rename."
+  },
   "scanReceiptEditOcrLineTitle": "Edit amount",
   "@scanReceiptEditOcrLineTitle": {
     "description": "Dialog title when correcting a parsed receipt line amount."

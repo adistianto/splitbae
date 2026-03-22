@@ -165,6 +165,9 @@ class AppLocalizationsId extends AppLocalizations {
       'Ketuk baris untuk memperbaiki harga, lalu konfirmasi.';
 
   @override
+  String get scanReceiptUnknownOcrItemName => 'Item tidak dikenal';
+
+  @override
   String get scanReceiptEditOcrLineTitle => 'Ubah jumlah';
 
   @override

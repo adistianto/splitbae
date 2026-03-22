@@ -53,6 +53,7 @@
   "scanReceiptExtractingSubtitle": "Ini bisa memakan waktu sebentar",
   "scanReceiptContinueToSplit": "Lanjut ke bagi tagihan",
   "scanReceiptOcrReviewHint": "Ketuk baris untuk memperbaiki harga, lalu konfirmasi.",
+  "scanReceiptUnknownOcrItemName": "Item tidak dikenal",
   "scanReceiptEditOcrLineTitle": "Ubah jumlah",
   "scanReceiptCamera": "Ambil foto",
   "scanReceiptGallery": "Pilih dari galeri",

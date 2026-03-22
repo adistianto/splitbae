@@ -164,6 +164,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Tap a line to fix the price, then confirm.';
 
   @override
+  String get scanReceiptUnknownOcrItemName => 'Unknown item';
+
+  @override
   String get scanReceiptEditOcrLineTitle => 'Edit amount';
 
   @override

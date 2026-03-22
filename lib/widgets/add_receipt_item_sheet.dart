@@ -253,6 +253,7 @@ class _AddItemFormCupertinoState extends ConsumerState<_AddItemFormCupertino> {
   Future<void> _addOcrLinesToDraft(
     List<ReceiptLineCandidate> candidates,
   ) async {
+    final l10n = AppLocalizations.of(context)!;
     final currency = ref.read(draftBillCurrencyProvider);
     final participants =
         await ref.read(draftBillActiveParticipantsProvider.future);
@@ -260,7 +261,10 @@ class _AddItemFormCupertinoState extends ConsumerState<_AddItemFormCupertino> {
     final notifier = ref.read(itemsProvider.notifier);
     for (final c in candidates) {
       final id = await notifier.addItem(
-        c.label,
+        resolvedReceiptLineLabel(
+          c,
+          l10n.scanReceiptUnknownOcrItemName,
+        ),
         minorUnitsToAmount(c.amountMinor, currency),
         quantity: c.quantity ?? 1,
       );
@@ -608,6 +612,7 @@ class _AddItemFormMaterialState extends ConsumerState<_AddItemFormMaterial> {
   Future<void> _addOcrLinesToDraft(
     List<ReceiptLineCandidate> candidates,
   ) async {
+    final l10n = AppLocalizations.of(context)!;
     final currency = ref.read(draftBillCurrencyProvider);
     final participants =
         await ref.read(draftBillActiveParticipantsProvider.future);
@@ -615,7 +620,10 @@ class _AddItemFormMaterialState extends ConsumerState<_AddItemFormMaterial> {
     final notifier = ref.read(itemsProvider.notifier);
     for (final c in candidates) {
       final id = await notifier.addItem(
-        c.label,
+        resolvedReceiptLineLabel(
+          c,
+          l10n.scanReceiptUnknownOcrItemName,
+        ),
         minorUnitsToAmount(c.amountMinor, currency),
         quantity: c.quantity ?? 1,
       );

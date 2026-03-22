@@ -374,6 +374,12 @@ abstract class AppLocalizations {
   /// **'Tap a line to fix the price, then confirm.'**
   String get scanReceiptOcrReviewHint;
 
+  /// Placeholder label when OCR found a price but the item name was unreadable; user can rename.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown item'**
+  String get scanReceiptUnknownOcrItemName;
+
   /// Dialog title when correcting a parsed receipt line amount.
   ///
   /// In en, this message translates to:

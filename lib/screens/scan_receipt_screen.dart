@@ -13,6 +13,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:splitbae/core/data/amount_minor.dart';
 import 'package:splitbae/core/ocr/receipt_line_parse.dart';
 import 'package:splitbae/core/ocr/receipt_ocr_channel.dart';
+import 'package:splitbae/core/ocr/receipt_spatial_parse.dart';
 import 'package:splitbae/core/platform/host_platform.dart';
 import 'package:splitbae/core/platform/receipt_scan_permissions.dart';
 import 'package:splitbae/l10n/app_localizations.dart';
@@ -183,9 +184,9 @@ class _ScanReceiptScreenState extends ConsumerState<ScanReceiptScreen> {
     }
 
     setState(() => _ocrBusy = true);
-    String rawText;
+    ReceiptOcrNativeResult structured;
     try {
-      rawText = await ReceiptOcrChannel.recognizeText(path).timeout(
+      structured = await ReceiptOcrChannel.recognizeTextStructured(path).timeout(
         const Duration(seconds: 45),
         onTimeout: () => throw TimeoutException('ocr'),
       );
@@ -218,8 +219,8 @@ class _ScanReceiptScreenState extends ConsumerState<ScanReceiptScreen> {
     if (!mounted) return;
     setState(() => _ocrBusy = false);
 
-    final candidates = parseReceiptLineCandidates(
-      rawText,
+    final candidates = parseReceiptLineCandidatesFromNative(
+      structured,
       currencyCode: widget.currencyCode,
     );
     if (candidates.isEmpty) {
@@ -279,7 +280,12 @@ class _ScanReceiptScreenState extends ConsumerState<ScanReceiptScreen> {
     final amtCtrl = TextEditingController(
       text: amountToInputText(c.lineTotalMajor(cc), cc),
     );
-    final nameCtrl = TextEditingController(text: c.label);
+    final nameCtrl = TextEditingController(
+      text: resolvedReceiptLineLabel(
+        c,
+        l10n.scanReceiptUnknownOcrItemName,
+      ),
+    );
 
     final ok = await showAdaptiveDialog<bool>(
       context: context,
@@ -350,7 +356,10 @@ class _ScanReceiptScreenState extends ConsumerState<ScanReceiptScreen> {
     final name = widget.nameController;
     final price = widget.priceController;
     if (name != null && price != null) {
-      name.text = c.label;
+      name.text = resolvedReceiptLineLabel(
+        c,
+        l10n.scanReceiptUnknownOcrItemName,
+      );
       price.text = amountToInputText(
         c.lineTotalMajor(widget.currencyCode),
         widget.currencyCode,
@@ -367,7 +376,10 @@ class _ScanReceiptScreenState extends ConsumerState<ScanReceiptScreen> {
         await ref.read(draftBillActiveParticipantsProvider.future);
     final allIds = participants.map((e) => e.id).toSet();
     final id = await notifier.addItem(
-      c.label,
+      resolvedReceiptLineLabel(
+        c,
+        l10n.scanReceiptUnknownOcrItemName,
+      ),
       c.lineTotalMajor(widget.currencyCode),
       quantity: c.quantity ?? 1,
     );
@@ -559,6 +571,11 @@ class _ScanReceiptScreenState extends ConsumerState<ScanReceiptScreen> {
                                           _OcrLineChip(
                                             index: i,
                                             candidate: _reviewCandidates![i],
+                                            displayLabel:
+                                                resolvedReceiptLineLabel(
+                                              _reviewCandidates![i],
+                                              l10n.scanReceiptUnknownOcrItemName,
+                                            ),
                                             currencyCode: widget.currencyCode,
                                             colorScheme: cs,
                                             onTap: () => _onChipTap(l10n, i),
@@ -725,6 +742,7 @@ class _OcrLineChip extends StatelessWidget {
   const _OcrLineChip({
     required this.index,
     required this.candidate,
+    required this.displayLabel,
     required this.currencyCode,
     required this.colorScheme,
     required this.onTap,
@@ -732,6 +750,7 @@ class _OcrLineChip extends StatelessWidget {
 
   final int index;
   final ReceiptLineCandidate candidate;
+  final String displayLabel;
   final String currencyCode;
   final ColorScheme colorScheme;
   final VoidCallback onTap;
@@ -755,7 +774,7 @@ class _OcrLineChip extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              candidate.label,
+              displayLabel,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.labelLarge,
