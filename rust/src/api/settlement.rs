@@ -137,6 +137,277 @@ fn settle_one_currency(
     Ok(edges)
 }
 
+// --- Posted-bill obligation graph: proportional split per transaction, pairwise net ---
+
+#[flutter_rust_bridge::frb]
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct SplitObligationRow {
+    pub transaction_id: String,
+    /// Participant who owes their share toward this bill (split obligation row).
+    pub ower_id: String,
+    pub amount_minor: i64,
+    pub currency_code: String,
+}
+
+#[flutter_rust_bridge::frb]
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct SplitPaymentRow {
+    pub transaction_id: String,
+    /// Participant who paid toward this bill (may be multiple per currency).
+    pub payer_id: String,
+    pub amount_minor: i64,
+    pub currency_code: String,
+}
+
+/// Build directed “debtor owes creditor” edges from posted split rows, apply recorded
+/// peer settlements, then **bilateral** cancellation (A↔B) per currency.
+///
+/// All arithmetic uses `i64` minor units; proportional allocation uses integer floor with
+/// remainder on the last payer (payers sorted by id) so sums stay exact.
+///
+/// Returns non-zero [`SettlementEdge`]s: `from` owes `to` `amount_minor` in `currency_code`.
+#[flutter_rust_bridge::frb(sync)]
+pub fn calculate_net_balances(
+    obligations: Vec<SplitObligationRow>,
+    payments: Vec<SplitPaymentRow>,
+    recorded_settlements: Vec<SettlementEdge>,
+) -> Result<Vec<SettlementEdge>, String> {
+    #[derive(Clone, Debug, Eq, PartialEq, Hash)]
+    struct BucketKey {
+        tx: String,
+        ccy: String,
+    }
+
+    let mut pay_map: HashMap<BucketKey, HashMap<String, i64>> = HashMap::new();
+    for p in payments {
+        let ccy = p.currency_code.trim().to_uppercase();
+        if ccy.is_empty() {
+            return Err("Empty currency_code in payment row".to_string());
+        }
+        if p.amount_minor < 0 {
+            return Err("Negative payment amount_minor".to_string());
+        }
+        let key = BucketKey {
+            tx: p.transaction_id,
+            ccy,
+        };
+        let slot = pay_map.entry(key).or_default();
+        let e = slot.entry(p.payer_id).or_insert(0);
+        *e = e
+            .checked_add(p.amount_minor)
+            .ok_or("payment merge overflow")?;
+    }
+
+    // owed[debtor][creditor][ccy] = amount debtor owes creditor
+    let mut owed: HashMap<(String, String, String), i64> = HashMap::new();
+
+    for o in obligations {
+        let ccy = o.currency_code.trim().to_uppercase();
+        if ccy.is_empty() {
+            return Err("Empty currency_code in obligation row".to_string());
+        }
+        if o.amount_minor < 0 {
+            return Err("Negative obligation amount_minor".to_string());
+        }
+        let key = BucketKey {
+            tx: o.transaction_id.clone(),
+            ccy: ccy.clone(),
+        };
+        let payer_sums = pay_map.get(&key).cloned().ok_or_else(|| {
+            format!(
+                "No payments for transaction {} currency {}",
+                o.transaction_id, ccy
+            )
+        })?;
+        let mut payers: Vec<(String, i64)> = payer_sums.into_iter().collect();
+        payers.sort_by(|a, b| a.0.cmp(&b.0));
+        let total_p: i128 = payers.iter().map(|(_, a)| *a as i128).sum();
+        if total_p == 0 {
+            return Err(format!(
+                "Zero total payments for transaction {} currency {}",
+                o.transaction_id, ccy
+            ));
+        }
+        let shares = allocate_minor_proportional(o.amount_minor, &payers)?;
+        for (payer_id, share) in shares {
+            if share == 0 {
+                continue;
+            }
+            add_owed_edge(&mut owed, &o.ower_id, &payer_id, &ccy, share)?;
+        }
+    }
+
+    for s in recorded_settlements {
+        let ccy = s.currency_code.trim().to_uppercase();
+        if ccy.is_empty() {
+            return Err("Empty currency_code in settlement".to_string());
+        }
+        if s.amount_minor < 0 {
+            return Err("Negative settlement amount_minor".to_string());
+        }
+        apply_settlement_payment(
+            &mut owed,
+            &s.from_participant_id,
+            &s.to_participant_id,
+            &ccy,
+            s.amount_minor,
+        )?;
+    }
+
+    pairwise_net_edges(&owed)
+}
+
+fn add_owed_edge(
+    owed: &mut HashMap<(String, String, String), i64>,
+    debtor: &str,
+    creditor: &str,
+    ccy: &str,
+    amount: i64,
+) -> Result<(), String> {
+    if amount == 0 {
+        return Ok(());
+    }
+    let key = (debtor.to_string(), creditor.to_string(), ccy.to_string());
+    let slot = owed.entry(key).or_insert(0);
+    *slot = slot
+        .checked_add(amount)
+        .ok_or("owed edge overflow")?;
+    Ok(())
+}
+
+/// `from` paid `to` — reduces what `from` owes `to`; surplus becomes debt the other way.
+fn apply_settlement_payment(
+    owed: &mut HashMap<(String, String, String), i64>,
+    from: &str,
+    to: &str,
+    ccy: &str,
+    amount: i64,
+) -> Result<(), String> {
+    if amount == 0 {
+        return Ok(());
+    }
+    let key_fwd = (from.to_string(), to.to_string(), ccy.to_string());
+    let cur = *owed.get(&key_fwd).unwrap_or(&0);
+    if cur >= amount {
+        let new = cur - amount;
+        if new == 0 {
+            owed.remove(&key_fwd);
+        } else {
+            owed.insert(key_fwd, new);
+        }
+        return Ok(());
+    }
+    let remaining = amount - cur;
+    if cur > 0 {
+        owed.remove(&key_fwd);
+    }
+    let key_rev = (to.to_string(), from.to_string(), ccy.to_string());
+    let rev = owed.entry(key_rev).or_insert(0);
+    *rev = rev
+        .checked_add(remaining)
+        .ok_or("settlement reverse overflow")?;
+    Ok(())
+}
+
+fn allocate_minor_proportional(
+    amount: i64,
+    payers: &[(String, i64)],
+) -> Result<Vec<(String, i64)>, String> {
+    if payers.is_empty() {
+        return Err("allocate_minor_proportional: empty payers".to_string());
+    }
+    if amount == 0 {
+        return Ok(payers
+            .iter()
+            .map(|(id, _)| (id.clone(), 0i64))
+            .collect());
+    }
+    let total_w: i128 = payers.iter().map(|(_, w)| *w as i128).sum();
+    if total_w == 0 {
+        return Err("allocate_minor_proportional: zero total weight".to_string());
+    }
+    let n = payers.len();
+    let mut out: Vec<(String, i64)> = Vec::with_capacity(n);
+    let mut assigned: i128 = 0;
+    for (i, (id, w)) in payers.iter().enumerate() {
+        if i == n - 1 {
+            let last = (amount as i128) - assigned;
+            out.push((id.clone(), last as i64));
+        } else {
+            let share = ((amount as i128) * (*w as i128) / total_w) as i64;
+            assigned += share as i128;
+            out.push((id.clone(), share));
+        }
+    }
+    Ok(out)
+}
+
+fn pairwise_net_edges(
+    owed: &HashMap<(String, String, String), i64>,
+) -> Result<Vec<SettlementEdge>, String> {
+    let mut participants_by_ccy: HashMap<String, Vec<String>> = HashMap::new();
+    for ((a, b, ccy), _) in owed.iter() {
+        participants_by_ccy.entry(ccy.clone()).or_default();
+        let v = participants_by_ccy.get_mut(ccy).unwrap();
+        if !v.contains(a) {
+            v.push(a.clone());
+        }
+        if !v.contains(b) {
+            v.push(b.clone());
+        }
+    }
+    for v in participants_by_ccy.values_mut() {
+        v.sort();
+        v.dedup();
+    }
+
+    let mut edges: Vec<SettlementEdge> = Vec::new();
+
+    for (ccy, ids) in participants_by_ccy {
+        let n = ids.len();
+        for i in 0..n {
+            for j in (i + 1)..n {
+                let a = &ids[i];
+                let b = &ids[j];
+                let ab = *owed.get(&(a.clone(), b.clone(), ccy.clone())).unwrap_or(&0);
+                let ba = *owed.get(&(b.clone(), a.clone(), ccy.clone())).unwrap_or(&0);
+                let net = ab
+                    .checked_sub(ba)
+                    .ok_or("pairwise net underflow")?;
+                if net == 0 {
+                    continue;
+                }
+                if net > 0 {
+                    edges.push(SettlementEdge {
+                        from_participant_id: a.clone(),
+                        to_participant_id: b.clone(),
+                        amount_minor: net,
+                        currency_code: ccy.clone(),
+                    });
+                } else {
+                    let owe = net.checked_neg().ok_or("pairwise net neg overflow")?;
+                    edges.push(SettlementEdge {
+                        from_participant_id: b.clone(),
+                        to_participant_id: a.clone(),
+                        amount_minor: owe,
+                        currency_code: ccy.clone(),
+                    });
+                }
+            }
+        }
+    }
+
+    edges.sort_by(|x, y| {
+        x.currency_code
+            .cmp(&y.currency_code)
+            .then_with(|| x.from_participant_id.cmp(&y.from_participant_id))
+            .then_with(|| x.to_participant_id.cmp(&y.to_participant_id))
+            .then_with(|| x.amount_minor.cmp(&y.amount_minor))
+    });
+
+    Ok(edges)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -229,5 +500,76 @@ mod tests {
         // With stable sort, first debtor is "bob" vs "amy" — both 10; order by id: amy, bob
         // Actually sort is descending by amount then id: amount both 10, then amy before bob.
         assert_eq!(out[0].from_participant_id, "amy");
+    }
+
+    #[test]
+    fn net_balances_single_payer_one_ower() {
+        let out = calculate_net_balances(
+            vec![SplitObligationRow {
+                transaction_id: "tx1".to_string(),
+                ower_id: "a".to_string(),
+                amount_minor: 100,
+                currency_code: "IDR".to_string(),
+            }],
+            vec![SplitPaymentRow {
+                transaction_id: "tx1".to_string(),
+                payer_id: "b".to_string(),
+                amount_minor: 100,
+                currency_code: "IDR".to_string(),
+            }],
+            vec![],
+        )
+        .unwrap();
+        assert_eq!(out.len(), 1);
+        assert_eq!(out[0].from_participant_id, "a");
+        assert_eq!(out[0].to_participant_id, "b");
+        assert_eq!(out[0].amount_minor, 100);
+    }
+
+    #[test]
+    fn net_balances_bilateral_cancel() {
+        let out = calculate_net_balances(
+            vec![
+                SplitObligationRow {
+                    transaction_id: "t1".to_string(),
+                    ower_id: "a".to_string(),
+                    amount_minor: 10,
+                    currency_code: "USD".to_string(),
+                },
+                SplitObligationRow {
+                    transaction_id: "t2".to_string(),
+                    ower_id: "b".to_string(),
+                    amount_minor: 3,
+                    currency_code: "USD".to_string(),
+                },
+            ],
+            vec![
+                SplitPaymentRow {
+                    transaction_id: "t1".to_string(),
+                    payer_id: "b".to_string(),
+                    amount_minor: 10,
+                    currency_code: "USD".to_string(),
+                },
+                SplitPaymentRow {
+                    transaction_id: "t2".to_string(),
+                    payer_id: "a".to_string(),
+                    amount_minor: 3,
+                    currency_code: "USD".to_string(),
+                },
+            ],
+            vec![],
+        )
+        .unwrap();
+        assert_eq!(out.len(), 1);
+        assert_eq!(out[0].from_participant_id, "a");
+        assert_eq!(out[0].to_participant_id, "b");
+        assert_eq!(out[0].amount_minor, 7);
+    }
+
+    #[test]
+    fn net_balances_empty() {
+        assert!(calculate_net_balances(vec![], vec![], vec![])
+            .unwrap()
+            .is_empty());
     }
 }

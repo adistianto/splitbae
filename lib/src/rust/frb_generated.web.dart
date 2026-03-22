@@ -78,6 +78,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<SettlementEdge> dco_decode_list_settlement_edge(dynamic raw);
 
   @protected
+  List<SplitObligationRow> dco_decode_list_split_obligation_row(dynamic raw);
+
+  @protected
+  List<SplitPaymentRow> dco_decode_list_split_payment_row(dynamic raw);
+
+  @protected
   List<SplitResult> dco_decode_list_split_result(dynamic raw);
 
   @protected
@@ -97,6 +103,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   SettlementEdge dco_decode_settlement_edge(dynamic raw);
+
+  @protected
+  SplitObligationRow dco_decode_split_obligation_row(dynamic raw);
+
+  @protected
+  SplitPaymentRow dco_decode_split_payment_row(dynamic raw);
 
   @protected
   SplitResult dco_decode_split_result(dynamic raw);
@@ -179,6 +191,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  List<SplitObligationRow> sse_decode_list_split_obligation_row(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<SplitPaymentRow> sse_decode_list_split_payment_row(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   List<SplitResult> sse_decode_list_split_result(SseDeserializer deserializer);
 
   @protected
@@ -200,6 +222,14 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   SettlementEdge sse_decode_settlement_edge(SseDeserializer deserializer);
+
+  @protected
+  SplitObligationRow sse_decode_split_obligation_row(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  SplitPaymentRow sse_decode_split_payment_row(SseDeserializer deserializer);
 
   @protected
   SplitResult sse_decode_split_result(SseDeserializer deserializer);
@@ -310,6 +340,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_split_obligation_row(
+    List<SplitObligationRow> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_split_payment_row(
+    List<SplitPaymentRow> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_split_result(
     List<SplitResult> self,
     SseSerializer serializer,
@@ -339,6 +381,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_settlement_edge(
     SettlementEdge self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_split_obligation_row(
+    SplitObligationRow self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_split_payment_row(
+    SplitPaymentRow self,
     SseSerializer serializer,
   );
 

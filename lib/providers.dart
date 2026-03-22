@@ -8,6 +8,7 @@ import 'package:splitbae/core/domain/participant_entry.dart';
 import 'package:splitbae/core/domain/ledger_ids.dart';
 import 'package:splitbae/core/domain/transaction_detail_data.dart';
 import 'package:splitbae/core/providers/database_providers.dart';
+import 'package:splitbae/features/balances/application/balances_provider.dart';
 import 'package:splitbae/features/bills/application/bills_provider.dart';
 import 'package:splitbae/core/database/app_database.dart'
     show SettlementTransfer, TransactionPayment;
@@ -371,17 +372,18 @@ final postedTransactionSplitProvider = Provider.autoDispose
       );
     });
 
-/// Rust minimal settlement edges from current ledger nets (items + participants + DB).
-final suggestedSettlementEdgesProvider =
+/// Pairwise net settlement edges from posted split obligations + payments (Rust
+/// [calculateNetBalances]); refreshes with bills feed and recorded settlements.
+final balancesFeedProvider =
     FutureProvider.autoDispose<List<SettlementEdge>>((ref) async {
-      ref.watch(itemsProvider);
-      ref.watch(participantsProvider);
-      ref.watch(draftBillInclusionRevisionProvider);
+      ref.watch(billsFeedProvider);
       ref.watch(settlementTransfersListProvider);
-      ref.watch(draftTransactionPaymentsProvider);
-      final svc = LedgerSettlementService(ref.watch(appDatabaseProvider));
-      return svc.suggestedEdges(kDefaultLedgerId);
+      final db = ref.watch(appDatabaseProvider);
+      return loadBalancesFeed(db: db, ledgerId: kDefaultLedgerId);
     });
+
+/// Same as [balancesFeedProvider] (legacy name).
+final suggestedSettlementEdgesProvider = balancesFeedProvider;
 
 /// Per-participant net balances by currency (draft + posted + settlements).
 final ledgerNetBalancesProvider = FutureProvider.autoDispose<List<NetBalance>>((

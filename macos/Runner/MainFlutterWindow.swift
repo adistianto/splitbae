@@ -1,8 +1,7 @@
 import Cocoa
 import FlutterMacOS
 
-/// Hosts a subtle `NSVisualEffectView` behind the Flutter surface so the window keeps native
-/// material presence while remaining transparent for Liquid Glass / shader content.
+/// Bottom `NSVisualEffectView` + transparent Flutter surface so desktop/vibrancy shows through.
 private final class SplitBaeFlutterHostViewController: NSViewController {
   let flutterViewController: FlutterViewController
 
@@ -13,6 +12,13 @@ private final class SplitBaeFlutterHostViewController: NSViewController {
 
   required init?(coder: NSCoder) {
     fatalError("init(coder:) has not been implemented")
+  }
+
+  override func loadView() {
+    let root = NSView()
+    root.wantsLayer = true
+    root.layer?.backgroundColor = NSColor.clear.cgColor
+    view = root
   }
 
   override func viewDidLoad() {
@@ -26,20 +32,24 @@ private final class SplitBaeFlutterHostViewController: NSViewController {
     effectView.state = .active
     effectView.translatesAutoresizingMaskIntoConstraints = false
 
-    flutterViewController.view.translatesAutoresizingMaskIntoConstraints = false
+    let flutterSurface = flutterViewController.view
+    flutterSurface.translatesAutoresizingMaskIntoConstraints = false
+    flutterSurface.wantsLayer = true
+    flutterSurface.layer?.backgroundColor = NSColor.clear.cgColor
 
+    // Subview order: first = back (vibrancy), second = front (Flutter).
     view.addSubview(effectView)
-    view.addSubview(flutterViewController.view)
+    view.addSubview(flutterSurface)
 
     NSLayoutConstraint.activate([
       effectView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
       effectView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
       effectView.topAnchor.constraint(equalTo: view.topAnchor),
       effectView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-      flutterViewController.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-      flutterViewController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-      flutterViewController.view.topAnchor.constraint(equalTo: view.topAnchor),
-      flutterViewController.view.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+      flutterSurface.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+      flutterSurface.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+      flutterSurface.topAnchor.constraint(equalTo: view.topAnchor),
+      flutterSurface.bottomAnchor.constraint(equalTo: view.bottomAnchor),
     ])
   }
 }
@@ -47,14 +57,18 @@ private final class SplitBaeFlutterHostViewController: NSViewController {
 class MainFlutterWindow: NSWindow {
   override func awakeFromNib() {
     let flutterViewController = FlutterViewController()
-    let host = SplitBaeFlutterHostViewController(flutterViewController: flutterViewController)
+
+    // FlutterView defaults to black; must clear before the view hierarchy loads for transparency.
+    flutterViewController.backgroundColor = .clear
 
     styleMask.insert(.fullSizeContentView)
     titleVisibility = .hidden
     titlebarAppearsTransparent = true
     isOpaque = false
     backgroundColor = .clear
+    hasShadow = true
 
+    let host = SplitBaeFlutterHostViewController(flutterViewController: flutterViewController)
     contentViewController = host
 
     let windowFrame = self.frame

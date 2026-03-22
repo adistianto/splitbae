@@ -6,8 +6,8 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `settle_one_currency`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_receiver_is_total_eq`, `assert_receiver_is_total_eq`, `clone`, `clone`, `eq`, `eq`, `fmt`, `fmt`
+// These functions are ignored because they are not marked as `pub`: `add_owed_edge`, `allocate_minor_proportional`, `apply_settlement_payment`, `pairwise_net_edges`, `settle_one_currency`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_receiver_is_total_eq`, `assert_receiver_is_total_eq`, `assert_receiver_is_total_eq`, `assert_receiver_is_total_eq`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`
 
 /// Merge duplicate `(participant, currency)` rows, then run greedy netting per currency.
 ///
@@ -16,6 +16,23 @@ List<SettlementEdge> calculateMinimalSettlementEdges({
   required List<NetBalance> balances,
 }) => RustLib.instance.api.crateApiSettlementCalculateMinimalSettlementEdges(
   balances: balances,
+);
+
+/// Build directed “debtor owes creditor” edges from posted split rows, apply recorded
+/// peer settlements, then **bilateral** cancellation (A↔B) per currency.
+///
+/// All arithmetic uses `i64` minor units; proportional allocation uses integer floor with
+/// remainder on the last payer (payers sorted by id) so sums stay exact.
+///
+/// Returns non-zero [`SettlementEdge`]s: `from` owes `to` `amount_minor` in `currency_code`.
+List<SettlementEdge> calculateNetBalances({
+  required List<SplitObligationRow> obligations,
+  required List<SplitPaymentRow> payments,
+  required List<SettlementEdge> recordedSettlements,
+}) => RustLib.instance.api.crateApiSettlementCalculateNetBalances(
+  obligations: obligations,
+  payments: payments,
+  recordedSettlements: recordedSettlements,
 );
 
 class NetBalance {
@@ -72,6 +89,72 @@ class SettlementEdge {
           runtimeType == other.runtimeType &&
           fromParticipantId == other.fromParticipantId &&
           toParticipantId == other.toParticipantId &&
+          amountMinor == other.amountMinor &&
+          currencyCode == other.currencyCode;
+}
+
+class SplitObligationRow {
+  final String transactionId;
+
+  /// Participant who owes their share toward this bill (split obligation row).
+  final String owerId;
+  final PlatformInt64 amountMinor;
+  final String currencyCode;
+
+  const SplitObligationRow({
+    required this.transactionId,
+    required this.owerId,
+    required this.amountMinor,
+    required this.currencyCode,
+  });
+
+  @override
+  int get hashCode =>
+      transactionId.hashCode ^
+      owerId.hashCode ^
+      amountMinor.hashCode ^
+      currencyCode.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SplitObligationRow &&
+          runtimeType == other.runtimeType &&
+          transactionId == other.transactionId &&
+          owerId == other.owerId &&
+          amountMinor == other.amountMinor &&
+          currencyCode == other.currencyCode;
+}
+
+class SplitPaymentRow {
+  final String transactionId;
+
+  /// Participant who paid toward this bill (may be multiple per currency).
+  final String payerId;
+  final PlatformInt64 amountMinor;
+  final String currencyCode;
+
+  const SplitPaymentRow({
+    required this.transactionId,
+    required this.payerId,
+    required this.amountMinor,
+    required this.currencyCode,
+  });
+
+  @override
+  int get hashCode =>
+      transactionId.hashCode ^
+      payerId.hashCode ^
+      amountMinor.hashCode ^
+      currencyCode.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SplitPaymentRow &&
+          runtimeType == other.runtimeType &&
+          transactionId == other.transactionId &&
+          payerId == other.payerId &&
           amountMinor == other.amountMinor &&
           currencyCode == other.currencyCode;
 }
