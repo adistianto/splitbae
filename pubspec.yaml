@@ -54,6 +54,8 @@ dependencies:
   dynamic_color: ^1.8.1
   image_picker: ^1.2.1
   permission_handler: ^11.4.0
+  flutter_animate: ^4.5.2
+  phosphor_flutter: ^2.1.0
 
 dev_dependencies:
   flutter_test:

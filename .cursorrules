@@ -1,136 +1,107 @@
 # SplitBae — Architecture & Discipline
 
-## Product goal
-High-performance, platform-adaptive bill splitting (“Splid + Splitty”). **Lean APK/IPA**, **offline-first**, **sync-ready** without baking in a heavy on-device AI model.
+## Product
+High-performance platform-adaptive bill splitting (“Splid + Splitty”): **lean APK/IPA**, **offline-first**, **sync-ready**, no heavy on-device AI.
 
----
+## Stack & visual language (strict)
+- **Flutter** | **State: `flutter_riverpod`** for app/feature state — no `provider`, `ChangeNotifierProvider`, or ad-hoc global state. **`setState`** only for ephemeral local UI (focus, single-tick animation), not business/cross-screen.
+- **Motion: `flutter_animate`** | **Icons: `phosphor_flutter`** (new work; skip if existing assets suffice). Both in `pubspec.yaml`.
+- **No generic M2 or unthemed M3 chrome** (e.g. default `AppBar` + flat `Card` with no system). **Hybrid: M3 Expressive + Liquid Glass**, repo + attached **@Docs**.
+  - **M3E:** `mergeMaterialExpressive`, `lib/core/theme/splitbae_material_expressive.dart`, `SplitBaeV0Layout` (`splitbae_v0_ui_contract.dart`). Docs: **@tofu_expressive**, **@m3e_design**, **@app_bar_m3e**, **@m3e_collection** — verify APIs; don’t invent.
+  - **Liquid Glass:** **Liquid Glass Easy** and/or `SplitBaeShellTokens`, `SplitBaeFrostedPanel`, `lib/core/shell/adaptive_home_screen.dart`. **Blur only shell chrome** (bars, FAB area, rail) — never full scroll content.
+  - **iOS:** **Cupertino Native Better** or repo Cupertino+shell when it helps fidelity; else **adaptive** (`showAdaptiveDialog`, `SwitchListTile.adaptive`, …).
+- **Agents:** Use **@Docs** + `lib/core/theme/` — no invented widgets/APIs. Small composable (mostly stateless) widgets; **no 500+ line files**. User pastes **terminal output** → fix **root cause** without breaking layouts/tests. **v0/React/Tailwind** from `vercel/…`: drop React logic; port **visual hierarchy** only — Tailwind spacing → **M3E / `SplitBaeV0Layout`**; shadcn-like → **Liquid Glass / shell**.
 
-## Git & delivery (trunk-based)
-- **Repository**: Single private remote (e.g. GitHub)—**the box** where all history lives.
-- **Commits**: Small, vertical slices (“Added IDR formatting”, “Wire backup export”). Each commit is a **snapshot** you can revert to if something breaks later.
-- **Trunk**: `main` (or `trunk`) stays releasable; integrate via short-lived branches or direct commits—**no long-lived feature branches** that drift for weeks.
-- **Issues**: **GitHub Issues** = task list. Prefer **one issue per small feature** (e.g. *#1 Setup Rust core*, *#2 Scan screen shell*) so work stays traceable and reviewable.
+## UI (all platforms)
+- **Native-first:** M3 + Cupertino, **adaptive** primitives; custom UI only for clear product value (e.g. v0 shell tokens), not decoration.
+- **Perf:** Hot path **Rust** + tight Dart; avoid redundant rebuilds, huge `BackdropFilter`, pointless custom painters — **profile** before micro-opts.
+- **DRY:** `ThemeExtension`, shared tokens; repeat patterns → **once** in `core/` or `widgets/shell/`.
+- **Parity:** Same MVP on phone/foldable/tablet/desktop, **iOS/Android/macOS** — layout adapts; no “lite” OS unless impossible (**issue** with why).
+- **Current-gen via Flutter stable:** **M3 Expressive** on Android (`mergeMaterialExpressive`, dynamic color); **Liquid Glass–style shell** on Apple (`SplitBaeShellTokens`, `SplitBaeFrostedPanel`). Prefer new **Flutter/Material/Cupertino** expressive APIs when they land — refactor shell tokens to wrap them.
+- **One IA, dual chrome:** Shared structure (Bills · Balances, search + profile, FAB roles/order, wide = rail + content, scan → draft). **Implementation** OS-native (M3 vs Cupertino, glass vs elevation) — don’t clone one OS on the other.
 
----
+## Git (trunk)
+Single remote; **small vertical commits**; **`main`/`trunk` releasable** (short branches or direct); **GitHub Issues** — prefer **one issue per small feature**.
 
-## v0 workflow target (MVP scope)
-- **Follow** the Vercel/v0 **workflows** for **transaction history**, **categories**, **per-transaction payments**, and **settlements** (semantics and persistence)—implemented in **SQLite + Rust + Dart**, not the v0 React stack.
-- **Insights** (spending trends, streaks, etc.) are **explicitly not required for MVP**; ship when ready without blocking core flows.
-- **Strings**: **English-first** in `lib/l10n/app_en.arb` and identifiers; other locales layer on top.
-- **Forward compatibility**: Prefer **versioned migrations**, **nullable FKs** where a future feature (trips, sync IDs) may attach, **single DB access layer** (repositories), and **additive backup format** changes—avoid ad-hoc SQL and one-off columns that block **sync / CRDT / multi-ledger** later.
+## v0 → MVP
+- **`vercel/SplitBae_v76_Vercel.v0/`**: IA, interactions, flows — **not** the shipping stack. Same **behavior** in **SQLite + Rust + Dart**, native UI.
+- Workflows to implement: **transaction history**, **categories**, **per-transaction payments**, **settlements** (semantics + persistence) — not v0 React.
+- **Insights** (trends, streaks): **not MVP**; ship later without blocking core.
+- **l10n:** English-first `lib/l10n/app_en.arb` + identifiers; other locales on top.
+- **Forward-compat:** Versioned migrations, nullable FKs (trips/sync IDs), single DB/repo layer, **additive** backups — avoid ad-hoc SQL/columns that block **sync / CRDT / multi-ledger**.
 
-## Engineering principles
-- **Modular**: Features are isolated; **core** is dependency-free of product fluff. Prefer many small files over “god” widgets.
-- **Lean & fast**: No bundled LLM for OCR. Hot paths: **Rust** (math, settlement, merge rules) + **Flutter** (UI, I/O, platform APIs). Avoid redundant rebuilds; profile before micro-optimizing.
-- **Professional**: Code should read like a maintained product—clear names, minimal noise, no filler comments. Prefer explicit types at boundaries (FRB, storage, exports).
-- **Best tool for the job**: Rust for deterministic money and graph logic; Flutter for rendering and OS integration; native stacks for OCR (below); SQLite for structured local state; CRDT layer when sync ships—not before MVP storage is solid.
-- **Rust owns the math**: No bill logic in Dart—no tax %, tip %, split totals, or minor-unit rules implemented as `total * 0.1` etc. in `lib/`. Put every calculation in `rust/src/api/` (e.g. `simple.rs` today), expose via **flutter_rust_bridge**, and call from Dart. Dart may only **format for display** (e.g. `intl` / `NumberFormat`) and **persist** values; amount encoding for SQLite goes through FRB helpers (see `amount_to_minor_units` / `minor_units_to_amount`).
-- **Native typography**: Do **not** set a global `ThemeData.fontFamily` that forces one typeface on both iOS and Android. Rely on Material 3 / Cupertino defaults so the OS supplies **San Francisco** on iOS and **Roboto** (or OEM default) on Android. Avoid micro-tweaks like custom `letterSpacing` on headlines unless there is a product-specific reason.
-- **Platform polish**: Prefer **adaptive** primitives (`showAdaptiveDialog`, `SwitchListTile.adaptive`, etc.) for parity with each OS; use **`dynamic_color`** on Android 12+ when theming; call **`configureSplitBaePlatform()`** for edge-to-edge; add **haptics** for primary navigation actions on mobile; reserve **keyboard shortcuts** for desktop (see `lib/core/platform/`). On **Apple** (`hostPlatformIsApple()` = iOS or macOS), narrow layouts use **`CupertinoPageScaffold`**; keep **Material** `Scaffold` + rail for wide layouts. **Do not** override **`MediaQuery` text scaler / bold / reduce-motion** from the engine—use **`splitBaeMaterialTheme`** + **`splitBaeAppBuilder`** and theme-relative **`TextStyle`**s instead of hard-coded font sizes.
+## Engineering
+- **Modular:** `core/` has **no feature imports**; many small files, no god widgets.
+- **Lean:** No bundled LLM for OCR. Rust: math/settlement/merge; Flutter: UI/I/O; SQLite: local state; **CRDT** only when sync — after MVP storage is solid.
+- **Quality:** Product-grade naming; explicit types at **FRB**, storage, exports; no filler comments.
+- **Rust owns math:** No tax/tip/split/minor-unit logic in `lib/` (no `total * 0.1` etc.). All in `rust/src/api/` (e.g. `simple.rs`), **flutter_rust_bridge**. Dart: **display** (`intl`/`NumberFormat`), **persist**; amounts via FRB (`amount_to_minor_units` / `minor_units_to_amount`).
+- **Typography:** No global `ThemeData.fontFamily` forcing one face — M3/Cupertino defaults (**SF** / **Roboto+OEM**). No gratuitous `letterSpacing` on headlines.
+- **Platform:** `dynamic_color` (Android 12+), **`configureSplitBaePlatform()`**, **haptics** on primary mobile nav, **shortcuts** desktop (`lib/core/platform/`). **`hostPlatformIsApple()`**: narrow → **`CupertinoPageScaffold`**; wide → Material **`Scaffold` + rail**. **Never** override engine **`MediaQuery`** (text scaler, bold, reduce-motion) — use **`splitBaeMaterialTheme`**, **`splitBaeAppBuilder`**, theme-relative **`TextStyle`**.
 
----
+## Platform presentation (detail)
+- v0 = **IA + flows**, not Tailwind/React fidelity. Ship **M3/Cupertino** + adaptive on **all** form factors; **macOS** same feature set.
+- **Cross-OS:** Aligned labels, icon semantics, **task order**; **l10n**; prefer **shared** interaction patterns (e.g. adaptive dialog vs one-OS-only sheet).
+- **v0 parity:** Tabs, FAB, scan, draft split, sheets. Structure: **`SplitBaeV0Layout`**. Chrome: **`SplitBaeShellTokens`** — Android **`splitbae_material_expressive.dart`**; Apple **LG** via `SplitBaeFrostedPanel`, `SplitBaeShellChromeIconButton`, `SplitBaeAdaptiveBottomNav`, wide rail in **`adaptive_home_screen.dart`**. **Chrome-only blur** (repeat: not full content).
+- **Color:** Android — `ColorScheme` + **`dynamic_color`**; Apple — `CupertinoColors` / semantics; keep **meaning** (primary/error/success) without cloning one v0 palette everywhere.
+- **Type:** Android — M3 scale, optional display via **named `TextTheme` roles**; Apple — **SF** UI; **New York** / **SF Pro Rounded** short roles only; **Dynamic Type** via theme-relative styles.
+- **Layout:** Phone — bottom/tab; tablet — split/rail/two-pane; desktop — shortcuts/menus/mouse; tooltip copy **trackpad vs touchpad** via l10n/branches.
+- **Motion:** Respect **`MediaQuery.disableAnimationsOf`** + reduce-motion. Android — Material motion, **predictive back**. iOS — **Cupertino** routes where Cupertino stack. **Haptics** primary actions — per-platform tuning.
 
-## Platform-native presentation (v0 concept → Flutter)
-- **v0 role**: The Vercel/v0 prototype defines **information architecture, features, and user workflows** only—not widget shapes, corner radii, or web-only chrome. **Shipping UI** uses each platform’s patterns (Material 3 / Cupertino) and **adaptive** layouts for **phone, tablet, and desktop** on **both** iOS and Android.
-- **v0 parity**: Keep the **same workflows** as `vercel/SplitBae_v76_Vercel.v0/` (tabs, FAB, scan, draft split, sheets). Reuse shared spacing/radii from **`SplitBaeV0Layout`** in `lib/core/theme/splitbae_v0_ui_contract.dart` for hero cards, insight chips, and FABs so the app stays aligned with the reference while using **native** controls (M3 / Cupertino), not a pixel clone of Tailwind.
-- **Color**: **Android** — M3 `ColorScheme` roles; **`dynamic_color`** on Android 12+ when theming. **Apple** — `CupertinoColors` / semantic dynamics for Cupertino surfaces; preserve **meaning** (primary, error, success) across platforms without copying a single v0 palette to both OSes.
-- **Typography**: **Android** — M3 type scale; default **Roboto/OEM**; optional **display** emphasis (e.g. serif, rounded sans) via **named `TextTheme` roles**, not one global `fontFamily`. **Apple** — **SF** for UI; **New York** or **SF Pro Rounded** only for **short, intentional** roles; **Dynamic Type** via theme-relative styles.
-- **Adaptive patterns**: **Phone** — OS-appropriate navigation (e.g. bottom bar / tab scaffold). **Tablet** — split view, rail, two-pane where appropriate. **Desktop** — shortcuts, menus, mouse affordances; **platform-appropriate** copy (e.g. **trackpad** vs **touchpad**) in tooltips via l10n or small platform branches.
-- **Animation**: Honor **`MediaQuery.disableAnimationsOf`** and reduce-motion. **Android** — Material motion and **predictive back** expectations. **iOS** — **Cupertino** transitions where the stack is Cupertino. **Haptics** for primary actions on mobile—tuned per platform, not identical on every control.
+## Repo layout
+| Area | Rule |
+|------|------|
+| `lib/core/` | Tokens, shells, extensions — **no feature imports** |
+| `lib/features/<name>/` | `presentation/`, `application/` (providers), optional `data/` |
+| `lib/l10n/` | `.arb` → generated `app_localizations*.dart` |
+| OCR | `ReceiptOcrChannel` + `MethodChannel` (`lib/core/ocr/`): Android **ML Kit** `MainActivity`, iOS **Vision** `SceneDelegate`; **parse/heuristics in Dart** (`receipt_line_parse.dart`, `receipt_ocr_refiner.dart`); **`probe`** early; OCR fail **must not** block manual entry (`runReceiptScanFlow`, add-item). **Persisted money** → **Rust**. |
+| `rust/src/` | `api/` FRB thin; `domain/` money+invariants; `ledger/` or `settlement/` splits + future CRDT **helpers** (transport in Flutter/plugin). Split up `simple.rs` as features grow. |
 
----
+## Persistence roadmap
+| | MVP | Later |
+|---|-----|--------|
+| Storage | Encrypted SQLite (SQLCipher-class); ~5–15% overhead OK; encrypt PII/payment fields | + optional plaintext export (opt-in) |
+| Backup | Manual **`.sb_backup`** (or agreed ext.), encrypted; user stores Drive/iCloud/email; **import** on-device; **no** custom cloud MVP | Scheduled; optional unencrypted export |
+| Sync | **Deferred** — paths allow future layer | Nextcloud/iCloud paths, **CRDT** (**Automerge** / **Yrs**), deterministic merge |
 
-## Repository layout (target; grow into this as features land)
+**MVP rule:** Persistence = **Flutter + SQLite + channels**; Rust takes **snapshots/commands** from Dart — **no** raw sockets in MVP.
 
-### Flutter (`lib/`)
-- `core/` — theme tokens, routing shells, shared extensions, **no feature imports**.
-- `features/<name>/` — `presentation/`, `application/` (providers), optional `data/` if feature-local only.
-- `l10n/` — `.arb` sources + generated `app_localizations*.dart` (crowdsourced translations via GitHub PRs to ARB files).
-- Platform-specific OCR: **`ReceiptOcrChannel`** + native `MethodChannel` (`lib/core/ocr/`), **Android** ML Kit in `MainActivity`, **iOS** Vision in `SceneDelegate`—**line parsing / heuristics** stay in Dart (`receipt_line_parse.dart`, `receipt_ocr_refiner.dart`); **`probe`** warms readiness early; OCR failures **must not** block manual entry (`runReceiptScanFlow`, add-item sheet). Money rules for persisted values stay in **Rust**.
+## OCR (no in-app LLM)
+Android **ML Kit** text; iOS **Vision** `VNRecognizeTextRequest`. Flow: shutter → **live editable chips**; lines = heuristic + user fix; Rust **canonical** after confirm. **No** transformer in-app MVP; server assist = later.
 
-### Rust (`rust/src/`)
-- `api/` — FRB-facing surface (`#[frb]` types and functions); keep thin.
-- `domain/` — money types, ledger invariants (pure, unit-testable).
-- `ledger/` (or `settlement/`) — split math, debt optimization, later CRDT merge **helpers** (actual sync transport stays in Flutter/Dart or a small native plugin—pick per evaluation).
-- Avoid a single monolithic `simple.rs` long-term; split when the second major feature lands.
+## Money
+Persist **`CurrencyAmount`**: value + **ISO 4217** + documented scale (Rust). FX later = **non-destructive** (new tables / nullable FX). FRB mirrors shape; **no** naked `f64` without currency in storage.
 
----
+## Post-MVP sync
+**CRDT** offline concurrent edits; **deterministic** merge. Evaluate **Automerge-rs** / **Yrs** + Dart bridge vs WASM — **record decision** in repo; **don’t block MVP**.
 
-## Offline-first, backup, sync (roadmap)
-| Layer | MVP (“Perfect Local Utility”) | Later |
-|-------|-------------------------------|--------|
-| Storage | **Encrypted SQLite** (e.g. SQLCipher or equivalent)—accept ~5–15% overhead for small rows; encrypt PII and payment handles. | Same DB + optional unencrypted export if user opts in. |
-| Backup | **Manual backup**: export encrypted **`.sb_backup`** (or agreed extension); user saves to **iCloud / Google Drive / email**—no custom cloud backend in MVP. **Import** restores on-device. | Scheduled backups, optional unencrypted export. |
-| Sync / Nextcloud | **Deferred.** No Nextcloud/WebDAV implementation in MVP; design storage paths so a future sync layer can attach. | **Nextcloud** / **iCloud** folder layout, **CRDT** merge (**Automerge** / **Yrs**), deterministic rules. |
-
-**Rule**: Persistence and network are **Flutter + SQLite + platform channels**; Rust consumes **snapshots** or **commands** from Dart for heavy math, not raw socket I/O in MVP.
-
----
-
-## Scanning & “direct-to-edit” (no heavy AI in binary)
-- **Android**: **Google ML Kit** (Text Recognition)—on-device, small footprint, uses OEM/NPU where available.
-- **iOS**: **Vision** (`VNRecognizeTextRequest`)—same rationale.
-- **Flow**: Shutter → **live editable chips** (scan-to-live), not a static preview screen. Parsing into line items is **heuristic + user correction**; Rust stores **canonical** numbers after confirm.
-- **Do not** ship a bundled transformer/LLM in the app for MVP OCR; optional server-side assist is a **later** product decision.
-
----
-
-## Money & multi-currency model
-- Persist **`CurrencyAmount`**: **numeric value + ISO 4217 code** (and scale policy explicit per type: minor units vs decimal—document in Rust). Adding FX later must **not** require a destructive migration—only new tables or nullable FX fields.
-- FRB types should mirror this shape; avoid “naked” `f64` without currency in persisted models.
-
----
-
-## Collaboration (post-MVP sync)
-- **CRDTs** for same-ledger concurrent edits offline; merge must be **deterministic** across devices.
-- Evaluate **Automerge-rs** / **Yrs** with a thin Dart bridge vs WASM—**decision recorded in repo** when sync starts; don’t block MVP on CRDT.
-
----
-
-## UI: navigation, motion, wrappers
-- **Dual wrappers** (Material 3 Expressive vs Liquid Glass)—semantic model once, presentation twice; see prior sections in git history if trimmed here.
-- **Fluid bottom bar** (morphing center **+**, soft labels for Trips / Balances, horizontal carousels)—implement when shell exists; don’t premature-abstract before second tab.
-- **Rive** for hero motion where it beats hand-rolled curves—keep asset count small; **120fps** is a target on ProMotion devices, not a guarantee on all hardware.
-
----
+## Shell extras
+Same **nav graph** everywhere — M3E (Android) vs LG shell (Apple); only chrome/controls differ. **Fluid bottom bar** (morphing center **+**, **soft labels** Trips/Balances, horizontal carousels): when shell ready — don’t abstract before second tab. **Rive**: hero motion if worth it — **few** assets; **120fps** aspirational on ProMotion.
 
 ## Localization
-- **Template**: `lib/l10n/app_en.arb` — add every new string here first; use **`@key` `description`** metadata for translator/MT context (screen, role of string, do-not-translate terms).
-- **Other locales**: `app_<code>.arb` — values only; optional **Weblate/Crowdin/Tolgee** + ARB for crowdsourcing; **MT** (DeepL/Google/etc.) as draft → **human review** before merge.
-- **Gaps**: `flutter gen-l10n` writes **`l10n_untranslated.txt`** (missing keys in non-English ARBs).
-- Runtime: device default with in-app override (settings).
+New strings → **`app_en.arb` first** with `@key` + `description` (context, DNT terms). Other locales: `app_<code>.arb`; crowdsourcing via **GitHub PRs** to ARBs + optional Weblate/Crowdin/Tolgee; MT → human review. **`l10n_untranslated.txt`** from `flutter gen-l10n`. Runtime: device default + settings override.
 
----
+## Security
+**SQLCipher-class** local DB. Backups **encrypted** by default; UX for passphrase / keychain.
 
-## Security & privacy
-- SQLCipher (or platform-accepted equivalent) for **at-rest** encryption of the local DB.
-- Backups: **encrypted** by default; clear UX for passphrase / OS keychain.
+## MVP — “Perfect Local Utility”
+**Goal:** Flawless **offline** tool first — **no** Nextcloud/multi-device sync in MVP.
 
----
+| Pillar | Ships |
+|--------|--------|
+| Encrypted DB | At-rest encryption (device loss/theft) |
+| Snap & Split | **ML Kit** / **Vision** only — no LLM; lines → assign; **Rust** canonical math |
+| Manual backup | Encrypted **`.sb_backup`** → user cloud/email; **import** elsewhere |
+| Native styles proof | ≥1 screen reads **LG** on iOS, ≥1 **M3 Expressive** on Android — same semantics, dual wrappers |
 
-## MVP — “Perfect Local Utility” (revised)
-Goal: ship a **flawless offline tool** first. **Nextcloud / multi-device sync** is explicitly **not** in MVP.
+**Stretch (after DB + backup + scan credible):** IDR-first, trip/group ledger, debt list + **Optimize** (Rust).
 
-| MVP pillar | What ships |
-|------------|------------|
-| **Encrypted local DB** | At-rest encryption so data is safe if the device is lost/stolen (SQLCipher-class stack). |
-| **“Snap & Split”** | **Native OCR** only (ML Kit on Android, Vision on iOS)—no bundled LLM. Bill → parsed lines → **assign items** to people; Rust holds canonical math. |
-| **Manual backup** | One action exports an **encrypted `.sb_backup`** file; user stores it in **Drive / iCloud / email**. Matching **import** on another install. |
-| **Native styles (proof)** | At least **one** screen that reads **Liquid Glass** on iOS and **one** that reads **Material 3 Expressive** on Android—same semantics, dual wrappers—so the design system is proven before the full shell. |
+**Out of MVP:** Nextcloud/WebDAV, CRDT, FX, in-app LLM, **insights/analytics** (v0-style trends until scheduled), Rive-heavy nav shell (optional).
 
-**Also in scope when capacity allows (same MVP spirit):** IDR-first flows, basic trip/group ledger, debt list + **Optimize** in Rust—**after** DB + backup + scan path are credible.
+## Post-MVP backlog
+Recurring spend, auto-categories, advanced splits (%/shares/fixed), multi-currency+FX, debt optimizer polish, “who pays next?”, PDF/WhatsApp, **user-chosen sync** (Nextcloud, iCloud paths).
 
-**Out of MVP**: Nextcloud/WebDAV sync, CRDT, FX, LLM inside the app, **insights/analytics** (v0-style trends until explicitly scheduled), Rive-heavy navigation shell (optional stretch).
-
----
-
-## Feature backlog (post-MVP)
-Recurring expenses, auto-categories (server or light rules), advanced splits (shares / % / fixed), full multi-currency + FX, debt optimizer refinements, “who pays next?” scoreboard polish, PDF/WhatsApp flows, **user-chosen sync providers** (Nextcloud, iCloud paths).
-
----
-
-## Cursor / AI usage
-Prefer edits that **match existing style**. No drive-by renames. No essay comments. When adding files, place them under the **layout above** unless a one-off script in `tool/`.
+## Cursor / AI
+Match existing style; **no** drive-by renames or essay comments; new files follow **repo layout** above unless `tool/` one-off.
 
 ## License
-The project is **Apache License 2.0** (`LICENSE`). New **third-party** code and dependencies must stay **license-compatible**; document notable obligations (NOTICE, attribution) when required.
+**Apache-2.0** (`LICENSE`). Third-party code: **license-compatible**; **NOTICE**/attribution when required.
