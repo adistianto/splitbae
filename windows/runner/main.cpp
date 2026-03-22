@@ -5,6 +5,11 @@
 #include "flutter_window.h"
 #include "utils.h"
 
+#if defined(SPLITBAE_WASDK_BOOTSTRAP)
+#include <WindowsAppSDK-VersionInfo.h>
+#include <MddBootstrap.h>
+#endif
+
 // On-device receipt OCR (`splitbae/receipt_ocr`) is registered from
 // `FlutterWindow::OnCreate` in `flutter_window.cpp` via `receipt_ocr_win.cpp`
 // (WinRT `Windows.Media.Ocr`). NPU-oriented `Microsoft.Windows.AI.Imaging`
@@ -23,6 +28,15 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   // plugins.
   ::CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
 
+#if defined(SPLITBAE_WASDK_BOOTSTRAP)
+  // Unpackaged .exe: load the Windows App SDK framework package before any
+  // WinRT APIs from that SDK (e.g. AI Imaging OCR). Packaged / other builds
+  // omit this via CMake when bootstrap headers are not present.
+  const bool wasdk_bootstrap_initialized = SUCCEEDED(MddBootstrapInitialize(
+      WINDOWSAPPSDK_RELEASE_MAJORMINOR, WINDOWSAPPSDK_RELEASE_VERSION_TAG_W,
+      {WINDOWSAPPSDK_RUNTIME_VERSION_UINT64}));
+#endif
+
   flutter::DartProject project(L"data");
 
   std::vector<std::string> command_line_arguments =
@@ -34,6 +48,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   Win32Window::Point origin(10, 10);
   Win32Window::Size size(1280, 720);
   if (!window.Create(L"splitbae", origin, size)) {
+#if defined(SPLITBAE_WASDK_BOOTSTRAP)
+    if (wasdk_bootstrap_initialized) {
+      MddBootstrapUninitialize();
+    }
+#endif
+    ::CoUninitialize();
     return EXIT_FAILURE;
   }
   window.SetQuitOnClose(true);
@@ -44,6 +64,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
     ::DispatchMessage(&msg);
   }
 
+#if defined(SPLITBAE_WASDK_BOOTSTRAP)
+  if (wasdk_bootstrap_initialized) {
+    MddBootstrapUninitialize();
+  }
+#endif
   ::CoUninitialize();
   return EXIT_SUCCESS;
 }
