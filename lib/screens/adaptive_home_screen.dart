@@ -14,6 +14,7 @@ import 'package:splitbae/core/ocr/receipt_ocr_probe_provider.dart';
 import 'package:splitbae/providers.dart';
 import 'package:splitbae/screens/balances_screen.dart';
 import 'package:splitbae/screens/bills_screen.dart';
+import 'package:splitbae/screens/draft_split_screen.dart';
 import 'package:splitbae/screens/scan_receipt_screen.dart';
 import 'package:splitbae/screens/settings_screen.dart';
 import 'package:splitbae/widgets/add_transaction_sheet.dart';
@@ -36,6 +37,7 @@ class _AdaptiveHomeScreenState extends ConsumerState<AdaptiveHomeScreen> {
   int _bottomTabIndex = 0;
   bool _shellChromeVisible = true;
   bool _shellSearchOpen = false;
+  bool _scanOverlayOpen = false;
   late final TextEditingController _shellSearchController;
 
   bool _onShellScroll(ScrollNotification n) {
@@ -100,6 +102,12 @@ class _AdaptiveHomeScreenState extends ConsumerState<AdaptiveHomeScreen> {
   }
 
   void _openScanBill() {
+    final wide = MediaQuery.sizeOf(context).width >= AppBreakpoints.expandedMin;
+    if (!wide) {
+      setState(() => _scanOverlayOpen = true);
+      return;
+    }
+
     Widget buildScan(WidgetRef ref) {
       return ScanReceiptScreen(
         currencyCode: ref.read(draftBillCurrencyProvider),
@@ -126,6 +134,26 @@ class _AdaptiveHomeScreenState extends ConsumerState<AdaptiveHomeScreen> {
         ),
       );
     }
+  }
+
+  void _closeScanOverlay() {
+    if (!mounted) return;
+    setState(() => _scanOverlayOpen = false);
+  }
+
+  void _openDraftAfterScanImport() {
+    _closeScanOverlay();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final route = hostPlatformIsApple()
+          ? CupertinoPageRoute<void>(
+              builder: (_) => const DraftSplitScreen(),
+            )
+          : MaterialPageRoute<void>(
+              builder: (_) => const DraftSplitScreen(),
+            );
+      Navigator.of(context).push(route);
+    });
   }
 
   void _openNewBillSheet() {
@@ -168,7 +196,7 @@ class _AdaptiveHomeScreenState extends ConsumerState<AdaptiveHomeScreen> {
           final topPad = MediaQuery.paddingOf(context).top;
           final filtersOpen = ref.watch(v0BillsFiltersSheetOpenProvider);
           final showFloatingChrome =
-              _shellChromeVisible && !filtersOpen;
+              _shellChromeVisible && !filtersOpen && !_scanOverlayOpen;
           final cs = Theme.of(context).colorScheme;
 
           return Scaffold(
@@ -308,34 +336,58 @@ class _AdaptiveHomeScreenState extends ConsumerState<AdaptiveHomeScreen> {
                   onNewBill: _openNewBillSheet,
                   onScanBill: _openScanBill,
                   onCreateReport: () => setState(() => _bottomTabIndex = 1),
-                  visible: _shellChromeVisible,
+                  visible: _shellChromeVisible && !_scanOverlayOpen,
                 ),
+                if (_scanOverlayOpen)
+                  Positioned.fill(
+                    child: PopScope(
+                      canPop: false,
+                      onPopInvokedWithResult: (didPop, result) {
+                        if (!didPop) _closeScanOverlay();
+                      },
+                      child: Material(
+                        color: Theme.of(context).colorScheme.surface,
+                        child: Consumer(
+                          builder: (context, ref, _) => ScanReceiptScreen(
+                            currencyCode: ref.read(draftBillCurrencyProvider),
+                            openDraftAfterBatchAdd: true,
+                            onAddAllLines: (candidates) =>
+                                _addOcrLinesToDraft(ref, candidates),
+                            onDismiss: _closeScanOverlay,
+                            onNavigateToDraft: _openDraftAfterScanImport,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             ),
-            bottomNavigationBar: SplitBaeV0BottomNav(
-              selectedIndex: _bottomTabIndex,
-              onDestinationSelected: (i) {
-                HapticFeedback.selectionClick();
-                setState(() {
-                  _bottomTabIndex = i;
-                  _shellSearchOpen = false;
-                  _shellSearchController.clear();
-                });
-                ref.read(v0ShellSearchQueryProvider.notifier).state = '';
-              },
-              destinations: [
-                SplitBaeV0BottomNavDestination(
-                  icon: Icons.receipt_long_outlined,
-                  selectedIcon: Icons.receipt_long,
-                  label: l10n.navBillsTab,
-                ),
-                SplitBaeV0BottomNavDestination(
-                  icon: Icons.account_balance_wallet_outlined,
-                  selectedIcon: Icons.account_balance_wallet,
-                  label: l10n.balancesTitle,
-                ),
-              ],
-            ),
+            bottomNavigationBar: _scanOverlayOpen
+                ? null
+                : SplitBaeV0BottomNav(
+                    selectedIndex: _bottomTabIndex,
+                    onDestinationSelected: (i) {
+                      HapticFeedback.selectionClick();
+                      setState(() {
+                        _bottomTabIndex = i;
+                        _shellSearchOpen = false;
+                        _shellSearchController.clear();
+                      });
+                      ref.read(v0ShellSearchQueryProvider.notifier).state = '';
+                    },
+                    destinations: [
+                      SplitBaeV0BottomNavDestination(
+                        icon: Icons.receipt_long_outlined,
+                        selectedIcon: Icons.receipt_long,
+                        label: l10n.navBillsTab,
+                      ),
+                      SplitBaeV0BottomNavDestination(
+                        icon: Icons.account_balance_wallet_outlined,
+                        selectedIcon: Icons.account_balance_wallet,
+                        label: l10n.balancesTitle,
+                      ),
+                    ],
+                  ),
           );
         }
 

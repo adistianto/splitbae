@@ -24,6 +24,38 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settings => 'Settings';
 
   @override
+  String get settingsV0ManagePreferences => 'Manage your preferences';
+
+  @override
+  String get settingsV0ActivityTitle => 'Your activity';
+
+  @override
+  String get settingsV0TotalSpent => 'Total spent';
+
+  @override
+  String get settingsV0ThisMonth => 'This month';
+
+  @override
+  String get settingsV0StatTransactions => 'Transactions';
+
+  @override
+  String get settingsV0StatFriends => 'Friends';
+
+  @override
+  String get settingsV0StatAvgPerTxn => 'Avg/txn';
+
+  @override
+  String get settingsV0TopCategories => 'Top categories';
+
+  @override
+  String get settingsV0TopPartner => 'Most frequent partner';
+
+  @override
+  String settingsV0PartnerTxCount(int count) {
+    return '$count bills together';
+  }
+
+  @override
   String get settingsLanguage => 'Language';
 
   @override
@@ -798,7 +830,33 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get addTransactionEveryoneIncludedHint =>
-      'Tap to include or exclude someone from this bill. Add or remove trip members from the draft split screen.';
+      'Search or tap a name; suggestions come from your posted bills.';
+
+  @override
+  String get addTransactionSearchPeopleHint => 'Search or add person…';
+
+  @override
+  String addTransactionAddPersonNamed(String name) {
+    return 'Add \"$name\"';
+  }
+
+  @override
+  String get addTransactionFrequentPartners => 'Frequent';
+
+  @override
+  String get addTransactionAlsoPartners => 'Also';
+
+  @override
+  String get addTransactionLineSharedByAll => 'Shared by all';
+
+  @override
+  String addTransactionLineAssignedToCount(int count) {
+    return 'Assigned to $count';
+  }
+
+  @override
+  String get addTransactionAllPeopleAdded =>
+      'Everyone is already on this bill.';
 
   @override
   String addTransactionItemsSection(int count) {

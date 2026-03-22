@@ -12,6 +12,7 @@ import 'package:splitbae/core/theme/dynamic_color_support.dart';
 import 'package:splitbae/core/platform/adaptive_confirm_dialog.dart';
 import 'package:splitbae/core/widgets/adaptive_app_bar.dart';
 import 'package:splitbae/screens/backup_screen.dart';
+import 'package:splitbae/widgets/settings_v0_activity_insights.dart';
 import 'package:splitbae/currency_catalog.dart';
 import 'package:splitbae/providers.dart';
 
@@ -297,6 +298,27 @@ class SettingsScreen extends ConsumerWidget {
         final menuWidth = (constraints.maxWidth - 32).clamp(240.0, 560.0);
         return ListView(
           children: [
+            if (embedded) ...[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                child: Text(
+                  l10n.settings,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                child: Text(
+                  l10n.settingsV0ManagePreferences,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                ),
+              ),
+            ],
+            const SettingsV0ActivityInsightsCard(),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               child: Text(
@@ -689,6 +711,7 @@ class _AppleLiquidSettingsBody extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
       children: [
+        const SettingsV0ActivityInsightsCard(),
         sectionTitle(l10n.settingsLanguage),
         glassSection(
           children: [

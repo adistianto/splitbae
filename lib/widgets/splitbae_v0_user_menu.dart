@@ -253,8 +253,8 @@ class _V0UserMenuBody extends ConsumerWidget {
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

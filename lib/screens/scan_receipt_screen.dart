@@ -33,6 +33,8 @@ class ScanReceiptScreen extends ConsumerStatefulWidget {
     this.onApplied,
     this.onAddAllLines,
     this.openDraftAfterBatchAdd = false,
+    this.onDismiss,
+    this.onNavigateToDraft,
   });
 
   /// When set (add-item sheet flow), single-line OCR fills these and pops [1].
@@ -46,6 +48,12 @@ class ScanReceiptScreen extends ConsumerStatefulWidget {
 
   /// When true (FAB entry), after importing lines navigate to [DraftSplitScreen].
   final bool openDraftAfterBatchAdd;
+
+  /// When non-null (e.g. in-app overlay host), replaces [Navigator.pop] when leaving scan.
+  final VoidCallback? onDismiss;
+
+  /// When non-null (overlay host), opens draft after OCR import instead of [Navigator.pushReplacement].
+  final VoidCallback? onNavigateToDraft;
 
   @override
   ConsumerState<ScanReceiptScreen> createState() =>
@@ -71,6 +79,15 @@ class _ScanReceiptScreenState extends ConsumerState<ScanReceiptScreen> {
       (defaultTargetPlatform == TargetPlatform.macOS ||
           defaultTargetPlatform == TargetPlatform.windows ||
           defaultTargetPlatform == TargetPlatform.linux);
+
+  void _exitScan([Object? result]) {
+    final d = widget.onDismiss;
+    if (d != null) {
+      d();
+    } else {
+      Navigator.of(context).pop(result);
+    }
+  }
 
   void _clearImage() {
     setState(() {
@@ -257,7 +274,7 @@ class _ScanReceiptScreenState extends ConsumerState<ScanReceiptScreen> {
     if (identical(pick, receiptLinePickerAddAllMarker)) {
       final handler = widget.onAddAllLines;
       if (handler == null) {
-        if (mounted) Navigator.of(context).pop(null);
+        if (mounted) _exitScan(null);
         return;
       }
       await handler(candidates);
@@ -267,7 +284,7 @@ class _ScanReceiptScreenState extends ConsumerState<ScanReceiptScreen> {
       if (widget.openDraftAfterBatchAdd) {
         _goDraftReplace();
       } else {
-        Navigator.of(context).pop(candidates.length);
+        _exitScan(candidates.length);
       }
       return;
     }
@@ -289,7 +306,7 @@ class _ScanReceiptScreenState extends ConsumerState<ScanReceiptScreen> {
       widget.quantityController?.text = '${c.quantity ?? 1}';
       widget.onApplied?.call();
       HapticFeedback.selectionClick();
-      if (mounted) Navigator.of(context).pop(1);
+      if (mounted) _exitScan(1);
       return;
     }
 
@@ -311,11 +328,16 @@ class _ScanReceiptScreenState extends ConsumerState<ScanReceiptScreen> {
     if (widget.openDraftAfterBatchAdd) {
       _goDraftReplace();
     } else {
-      Navigator.of(context).pop(1);
+      _exitScan(1);
     }
   }
 
   void _goDraftReplace() {
+    final overlay = widget.onNavigateToDraft;
+    if (overlay != null) {
+      overlay();
+      return;
+    }
     Navigator.of(context).pushReplacement(
       hostPlatformIsApple()
           ? CupertinoPageRoute<void>(
@@ -359,7 +381,7 @@ class _ScanReceiptScreenState extends ConsumerState<ScanReceiptScreen> {
                               child: IconButton(
                                 padding: const EdgeInsets.only(left: 10),
                                 icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-                                onPressed: () => Navigator.of(context).pop(null),
+                                onPressed: () => _exitScan(null),
                                 tooltip: MaterialLocalizations.of(context)
                                     .backButtonTooltip,
                               ),
@@ -596,7 +618,7 @@ class _ScanReceiptScreenState extends ConsumerState<ScanReceiptScreen> {
                             ],
                             const SizedBox(height: 20),
                             TextButton(
-                              onPressed: () => Navigator.of(context).pop(null),
+                              onPressed: () => _exitScan(null),
                               child: Text(l10n.scanReceiptEnterManually),
                             ),
                           ],

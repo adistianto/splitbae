@@ -128,6 +128,66 @@ abstract class AppLocalizations {
   /// **'Settings'**
   String get settings;
 
+  /// Subtitle under Settings title (v0 settings-tab parity).
+  ///
+  /// In en, this message translates to:
+  /// **'Manage your preferences'**
+  String get settingsV0ManagePreferences;
+
+  /// Heading for the insights card on Settings (posted bills summary).
+  ///
+  /// In en, this message translates to:
+  /// **'Your activity'**
+  String get settingsV0ActivityTitle;
+
+  /// No description provided for @settingsV0TotalSpent.
+  ///
+  /// In en, this message translates to:
+  /// **'Total spent'**
+  String get settingsV0TotalSpent;
+
+  /// No description provided for @settingsV0ThisMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'This month'**
+  String get settingsV0ThisMonth;
+
+  /// No description provided for @settingsV0StatTransactions.
+  ///
+  /// In en, this message translates to:
+  /// **'Transactions'**
+  String get settingsV0StatTransactions;
+
+  /// No description provided for @settingsV0StatFriends.
+  ///
+  /// In en, this message translates to:
+  /// **'Friends'**
+  String get settingsV0StatFriends;
+
+  /// No description provided for @settingsV0StatAvgPerTxn.
+  ///
+  /// In en, this message translates to:
+  /// **'Avg/txn'**
+  String get settingsV0StatAvgPerTxn;
+
+  /// No description provided for @settingsV0TopCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'Top categories'**
+  String get settingsV0TopCategories;
+
+  /// No description provided for @settingsV0TopPartner.
+  ///
+  /// In en, this message translates to:
+  /// **'Most frequent partner'**
+  String get settingsV0TopPartner;
+
+  /// Partner insight: how many posted bills included this person.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} bills together'**
+  String settingsV0PartnerTxCount(int count);
+
   /// Section header for language / locale preferences.
   ///
   /// In en, this message translates to:
@@ -1510,11 +1570,53 @@ abstract class AppLocalizations {
   /// **'Who\'s splitting?'**
   String get addTransactionWhosSplitting;
 
-  /// Explains MVP uses all ledger participants.
+  /// Short hint under Who's splitting (v0 add-expense-sheet parity).
   ///
   /// In en, this message translates to:
-  /// **'Tap to include or exclude someone from this bill. Add or remove trip members from the draft split screen.'**
+  /// **'Search or tap a name; suggestions come from your posted bills.'**
   String get addTransactionEveryoneIncludedHint;
+
+  /// People picker search field in add-transaction sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Search or add person…'**
+  String get addTransactionSearchPeopleHint;
+
+  /// List tile to create a new person from search query.
+  ///
+  /// In en, this message translates to:
+  /// **'Add \"{name}\"'**
+  String addTransactionAddPersonNamed(String name);
+
+  /// No description provided for @addTransactionFrequentPartners.
+  ///
+  /// In en, this message translates to:
+  /// **'Frequent'**
+  String get addTransactionFrequentPartners;
+
+  /// No description provided for @addTransactionAlsoPartners.
+  ///
+  /// In en, this message translates to:
+  /// **'Also'**
+  String get addTransactionAlsoPartners;
+
+  /// No description provided for @addTransactionLineSharedByAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared by all'**
+  String get addTransactionLineSharedByAll;
+
+  /// No description provided for @addTransactionLineAssignedToCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Assigned to {count}'**
+  String addTransactionLineAssignedToCount(int count);
+
+  /// People picker: no unselected participants left.
+  ///
+  /// In en, this message translates to:
+  /// **'Everyone is already on this bill.'**
+  String get addTransactionAllPeopleAdded;
 
   /// Section header for line items with count.
   ///

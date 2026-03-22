@@ -1,3 +1,4 @@
+import 'dart:async' show unawaited;
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -8,6 +9,7 @@ import 'package:intl/intl.dart';
 import 'package:splitbae/core/data/amount_minor.dart';
 import 'package:splitbae/core/data/draft_bill_inclusion_repository.dart';
 import 'package:splitbae/core/domain/ledger_ids.dart';
+import 'package:splitbae/core/domain/posted_bill_summary.dart';
 import 'package:splitbae/core/domain/ledger_line_item.dart';
 import 'package:splitbae/core/domain/participant_entry.dart';
 import 'package:splitbae/core/providers/database_providers.dart';
@@ -22,6 +24,7 @@ import 'package:splitbae/money_format.dart';
 import 'package:splitbae/providers.dart';
 import 'package:splitbae/screens/draft_split_screen.dart';
 import 'package:splitbae/widgets/add_receipt_item_sheet.dart';
+import 'package:splitbae/widgets/item_assignee_chips.dart';
 import 'package:splitbae/widgets/draft_paid_by_compact.dart';
 import 'package:splitbae/widgets/who_paid_sheet.dart';
 
@@ -34,6 +37,39 @@ Future<void> showAddTransactionSheet(BuildContext context) {
     backgroundColor: Colors.transparent,
     builder: (ctx) => _AddTransactionSheetBody(hostContext: context),
   );
+}
+
+/// v0 [add-expense-sheet] “Frequent / Also” row: co-occurrence from posted bills.
+List<ParticipantEntry> recommendedSplitPartnersForAddTransaction({
+  required List<PostedBillSummary> bills,
+  required List<ParticipantEntry> allPeople,
+  required Set<String> selectedIds,
+}) {
+  if (allPeople.length <= 1) return [];
+  final unselected =
+      allPeople.where((p) => !selectedIds.contains(p.id)).toList();
+  if (unselected.isEmpty) return [];
+  final scores = <String, int>{};
+  for (final s in bills) {
+    final ids = s.participantIds.toSet();
+    if (selectedIds.isEmpty) {
+      for (final id in ids) {
+        scores[id] = (scores[id] ?? 0) + 1;
+      }
+    } else {
+      if (!selectedIds.any(ids.contains)) continue;
+      for (final id in ids) {
+        if (selectedIds.contains(id)) continue;
+        scores[id] = (scores[id] ?? 0) + 1;
+      }
+    }
+  }
+  unselected.sort((a, b) {
+    final d = (scores[b.id] ?? 0).compareTo(scores[a.id] ?? 0);
+    if (d != 0) return d;
+    return a.displayName.compareTo(b.displayName);
+  });
+  return unselected.take(3).toList();
 }
 
 class _AddTransactionSheetBody extends ConsumerStatefulWidget {
@@ -54,6 +90,9 @@ class _AddTransactionSheetBodyState
   String _category = 'food';
   String? _receiptPath;
   String? _suggestedCategory;
+  final _peopleSearchCtrl = TextEditingController();
+  final _peopleSearchFocus = FocusNode();
+  bool _peopleMenuOpen = false;
 
   static const _categories = <String>[
     'food',
@@ -67,9 +106,19 @@ class _AddTransactionSheetBodyState
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _peopleSearchFocus.addListener(() {
+      setState(() => _peopleMenuOpen = _peopleSearchFocus.hasFocus);
+    });
+  }
+
+  @override
   void dispose() {
     _desc.dispose();
     _tax.dispose();
+    _peopleSearchCtrl.dispose();
+    _peopleSearchFocus.dispose();
     super.dispose();
   }
 
@@ -211,6 +260,49 @@ class _AddTransactionSheetBodyState
     setState(() => _receiptPath = file.path);
   }
 
+  Future<void> _addPersonFromSearch() async {
+    final name = _peopleSearchCtrl.text.trim();
+    if (name.isEmpty) return;
+    final before = ref.read(participantsProvider).map((e) => e.id).toSet();
+    await ref.read(participantsProvider.notifier).addParticipant(name);
+    if (!mounted) return;
+    final after = ref.read(participantsProvider);
+    final newIds = after.map((e) => e.id).toSet().difference(before);
+    if (newIds.isEmpty) return;
+    final newId = newIds.first;
+    final active = await ref.read(draftBillActiveParticipantsProvider.future);
+    final activeIds = active.map((e) => e.id).toSet();
+    if (!activeIds.contains(newId)) {
+      await DraftBillInclusionRepository(ref.read(appDatabaseProvider))
+          .setIncludedParticipants(kDefaultLedgerId, {...activeIds, newId});
+      ref.read(draftBillInclusionRevisionProvider.notifier).state++;
+      await ref.read(itemsProvider.notifier).reloadFromDatabase();
+      ref.read(draftPaymentsDbRevisionProvider.notifier).state++;
+    }
+    if (!mounted) return;
+    _peopleSearchCtrl.clear();
+    FocusScope.of(context).unfocus();
+    setState(() {});
+    HapticFeedback.selectionClick();
+  }
+
+  Future<void> _selectCategory(String id) async {
+    setState(() {
+      _category = id;
+      _suggestedCategory = null;
+    });
+    if (id != 'settlement') return;
+    final active = await ref.read(draftBillActiveParticipantsProvider.future);
+    if (!mounted) return;
+    if (active.length >= 2) {
+      final a = active[0].displayName.split(RegExp(r'\s+')).first;
+      final b = active[1].displayName.split(RegExp(r'\s+')).first;
+      _desc.text = 'Settlement: $a → $b';
+    } else {
+      _desc.text = 'Settlement';
+    }
+  }
+
   Future<void> _post(AppLocalizations l10n) async {
     final messenger = ScaffoldMessenger.of(widget.hostContext);
     final items = ref.read(itemsProvider);
@@ -259,12 +351,245 @@ class _AddTransactionSheetBodyState
     }
   }
 
+  Widget _buildPeopleSplittingSection({
+    required BuildContext context,
+    required AppLocalizations l10n,
+    required ColorScheme scheme,
+    required List<PostedBillSummary> bills,
+    required List<ParticipantEntry> allPeople,
+    required List<ParticipantEntry> active,
+  }) {
+    final effectiveIds = active.map((e) => e.id).toSet();
+    final recommended = recommendedSplitPartnersForAddTransaction(
+      bills: bills,
+      allPeople: allPeople,
+      selectedIds: effectiveIds,
+    );
+    final q = _peopleSearchCtrl.text.trim().toLowerCase();
+    final filtered = q.isEmpty
+        ? allPeople
+        : allPeople
+            .where((p) => p.displayName.toLowerCase().contains(q))
+            .toList();
+    final exactNameMatch = q.isNotEmpty &&
+        allPeople.any((p) => p.displayName.toLowerCase() == q);
+    final showAddTile = q.isNotEmpty && !exactNameMatch;
+    final unselectedCount =
+        filtered.where((p) => !effectiveIds.contains(p.id)).length;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          '${l10n.addTransactionWhosSplitting} (${effectiveIds.length})',
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: scheme.onSurfaceVariant,
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          l10n.addTransactionEveryoneIncludedHint,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
+        ),
+        const SizedBox(height: 10),
+        if (allPeople.isEmpty)
+          Text(
+            l10n.itemAssigneesNeedPeople,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+          )
+        else ...[
+          if (active.isNotEmpty)
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final p in active)
+                  InputChip(
+                    label: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 140),
+                      child: Text(
+                        p.displayName,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    avatar: CircleAvatar(
+                      radius: 12,
+                      backgroundColor: scheme.primaryContainer,
+                      child: Text(
+                        splitBaeInitialGrapheme(p.displayName),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: scheme.onPrimaryContainer,
+                        ),
+                      ),
+                    ),
+                    onDeleted: allPeople.length <= 1
+                        ? null
+                        : () => unawaited(
+                              _onToggleSplittingPerson(
+                                ref,
+                                p,
+                                active,
+                                allPeople,
+                              ),
+                            ),
+                  ),
+              ],
+            ),
+          if (recommended.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  Text(
+                    effectiveIds.isEmpty
+                        ? l10n.addTransactionFrequentPartners
+                        : l10n.addTransactionAlsoPartners,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                  ),
+                  const SizedBox(width: 8),
+                  for (final p in recommended)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ActionChip(
+                        avatar: CircleAvatar(
+                          radius: 12,
+                          backgroundColor: scheme.primary.withValues(alpha: 0.22),
+                          child: Text(
+                            splitBaeInitialGrapheme(p.displayName),
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: scheme.primary,
+                            ),
+                          ),
+                        ),
+                        label: Text(
+                          p.displayName.split(RegExp(r'\s+')).first,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        onPressed: allPeople.length <= 1
+                            ? null
+                            : () => unawaited(
+                                  _onToggleSplittingPerson(
+                                    ref,
+                                    p,
+                                    active,
+                                    allPeople,
+                                  ),
+                                ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(height: 10),
+          TextField(
+            controller: _peopleSearchCtrl,
+            focusNode: _peopleSearchFocus,
+            onChanged: (_) => setState(() {}),
+            decoration: InputDecoration(
+              prefixIcon: const Icon(Icons.search, size: 22),
+              hintText: l10n.addTransactionSearchPeopleHint,
+              filled: true,
+              fillColor: scheme.surfaceContainerHighest,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide.none,
+              ),
+            ),
+          ),
+          if (_peopleMenuOpen &&
+              (unselectedCount > 0 || showAddTile)) ...[
+            const SizedBox(height: 8),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: scheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: scheme.outlineVariant.withValues(alpha: 0.45),
+                ),
+              ),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 200),
+                child: ListView(
+                  shrinkWrap: true,
+                  children: [
+                    for (final p in filtered)
+                      if (!effectiveIds.contains(p.id))
+                        ListTile(
+                          dense: true,
+                          leading: CircleAvatar(
+                            child: Text(
+                              splitBaeInitialGrapheme(p.displayName),
+                            ),
+                          ),
+                          title: Text(p.displayName),
+                          onTap: () {
+                            unawaited(
+                              _onToggleSplittingPerson(
+                                ref,
+                                p,
+                                active,
+                                allPeople,
+                              ),
+                            );
+                            _peopleSearchCtrl.clear();
+                            FocusScope.of(context).unfocus();
+                          },
+                        ),
+                    if (showAddTile)
+                      ListTile(
+                        dense: true,
+                        leading: Icon(
+                          Icons.person_add_alt_1,
+                          color: scheme.primary,
+                        ),
+                        title: Text(
+                          l10n.addTransactionAddPersonNamed(
+                            _peopleSearchCtrl.text.trim(),
+                          ),
+                        ),
+                        onTap: () => unawaited(_addPersonFromSearch()),
+                      ),
+                    if (unselectedCount == 0 &&
+                        !showAddTile &&
+                        q.isEmpty &&
+                        allPeople.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Text(
+                          l10n.addTransactionAllPeopleAdded,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: scheme.onSurfaceVariant,
+                              ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ],
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final locale = Localizations.localeOf(context);
     final items = ref.watch(itemsProvider);
     final allPeople = ref.watch(participantsProvider);
+    final billsAsync = ref.watch(postedBillSummariesProvider);
     final activeAsync = ref.watch(draftBillActiveParticipantsProvider);
     final ccy = _primaryCurrency(items);
     final bottom = MediaQuery.viewInsetsOf(context).bottom;
@@ -277,6 +602,7 @@ class _AddTransactionSheetBodyState
     }
     final taxVal = double.tryParse(_tax.text.trim().replaceAll(',', '.')) ?? 0.0;
     final grand = subtotal + (taxVal < 0 ? 0 : taxVal);
+    final activeList = activeAsync.valueOrNull ?? [];
 
     return Theme(
       data: Theme.of(context).copyWith(
@@ -431,12 +757,9 @@ class _AddTransactionSheetBodyState
                                   _categoryLabel(
                                       _suggestedCategory!, l10n),
                                 ),
-                                onPressed: () {
-                                  setState(() {
-                                    _category = _suggestedCategory!;
-                                    _suggestedCategory = null;
-                                  });
-                                },
+                                onPressed: () => unawaited(
+                                  _selectCategory(_suggestedCategory!),
+                                ),
                               ),
                             ],
                           ),
@@ -472,8 +795,7 @@ class _AddTransactionSheetBodyState
                                 ),
                                 selectedColor: scheme.primary,
                                 backgroundColor: bg,
-                                onSelected: (_) =>
-                                    setState(() => _category = id),
+                                onSelected: (_) => unawaited(_selectCategory(id)),
                               );
                             },
                           ),
@@ -529,54 +851,19 @@ class _AddTransactionSheetBodyState
                           onTap: _pickDateTime,
                         ),
                         const SizedBox(height: 20),
-                        _sectionLabel(
-                            context, l10n.addTransactionWhosSplitting),
-                        const SizedBox(height: 8),
-                        Text(
-                          l10n.addTransactionEveryoneIncludedHint,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: scheme.onSurfaceVariant,
-                              ),
-                        ),
-                        const SizedBox(height: 10),
-                        activeAsync.when(
-                          data: (active) {
-                            final effectiveIds =
-                                active.map((e) => e.id).toSet();
-                            return Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: [
-                                for (final p in allPeople)
-                                  FilterChip(
-                                    showCheckmark: false,
-                                    selected: effectiveIds.contains(p.id),
-                                    onSelected: allPeople.length <= 1
-                                        ? null
-                                        : (_) => _onToggleSplittingPerson(
-                                              ref,
-                                              p,
-                                              active,
-                                              allPeople,
-                                            ),
-                                    avatar: CircleAvatar(
-                                      backgroundColor: scheme.primaryContainer,
-                                      child: Text(
-                                        splitBaeInitialGrapheme(p.displayName),
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          color: scheme.onPrimaryContainer,
-                                        ),
-                                      ),
-                                    ),
-                                    label: Text(
-                                      p.displayName,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                              ],
-                            );
-                          },
+                        billsAsync.when(
+                          data: (bills) => activeAsync.when(
+                            data: (active) => _buildPeopleSplittingSection(
+                              context: context,
+                              l10n: l10n,
+                              scheme: scheme,
+                              bills: bills,
+                              allPeople: allPeople,
+                              active: active,
+                            ),
+                            loading: () => const SizedBox(height: 8),
+                            error: (_, _) => const SizedBox.shrink(),
+                          ),
                           loading: () => const SizedBox(height: 8),
                           error: (_, _) => const SizedBox.shrink(),
                         ),
@@ -618,6 +905,7 @@ class _AddTransactionSheetBodyState
                               line: line,
                               locale: locale,
                               scheme: scheme,
+                              activeParticipants: activeList,
                               onTap: () {
                                 showAddReceiptItemSheet(
                                   context,
@@ -831,21 +1119,24 @@ class _AddTransactionSheetBodyState
   }
 }
 
-class _DraftLinePreviewCard extends StatelessWidget {
+class _DraftLinePreviewCard extends ConsumerWidget {
   const _DraftLinePreviewCard({
     required this.line,
     required this.locale,
     required this.scheme,
+    required this.activeParticipants,
     required this.onTap,
   });
 
   final LedgerLineItem line;
   final Locale locale;
   final ColorScheme scheme;
+  final List<ParticipantEntry> activeParticipants;
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final lineStr = formatCurrencyAmount(
       amount: line.receiptItem.price,
       currencyCode: line.receiptItem.currencyCode,
@@ -856,55 +1147,88 @@ class _DraftLinePreviewCard extends StatelessWidget {
       currencyCode: line.receiptItem.currencyCode,
       locale: locale,
     );
+    final assignee = line.assignedParticipantIds.toSet();
+    final caption = assignee.isEmpty
+        ? l10n.addTransactionLineSharedByAll
+        : l10n.addTransactionLineAssignedToCount(assignee.length);
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Material(
         color: scheme.surfaceContainerHighest.withValues(alpha: 0.65),
         borderRadius: BorderRadius.circular(20),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  line.receiptItem.name,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                ),
-                const SizedBox(height: 8),
-                Row(
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            InkWell(
+              onTap: onTap,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _mini(context, AppLocalizations.of(context)!.itemQuantityLabel,
-                        '${line.quantity}'),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _mini(
-                        context,
-                        AppLocalizations.of(context)!.draftBillLineUnitColumn,
-                        unitStr,
-                      ),
+                    Text(
+                      line.receiptItem.name,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
                     ),
-                    _mini(
-                      context,
-                      AppLocalizations.of(context)!.draftBillLineLineTotalColumn,
-                      lineStr,
-                      strong: true,
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        _lineMini(
+                          context,
+                          l10n.itemQuantityLabel,
+                          '${line.quantity}',
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _lineMini(
+                            context,
+                            l10n.draftBillLineUnitColumn,
+                            unitStr,
+                          ),
+                        ),
+                        _lineMini(
+                          context,
+                          l10n.draftBillLineLineTotalColumn,
+                          lineStr,
+                          strong: true,
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
+              ),
             ),
-          ),
+            if (activeParticipants.length > 1)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+                child: ItemAssigneeChips(
+                  participants: activeParticipants,
+                  assigneeIds: assignee,
+                  dense: true,
+                  avatarOnly: true,
+                  showMainLabel: false,
+                  caption: caption,
+                  onAssigneesChanged: (ids) {
+                    unawaited(
+                      ref.read(itemsProvider.notifier).setLineAssignments(
+                            lineId: line.id,
+                            selectedParticipantIds: ids,
+                          ),
+                    );
+                  },
+                ),
+              ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _mini(
+  Widget _lineMini(
     BuildContext context,
     String label,
     String value, {

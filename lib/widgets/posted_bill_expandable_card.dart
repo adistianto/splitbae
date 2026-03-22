@@ -53,6 +53,7 @@ class _PostedBillExpandableCardState extends ConsumerState<PostedBillExpandableC
   Future<void> _shareBill(
     BuildContext context,
     AppLocalizations l10n,
+    WidgetRef ref,
   ) async {
     final t = widget.summary.transaction;
     final title = t.description.trim().isEmpty ? l10n.postBillUntitled : t.description;
@@ -68,9 +69,45 @@ class _PostedBillExpandableCardState extends ConsumerState<PostedBillExpandableC
       currencyCode: t.currencyCode,
       locale: widget.locale,
     );
-    final text = '$title\n$date · $amountLabel';
+    final detail = await ref.read(transactionDetailProvider(t.id).future);
+    final buf = StringBuffer()
+      ..writeln(title)
+      ..writeln('$date · $amountLabel')
+      ..writeln();
+    if (detail != null && detail.lines.isNotEmpty) {
+      buf.writeln('${l10n.transactionDetailTabItems}:');
+      for (final line in detail.lines) {
+        final lineTotal = formatCurrencyAmount(
+          amount: line.receiptItem.price,
+          currencyCode: line.receiptItem.currencyCode,
+          locale: widget.locale,
+        );
+        buf.writeln(
+          '- ${line.receiptItem.name} x${line.quantity}: $lineTotal',
+        );
+      }
+      if (t.taxAmountMinor > 0) {
+        final taxAmt = minorUnitsToAmount(t.taxAmountMinor, t.currencyCode);
+        final taxLabel = formatCurrencyAmount(
+          amount: taxAmt,
+          currencyCode: t.currencyCode,
+          locale: widget.locale,
+        );
+        buf.writeln();
+        buf.writeln('${l10n.addTransactionTaxLabel}: $taxLabel');
+      }
+    }
+    final who = widget.summary.participantIds
+        .map((id) => detail?.participantNames[id] ?? id)
+        .join(', ');
+    if (who.isNotEmpty) {
+      buf.writeln();
+      buf.writeln(who);
+    }
+    buf.writeln();
+    buf.writeln(l10n.appTitle);
     await SharePlus.instance.share(
-      ShareParams(text: text, subject: title),
+      ShareParams(text: buf.toString(), subject: title),
     );
   }
 
@@ -270,58 +307,6 @@ class _PostedBillExpandableCardState extends ConsumerState<PostedBillExpandableC
               ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(4, 0, 4, 4),
-            child: Wrap(
-              spacing: 4,
-              runSpacing: 4,
-              children: [
-                TextButton.icon(
-                  onPressed: () {
-                    HapticFeedback.selectionClick();
-                    _shareBill(context, l10n);
-                  },
-                  icon: const Icon(Icons.share_outlined, size: 18),
-                  label: Text(l10n.billCardShare),
-                ),
-                TextButton.icon(
-                  onPressed: () {
-                    HapticFeedback.selectionClick();
-                    _copyPostedToDraftAndOpenSheet(context, l10n);
-                  },
-                  icon: const Icon(Icons.edit_note_outlined, size: 18),
-                  label: Text(l10n.billCardAdjustDraft),
-                ),
-                TextButton.icon(
-                  onPressed: () {
-                    HapticFeedback.selectionClick();
-                    openTransactionDetailScreen(context, id);
-                  },
-                  icon: const Icon(Icons.open_in_new_outlined, size: 18),
-                  label: Text(l10n.billCardEdit),
-                ),
-                TextButton.icon(
-                  onPressed: () async {
-                    final ok = await _confirmDelete(context, l10n);
-                    if (ok != true || !context.mounted) return;
-                    try {
-                      await ref.read(itemsProvider.notifier).deletePostedBill(id);
-                      HapticFeedback.mediumImpact();
-                    } catch (_) {}
-                  },
-                  icon: Icon(
-                    Icons.delete_outline,
-                    size: 18,
-                    color: Theme.of(context).colorScheme.error,
-                  ),
-                  label: Text(
-                    l10n.billCardDelete,
-                    style: TextStyle(color: Theme.of(context).colorScheme.error),
-                  ),
-                ),
-              ],
-            ),
-          ),
           if (_expanded) ...[
             Divider(
               height: 1,
@@ -410,6 +395,67 @@ class _PostedBillExpandableCardState extends ConsumerState<PostedBillExpandableC
               error: (e, _) => Padding(
                 padding: const EdgeInsets.all(16),
                 child: Text('$e'),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 8, 8, 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        HapticFeedback.selectionClick();
+                        _shareBill(context, l10n, ref);
+                      },
+                      icon: const Icon(Icons.share_outlined, size: 18),
+                      label: Text(l10n.billCardShare),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        HapticFeedback.selectionClick();
+                        _copyPostedToDraftAndOpenSheet(context, l10n);
+                      },
+                      icon: const Icon(Icons.edit_note_outlined, size: 18),
+                      label: Text(l10n.billCardAdjustDraft),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        HapticFeedback.selectionClick();
+                        openTransactionDetailScreen(context, id);
+                      },
+                      icon: const Icon(Icons.open_in_new_outlined, size: 18),
+                      label: Text(l10n.billCardEdit),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton.filledTonal(
+                    onPressed: () async {
+                      final ok = await _confirmDelete(context, l10n);
+                      if (ok != true || !context.mounted) return;
+                      try {
+                        await ref.read(itemsProvider.notifier).deletePostedBill(id);
+                        HapticFeedback.mediumImpact();
+                      } catch (_) {}
+                    },
+                    icon: Icon(
+                      Icons.delete_outline,
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                    tooltip: l10n.billCardDelete,
+                  ),
+                ],
               ),
             ),
           ],

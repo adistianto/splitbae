@@ -24,6 +24,38 @@ class AppLocalizationsId extends AppLocalizations {
   String get settings => 'Pengaturan';
 
   @override
+  String get settingsV0ManagePreferences => 'Kelola preferensi Anda';
+
+  @override
+  String get settingsV0ActivityTitle => 'Aktivitas Anda';
+
+  @override
+  String get settingsV0TotalSpent => 'Total belanja';
+
+  @override
+  String get settingsV0ThisMonth => 'Bulan ini';
+
+  @override
+  String get settingsV0StatTransactions => 'Transaksi';
+
+  @override
+  String get settingsV0StatFriends => 'Teman';
+
+  @override
+  String get settingsV0StatAvgPerTxn => 'Rata/transaksi';
+
+  @override
+  String get settingsV0TopCategories => 'Kategori teratas';
+
+  @override
+  String get settingsV0TopPartner => 'Partner paling sering';
+
+  @override
+  String settingsV0PartnerTxCount(int count) {
+    return '$count tagihan bersama';
+  }
+
+  @override
   String get settingsLanguage => 'Bahasa';
 
   @override
@@ -804,7 +836,33 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get addTransactionEveryoneIncludedHint =>
-      'Ketuk untuk menyertakan atau mengecualikan seseorang dari tagihan ini. Tambah atau hapus anggota trip dari layar bagi tagihan.';
+      'Cari atau ketuk nama; saran dari tagihan yang diposting.';
+
+  @override
+  String get addTransactionSearchPeopleHint => 'Cari atau tambah orang…';
+
+  @override
+  String addTransactionAddPersonNamed(String name) {
+    return 'Tambah \"$name\"';
+  }
+
+  @override
+  String get addTransactionFrequentPartners => 'Sering';
+
+  @override
+  String get addTransactionAlsoPartners => 'Juga';
+
+  @override
+  String get addTransactionLineSharedByAll => 'Dibagi semua';
+
+  @override
+  String addTransactionLineAssignedToCount(int count) {
+    return 'Ditugaskan ke $count';
+  }
+
+  @override
+  String get addTransactionAllPeopleAdded =>
+      'Semua orang sudah ada di tagihan ini.';
 
   @override
   String addTransactionItemsSection(int count) {

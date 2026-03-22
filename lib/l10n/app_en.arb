@@ -20,6 +20,30 @@
   "@settings": {
     "description": "Title for the settings screen and its entry in navigation."
   },
+  "settingsV0ManagePreferences": "Manage your preferences",
+  "@settingsV0ManagePreferences": {
+    "description": "Subtitle under Settings title (v0 settings-tab parity)."
+  },
+  "settingsV0ActivityTitle": "Your activity",
+  "@settingsV0ActivityTitle": {
+    "description": "Heading for the insights card on Settings (posted bills summary)."
+  },
+  "settingsV0TotalSpent": "Total spent",
+  "settingsV0ThisMonth": "This month",
+  "settingsV0StatTransactions": "Transactions",
+  "settingsV0StatFriends": "Friends",
+  "settingsV0StatAvgPerTxn": "Avg/txn",
+  "settingsV0TopCategories": "Top categories",
+  "settingsV0TopPartner": "Most frequent partner",
+  "settingsV0PartnerTxCount": "{count} bills together",
+  "@settingsV0PartnerTxCount": {
+    "description": "Partner insight: how many posted bills included this person.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "settingsLanguage": "Language",
   "@settingsLanguage": {
     "description": "Section header for language / locale preferences."
@@ -947,9 +971,37 @@
   "@addTransactionWhosSplitting": {
     "description": "Section for participants on this bill."
   },
-  "addTransactionEveryoneIncludedHint": "Tap to include or exclude someone from this bill. Add or remove trip members from the draft split screen.",
+  "addTransactionEveryoneIncludedHint": "Search or tap a name; suggestions come from your posted bills.",
   "@addTransactionEveryoneIncludedHint": {
-    "description": "Explains MVP uses all ledger participants."
+    "description": "Short hint under Who's splitting (v0 add-expense-sheet parity)."
+  },
+  "addTransactionSearchPeopleHint": "Search or add person…",
+  "@addTransactionSearchPeopleHint": {
+    "description": "People picker search field in add-transaction sheet."
+  },
+  "addTransactionAddPersonNamed": "Add \"{name}\"",
+  "@addTransactionAddPersonNamed": {
+    "description": "List tile to create a new person from search query.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "addTransactionFrequentPartners": "Frequent",
+  "addTransactionAlsoPartners": "Also",
+  "addTransactionLineSharedByAll": "Shared by all",
+  "addTransactionLineAssignedToCount": "Assigned to {count}",
+  "@addTransactionLineAssignedToCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "addTransactionAllPeopleAdded": "Everyone is already on this bill.",
+  "@addTransactionAllPeopleAdded": {
+    "description": "People picker: no unselected participants left."
   },
   "addTransactionItemsSection": "Items ({count})",
   "@addTransactionItemsSection": {
