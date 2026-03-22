@@ -383,6 +383,22 @@
   "@perPersonTitle": {
     "description": "Section header above the split totals list."
   },
+  "draftSplitPinnedSummaryTitle": "Amount owed",
+  "@draftSplitPinnedSummaryTitle": {
+    "description": "Title on the pinned bottom bar showing per-person split totals from calculateSplit."
+  },
+  "draftSplitTaxFieldLabel": "Tax",
+  "@draftSplitTaxFieldLabel": {
+    "description": "Label for tax amount (minor units) in the draft receipt split."
+  },
+  "draftSplitTipFieldLabel": "Tip",
+  "@draftSplitTipFieldLabel": {
+    "description": "Label for tip amount (minor units) in the draft receipt split."
+  },
+  "draftSplitCalculateError": "Could not update split.",
+  "@draftSplitCalculateError": {
+    "description": "Shown when calculateSplit fails (e.g. invalid receipt)."
+  },
   "settingsDataPrivacy": "Data & privacy",
   "@settingsDataPrivacy": {
     "description": "Section header for storage and encryption preferences."

@@ -642,6 +642,30 @@ abstract class AppLocalizations {
   /// **'Per person'**
   String get perPersonTitle;
 
+  /// Title on the pinned bottom bar showing per-person split totals from calculateSplit.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount owed'**
+  String get draftSplitPinnedSummaryTitle;
+
+  /// Label for tax amount (minor units) in the draft receipt split.
+  ///
+  /// In en, this message translates to:
+  /// **'Tax'**
+  String get draftSplitTaxFieldLabel;
+
+  /// Label for tip amount (minor units) in the draft receipt split.
+  ///
+  /// In en, this message translates to:
+  /// **'Tip'**
+  String get draftSplitTipFieldLabel;
+
+  /// Shown when calculateSplit fails (e.g. invalid receipt).
+  ///
+  /// In en, this message translates to:
+  /// **'Could not update split.'**
+  String get draftSplitCalculateError;
+
   /// Section header for storage and encryption preferences.
   ///
   /// In en, this message translates to:

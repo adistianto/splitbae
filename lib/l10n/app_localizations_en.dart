@@ -322,6 +322,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get perPersonTitle => 'Per person';
 
   @override
+  String get draftSplitPinnedSummaryTitle => 'Amount owed';
+
+  @override
+  String get draftSplitTaxFieldLabel => 'Tax';
+
+  @override
+  String get draftSplitTipFieldLabel => 'Tip';
+
+  @override
+  String get draftSplitCalculateError => 'Could not update split.';
+
+  @override
   String get settingsDataPrivacy => 'Data & privacy';
 
   @override

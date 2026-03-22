@@ -324,6 +324,18 @@ class AppLocalizationsId extends AppLocalizations {
   String get perPersonTitle => 'Per orang';
 
   @override
+  String get draftSplitPinnedSummaryTitle => 'Jumlah terutang';
+
+  @override
+  String get draftSplitTaxFieldLabel => 'Pajak';
+
+  @override
+  String get draftSplitTipFieldLabel => 'Tip';
+
+  @override
+  String get draftSplitCalculateError => 'Tidak bisa memperbarui pembagian.';
+
+  @override
   String get settingsDataPrivacy => 'Data & privasi';
 
   @override
