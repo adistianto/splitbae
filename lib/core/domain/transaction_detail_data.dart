@@ -9,6 +9,7 @@ class TransactionDetailData {
     required this.payments,
     required this.participantNames,
     required this.participantCount,
+    required this.transactionParticipantIds,
   });
 
   final Transaction transaction;
@@ -20,4 +21,7 @@ class TransactionDetailData {
 
   /// Snapshot count from [TransactionParticipants] at post time.
   final int participantCount;
+
+  /// Who was on this bill (same order as [TransactionParticipants] query).
+  final List<String> transactionParticipantIds;
 }

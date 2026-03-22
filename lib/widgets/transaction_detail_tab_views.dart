@@ -18,10 +18,12 @@ class TransactionDetailItemsBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final participants = ref.watch(participantsProvider);
-    final participantRefs = participants
+    final participantRefs = detail.transactionParticipantIds
         .map(
-          (e) => ParticipantRef(id: e.id, displayName: e.displayName),
+          (id) => ParticipantRef(
+            id: id,
+            displayName: detail.participantNames[id] ?? '',
+          ),
         )
         .toList();
     final locale = Localizations.localeOf(context);

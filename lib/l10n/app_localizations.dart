@@ -1315,7 +1315,7 @@ abstract class AppLocalizations {
   /// Explains MVP uses all ledger participants.
   ///
   /// In en, this message translates to:
-  /// **'Everyone in this trip is included. Add people from the draft split screen.'**
+  /// **'Tap to include or exclude someone from this bill. Add or remove trip members from the draft split screen.'**
   String get addTransactionEveryoneIncludedHint;
 
   /// Section header for line items with count.

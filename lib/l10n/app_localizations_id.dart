@@ -697,7 +697,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get addTransactionEveryoneIncludedHint =>
-      'Semua orang di trip ini ikut. Tambah orang dari layar bagi tagihan.';
+      'Ketuk untuk menyertakan atau mengecualikan seseorang dari tagihan ini. Tambah atau hapus anggota trip dari layar bagi tagihan.';
 
   @override
   String addTransactionItemsSection(int count) {

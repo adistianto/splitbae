@@ -253,7 +253,8 @@ class _AddItemFormCupertinoState extends ConsumerState<_AddItemFormCupertino> {
   Future<void> _addOcrLinesToDraft(
     List<ReceiptLineCandidate> candidates,
   ) async {
-    final participants = ref.read(participantsProvider);
+    final participants =
+        await ref.read(draftBillActiveParticipantsProvider.future);
     final allIds = participants.map((e) => e.id).toSet();
     final notifier = ref.read(itemsProvider.notifier);
     for (final c in candidates) {
@@ -460,7 +461,10 @@ class _AddItemFormCupertinoState extends ConsumerState<_AddItemFormCupertino> {
           Material(
             color: Colors.transparent,
             child: ItemAssigneeChips(
-              participants: ref.watch(participantsProvider),
+              participants: ref
+                      .watch(draftBillActiveParticipantsProvider)
+                      .valueOrNull ??
+                  [],
               assigneeIds: _assigneeIds,
               dense: true,
               onAssigneesChanged: (ids) => setState(() => _assigneeIds = ids),
@@ -603,7 +607,8 @@ class _AddItemFormMaterialState extends ConsumerState<_AddItemFormMaterial> {
   Future<void> _addOcrLinesToDraft(
     List<ReceiptLineCandidate> candidates,
   ) async {
-    final participants = ref.read(participantsProvider);
+    final participants =
+        await ref.read(draftBillActiveParticipantsProvider.future);
     final allIds = participants.map((e) => e.id).toSet();
     final notifier = ref.read(itemsProvider.notifier);
     for (final c in candidates) {
@@ -796,7 +801,10 @@ class _AddItemFormMaterialState extends ConsumerState<_AddItemFormMaterial> {
             ),
             const SizedBox(height: 16),
             ItemAssigneeChips(
-              participants: ref.watch(participantsProvider),
+              participants: ref
+                      .watch(draftBillActiveParticipantsProvider)
+                      .valueOrNull ??
+                  [],
               assigneeIds: _assigneeIds,
               dense: true,
               onAssigneesChanged: (ids) => setState(() => _assigneeIds = ids),

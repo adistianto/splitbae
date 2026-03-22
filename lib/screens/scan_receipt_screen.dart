@@ -294,7 +294,8 @@ class _ScanReceiptScreenState extends ConsumerState<ScanReceiptScreen> {
     }
 
     final notifier = ref.read(itemsProvider.notifier);
-    final participants = ref.read(participantsProvider);
+    final participants =
+        await ref.read(draftBillActiveParticipantsProvider.future);
     final allIds = participants.map((e) => e.id).toSet();
     final id = await notifier.addItem(
       c.label,

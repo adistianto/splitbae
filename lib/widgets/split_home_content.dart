@@ -238,6 +238,7 @@ class SplitHomeContent extends ConsumerWidget {
     final locale = Localizations.localeOf(context);
     final items = ref.watch(itemsProvider);
     final participants = ref.watch(participantsProvider);
+    final activeAsync = ref.watch(draftBillActiveParticipantsProvider);
 
     final intro = Padding(
       padding: EdgeInsets.fromLTRB(horizontalPadding, 12, horizontalPadding, 4),
@@ -267,8 +268,6 @@ class SplitHomeContent extends ConsumerWidget {
       ),
     );
 
-    final lineCards = _lineCards(context, ref, items, participants, locale);
-
     final perPersonHeader = Padding(
       padding: EdgeInsets.fromLTRB(horizontalPadding, 20, horizontalPadding, 8),
       child: Text(
@@ -287,8 +286,11 @@ class SplitHomeContent extends ConsumerWidget {
       ),
     );
 
-    Widget splitPane(AsyncValue<List<SplitResult>> async) {
-      if (participants.isEmpty) {
+    Widget splitPane(
+      AsyncValue<List<SplitResult>> async,
+      List<ParticipantEntry> activeParticipants,
+    ) {
+      if (activeParticipants.isEmpty) {
         return Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -312,66 +314,79 @@ class SplitHomeContent extends ConsumerWidget {
       );
     }
 
-    final billChildren = <Widget>[
-      intro,
-      if (items.isNotEmpty && participants.isNotEmpty)
-        Padding(
-          padding: EdgeInsets.fromLTRB(
-            horizontalPadding,
-            8,
-            horizontalPadding,
-            4,
-          ),
-          child: FilledButton.tonal(
-            onPressed: () => showPostBillSheet(context, ref),
-            child: Text(l10n.postBillAction),
-          ),
-        ),
-      billHeader,
-      if (items.isEmpty) emptyBill else ...lineCards,
-    ];
+    return activeAsync.when(
+      data: (activeParticipants) {
+        final lineCards =
+            _lineCards(context, ref, items, activeParticipants, locale);
 
-    if (!twoColumn) {
-      return ListView(
-        padding: const EdgeInsets.only(bottom: 88),
-        children: [...billChildren, splitPane(splitAsync)],
-      );
-    }
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Expanded(
-          child: Scrollbar(
-            child: ListView(
-              padding: const EdgeInsets.only(bottom: 24),
-              children: billChildren,
+        final billChildren = <Widget>[
+          intro,
+          if (items.isNotEmpty && participants.isNotEmpty)
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                horizontalPadding,
+                8,
+                horizontalPadding,
+                4,
+              ),
+              child: FilledButton.tonal(
+                onPressed: () => showPostBillSheet(context, ref),
+                child: Text(l10n.postBillAction),
+              ),
             ),
-          ),
-        ),
-        const VerticalDivider(width: 1),
-        Expanded(
-          child: Scrollbar(
-            child: participants.isEmpty
-                ? ListView(
-                    padding: const EdgeInsets.only(bottom: 24),
-                    children: [perPersonHeader, emptyParticipants],
-                  )
-                : splitAsync.when(
-                    data: (results) => ListView(
-                      padding: const EdgeInsets.only(bottom: 24),
-                      children: [
-                        perPersonHeader,
-                        ..._splitCards(context, results, locale),
-                      ],
-                    ),
-                    loading: () =>
-                        const Center(child: CircularProgressIndicator()),
-                    error: (err, stack) => Center(child: Text('Error: $err')),
-                  ),
-          ),
-        ),
-      ],
+          billHeader,
+          if (items.isEmpty) emptyBill else ...lineCards,
+        ];
+
+        if (!twoColumn) {
+          return ListView(
+            padding: const EdgeInsets.only(bottom: 88),
+            children: [
+              ...billChildren,
+              splitPane(splitAsync, activeParticipants),
+            ],
+          );
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: Scrollbar(
+                child: ListView(
+                  padding: const EdgeInsets.only(bottom: 24),
+                  children: billChildren,
+                ),
+              ),
+            ),
+            const VerticalDivider(width: 1),
+            Expanded(
+              child: Scrollbar(
+                child: activeParticipants.isEmpty
+                    ? ListView(
+                        padding: const EdgeInsets.only(bottom: 24),
+                        children: [perPersonHeader, emptyParticipants],
+                      )
+                    : splitAsync.when(
+                        data: (results) => ListView(
+                          padding: const EdgeInsets.only(bottom: 24),
+                          children: [
+                            perPersonHeader,
+                            ..._splitCards(context, results, locale),
+                          ],
+                        ),
+                        loading: () =>
+                            const Center(child: CircularProgressIndicator()),
+                        error: (err, stack) =>
+                            Center(child: Text('Error: $err')),
+                      ),
+              ),
+            ),
+          ],
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (err, stack) => Center(child: Text('Error: $err')),
     );
   }
 }

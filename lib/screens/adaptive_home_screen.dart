@@ -43,7 +43,8 @@ class _AdaptiveHomeScreenState extends ConsumerState<AdaptiveHomeScreen> {
     WidgetRef ref,
     List<ReceiptLineCandidate> candidates,
   ) async {
-    final participants = ref.read(participantsProvider);
+    final participants =
+        await ref.read(draftBillActiveParticipantsProvider.future);
     final allIds = participants.map((e) => e.id).toSet();
     final notifier = ref.read(itemsProvider.notifier);
     for (final c in candidates) {

@@ -199,7 +199,7 @@
   "addTransactionYesterday": "Kemarin",
   "addTransactionDateTimeSection": "Tanggal",
   "addTransactionWhosSplitting": "Siapa yang patungan?",
-  "addTransactionEveryoneIncludedHint": "Semua orang di trip ini ikut. Tambah orang dari layar bagi tagihan.",
+  "addTransactionEveryoneIncludedHint": "Ketuk untuk menyertakan atau mengecualikan seseorang dari tagihan ini. Tambah atau hapus anggota trip dari layar bagi tagihan.",
   "addTransactionItemsSection": "Item ({count})",
   "addTransactionAddLineItem": "Tambah item",
   "addTransactionTaxSplitHint": "Dibagi proporsional ke peserta",

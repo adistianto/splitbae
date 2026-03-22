@@ -151,6 +151,22 @@ class ReceiptLineAssignments extends Table {
   Set<Column<Object>> get primaryKey => {lineId, participantId};
 }
 
+/// Explicit subset of ledger participants on the **draft** bill. **No rows**
+/// means everyone on the ledger splits this bill.
+@TableIndex(
+  name: 'idx_draft_included_ledger',
+  columns: {#ledgerId},
+)
+class DraftBillIncludedParticipants extends Table {
+  TextColumn get ledgerId =>
+      text().references(Ledgers, #id, onDelete: KeyAction.cascade)();
+  TextColumn get participantId =>
+      text().references(Participants, #id, onDelete: KeyAction.cascade)();
+
+  @override
+  Set<Column<Object>> get primaryKey => {ledgerId, participantId};
+}
+
 @DriftDatabase(
   tables: [
     Ledgers,
@@ -161,13 +177,14 @@ class ReceiptLineAssignments extends Table {
     SettlementTransfers,
     ReceiptLines,
     ReceiptLineAssignments,
+    DraftBillIncludedParticipants,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -229,6 +246,10 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 7) {
         await m.addColumn(receiptLines, receiptLines.quantity);
+      }
+      if (from < 8) {
+        await m.createTable(draftBillIncludedParticipants);
+        await m.createIndex(idxDraftIncludedLedger);
       }
     },
   );

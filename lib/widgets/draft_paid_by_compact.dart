@@ -88,7 +88,8 @@ class _DraftPaidByCompactState extends ConsumerState<DraftPaidByCompact> {
     final totalMinor = totals[ccy] ?? 0;
     if (totalMinor <= 0) return;
 
-    final participants = ref.read(participantsProvider);
+    final participants =
+        await ref.read(draftBillActiveParticipantsProvider.future);
     final lineTotals = [
       rust.LineTotalMinor(
         currencyCode: ccy,
@@ -152,9 +153,10 @@ class _DraftPaidByCompactState extends ConsumerState<DraftPaidByCompact> {
     final scheme = Theme.of(context).colorScheme;
 
     ref.watch(itemsProvider);
+    ref.watch(draftBillInclusionRevisionProvider);
     final payAsync = ref.watch(draftTransactionPaymentsProvider);
     final payments = payAsync.asData?.value ?? <TransactionPayment>[];
-    final people = ref.watch(participantsProvider);
+    final peopleAsync = ref.watch(draftBillActiveParticipantsProvider);
 
     ref.listen<AsyncValue<List<TransactionPayment>>>(
       draftTransactionPaymentsProvider,
@@ -169,7 +171,8 @@ class _DraftPaidByCompactState extends ConsumerState<DraftPaidByCompact> {
               .where((p) => p.currencyCode == ccy && p.amountMinor > 0)
               .map((p) => p.participantId)
               .toSet();
-          final currentPeople = ref.read(participantsProvider);
+          final currentPeople =
+              ref.read(draftBillActiveParticipantsProvider).valueOrNull ?? [];
           if (payers.length > 1) {
             setState(() {
               _mode = _PaidMode.split;
@@ -191,10 +194,38 @@ class _DraftPaidByCompactState extends ConsumerState<DraftPaidByCompact> {
     final positive = totals.entries.where((e) => e.value > 0).toList()
       ..sort((a, b) => a.key.compareTo(b.key));
 
-    if (people.isEmpty || positive.isEmpty) {
-      return const SizedBox.shrink();
-    }
+    return peopleAsync.when(
+      data: (people) {
+        if (people.isEmpty || positive.isEmpty) {
+          return const SizedBox.shrink();
+        }
 
+        return _paidByBody(
+          context,
+          ref,
+          l10n,
+          locale,
+          scheme,
+          people,
+          positive,
+          payments,
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
+    );
+  }
+
+  Widget _paidByBody(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l10n,
+    Locale locale,
+    ColorScheme scheme,
+    List<ParticipantEntry> people,
+    List<MapEntry<String, int>> positive,
+    List<TransactionPayment> payments,
+  ) {
     if (positive.length > 1) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

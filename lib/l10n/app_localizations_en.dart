@@ -691,7 +691,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get addTransactionEveryoneIncludedHint =>
-      'Everyone in this trip is included. Add people from the draft split screen.';
+      'Tap to include or exclude someone from this bill. Add or remove trip members from the draft split screen.';
 
   @override
   String addTransactionItemsSection(int count) {

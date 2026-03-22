@@ -52,7 +52,7 @@ class _WhoPaidSheetState extends ConsumerState<WhoPaidSheet> {
   @override
   void initState() {
     super.initState();
-    _load();
+    Future.microtask(() => _load());
   }
 
   Future<void> _load() async {
@@ -60,7 +60,7 @@ class _WhoPaidSheetState extends ConsumerState<WhoPaidSheet> {
     final repo = DraftPaymentRepository(db);
     final totals = await repo.draftLineTotalsByCurrency(kDefaultLedgerId);
     final payments = await repo.listForDraft(kDefaultLedgerId);
-    final participants = ref.read(participantsProvider);
+    final participants = await ref.read(draftBillActiveParticipantsProvider.future);
 
     final paid = <String, Map<String, int>>{};
     for (final p in payments) {
@@ -114,7 +114,8 @@ class _WhoPaidSheetState extends ConsumerState<WhoPaidSheet> {
       return;
     }
 
-    final participants = ref.read(participantsProvider);
+    final participants =
+        await ref.read(draftBillActiveParticipantsProvider.future);
     final lineTotals = _totalsByCcy.entries
         .where((e) => e.value > 0)
         .map(
@@ -235,7 +236,14 @@ class _WhoPaidSheetState extends ConsumerState<WhoPaidSheet> {
       );
     }
 
-    final participants = ref.watch(participantsProvider);
+    final participantsAsync = ref.watch(draftBillActiveParticipantsProvider);
+    final participants = participantsAsync.valueOrNull ?? [];
+    if (participantsAsync.isLoading) {
+      return const Padding(
+        padding: EdgeInsets.all(32),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
     if (participants.isEmpty) {
       return Padding(
         padding: const EdgeInsets.all(24),

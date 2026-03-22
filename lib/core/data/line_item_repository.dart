@@ -2,6 +2,8 @@ import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 
 import 'currency_recording.dart';
+import 'draft_bill_inclusion_repository.dart';
+import 'participant_repository.dart';
 import '../database/app_database.dart';
 import '../domain/ledger_ids.dart';
 import '../domain/ledger_line_item.dart';
@@ -27,7 +29,16 @@ class LineItemRepository {
               )
               ..orderBy([(t) => OrderingTerm(expression: t.createdAtMs)]))
             .get();
-    return await _mapRowsToLineItems(rows);
+    final tpRows =
+        await (_db.select(_db.transactionParticipants)
+              ..where((x) => x.transactionId.equals(transactionId)))
+            .get();
+    var effective = tpRows.map((e) => e.participantId).toSet();
+    if (effective.isEmpty) {
+      final all = await ParticipantRepository(_db).listParticipants(ledgerId);
+      effective = all.map((e) => e.id).toSet();
+    }
+    return await _mapRowsToLineItems(rows, effectiveParticipantIds: effective);
   }
 
   /// Lines for the ledger’s **draft** transaction (in-progress bill).
@@ -42,12 +53,17 @@ class LineItemRepository {
               )
               ..orderBy([(t) => OrderingTerm(expression: t.createdAtMs)]))
             .get();
-    return await _mapRowsToLineItems(rows);
+    final all = await ParticipantRepository(_db).listParticipants(ledgerId);
+    final effective = await DraftBillInclusionRepository(
+      _db,
+    ).effectiveIncludedIds(ledgerId, all);
+    return await _mapRowsToLineItems(rows, effectiveParticipantIds: effective);
   }
 
   Future<List<LedgerLineItem>> _mapRowsToLineItems(
-    List<ReceiptLine> rows,
-  ) async {
+    List<ReceiptLine> rows, {
+    required Set<String> effectiveParticipantIds,
+  }) async {
     if (rows.isEmpty) return [];
 
     final lineIds = rows.map((r) => r.id).toList();
@@ -61,14 +77,20 @@ class LineItemRepository {
       byLine.putIfAbsent(a.lineId, () => []).add(a.participantId);
     }
 
+    final effective = effectiveParticipantIds;
     return rows
         .map(
-          (row) => LedgerLineItem(
-            id: row.id,
-            receiptItem: _toReceiptItem(row),
-            quantity: row.quantity,
-            assignedParticipantIds: byLine[row.id] ?? const [],
-          ),
+          (row) {
+            final raw = byLine[row.id] ?? const [];
+            final filtered =
+                raw.where((id) => effective.contains(id)).toList();
+            return LedgerLineItem(
+              id: row.id,
+              receiptItem: _toReceiptItem(row),
+              quantity: row.quantity,
+              assignedParticipantIds: filtered,
+            );
+          },
         )
         .toList();
   }

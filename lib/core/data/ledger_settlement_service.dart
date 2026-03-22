@@ -4,6 +4,7 @@ import '../database/app_database.dart';
 import '../domain/ledger_ids.dart';
 import 'amount_minor.dart';
 import 'bill_payment_validation.dart';
+import 'draft_bill_inclusion_repository.dart';
 import 'draft_payment_repository.dart';
 import 'line_item_repository.dart';
 import 'participant_repository.dart';
@@ -33,6 +34,14 @@ class LedgerSettlementService {
 
     if (lines.isEmpty && settlementRows.isEmpty) return [];
 
+    final included = await DraftBillInclusionRepository(
+      _db,
+    ).effectiveIncludedIds(ledgerId, participants);
+    final activeParticipants = participants
+        .where((p) => included.contains(p.id))
+        .toList();
+    if (activeParticipants.isEmpty) return [];
+
     final lineRows = await (_db.select(_db.receiptLines)
           ..where((t) => t.ledgerId.equals(ledgerId))
           ..where((t) => t.transactionId.equals(draftTx)))
@@ -45,7 +54,7 @@ class LedgerSettlementService {
     }
 
     final paymentRows = await DraftPaymentRepository(_db).listForDraft(ledgerId);
-    final payerId = participants.first.id;
+    final payerId = activeParticipants.first.id;
 
     final lineTotalsForValidate = <rust.LineTotalMinor>[];
     for (final e in totalByCcy.entries) {
@@ -103,7 +112,7 @@ class LedgerSettlementService {
             ),
           )
           .toList(),
-      participants: participants
+      participants: activeParticipants
           .map(
             (e) => rust.ParticipantRef(id: e.id, displayName: e.displayName),
           )

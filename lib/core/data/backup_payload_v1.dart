@@ -7,6 +7,7 @@ import '../database/app_database.dart';
 ///
 /// **Version 1**: ledgers, participants, receipt lines, assignments (no tx rows).
 /// **Version 2**: adds transactions and settlement-related tables for v0 parity.
+/// **Version 3**: adds [draftBillIncludedParticipants] for per-bill splitting.
 class BackupPayloadV1 {
   BackupPayloadV1({
     required this.exportedAtUtcMs,
@@ -18,11 +19,12 @@ class BackupPayloadV1 {
     this.transactionParticipants = const [],
     this.transactionPayments = const [],
     this.settlementTransfers = const [],
-    this.formatVersion = 2,
+    this.draftBillIncludedParticipants = const [],
+    this.formatVersion = 3,
   });
 
   static const String formatId = 'splitbae_backup';
-  static const int latestFormatVersion = 2;
+  static const int latestFormatVersion = 3;
 
   final int formatVersion;
   final int exportedAtUtcMs;
@@ -34,6 +36,7 @@ class BackupPayloadV1 {
   final List<TransactionParticipant> transactionParticipants;
   final List<TransactionPayment> transactionPayments;
   final List<SettlementTransfer> settlementTransfers;
+  final List<DraftBillIncludedParticipant> draftBillIncludedParticipants;
 
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
@@ -52,6 +55,8 @@ class BackupPayloadV1 {
           transactionPayments.map((e) => e.toJson()).toList(),
       'settlementTransfers':
           settlementTransfers.map((e) => e.toJson()).toList(),
+      'draftBillIncludedParticipants':
+          draftBillIncludedParticipants.map((e) => e.toJson()).toList(),
     };
   }
 
@@ -101,6 +106,10 @@ class BackupPayloadV1 {
       transactionPayments: _parseTxPayments(version, json['transactionPayments']),
       settlementTransfers:
           _parseSettlementTransfers(version, json['settlementTransfers']),
+      draftBillIncludedParticipants: _parseDraftIncluded(
+        version,
+        json['draftBillIncludedParticipants'],
+      ),
     );
   }
 
@@ -162,6 +171,20 @@ class BackupPayloadV1 {
     return raw
         .map(
           (e) => SettlementTransfer.fromJson(
+            Map<String, dynamic>.from(e as Map),
+          ),
+        )
+        .toList();
+  }
+
+  static List<DraftBillIncludedParticipant> _parseDraftIncluded(
+    int version,
+    Object? raw,
+  ) {
+    if (version < 3 || raw is! List) return const [];
+    return raw
+        .map(
+          (e) => DraftBillIncludedParticipant.fromJson(
             Map<String, dynamic>.from(e as Map),
           ),
         )

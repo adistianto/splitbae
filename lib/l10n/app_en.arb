@@ -878,7 +878,7 @@
   "@addTransactionWhosSplitting": {
     "description": "Section for participants on this bill."
   },
-  "addTransactionEveryoneIncludedHint": "Everyone in this trip is included. Add people from the draft split screen.",
+  "addTransactionEveryoneIncludedHint": "Tap to include or exclude someone from this bill. Add or remove trip members from the draft split screen.",
   "@addTransactionEveryoneIncludedHint": {
     "description": "Explains MVP uses all ledger participants."
   },

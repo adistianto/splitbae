@@ -38,12 +38,14 @@ class TransactionDetailRepository {
     final tpRows = await (_db.select(_db.transactionParticipants)
           ..where((x) => x.transactionId.equals(transactionId)))
         .get();
+    final txParticipantIds = tpRows.map((e) => e.participantId).toList();
     return TransactionDetailData(
       transaction: t,
       lines: lines,
       payments: payments,
       participantNames: names,
       participantCount: tpRows.length,
+      transactionParticipantIds: txParticipantIds,
     );
   }
 }

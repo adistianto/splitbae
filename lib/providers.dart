@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:splitbae/app_settings.dart';
+import 'package:splitbae/core/data/draft_bill_inclusion_repository.dart';
 import 'package:splitbae/core/data/draft_payment_repository.dart';
 import 'package:splitbae/core/data/bill_posting_repository.dart';
 import 'package:splitbae/core/data/ledger_settlement_service.dart';
@@ -35,6 +36,9 @@ void _bumpDraftPaymentsDbRevision(Ref ref) {
 void _bumpPostedBillsFeedRevision(Ref ref) {
   ref.read(postedBillsFeedRevisionProvider.notifier).state++;
 }
+
+/// Bumped when draft “who’s splitting” inclusion changes (DB + payments).
+final draftBillInclusionRevisionProvider = StateProvider<int>((ref) => 0);
 
 class ItemsNotifier extends StateNotifier<List<LedgerLineItem>> {
   ItemsNotifier(this._ref) : super(const []) {
@@ -105,12 +109,15 @@ class ItemsNotifier extends StateNotifier<List<LedgerLineItem>> {
     required String lineId,
     required Set<String> selectedParticipantIds,
   }) async {
-    final participants = _ref.read(participantsProvider);
+    final all = _ref.read(participantsProvider);
+    final effective = await DraftBillInclusionRepository(
+      _ref.read(appDatabaseProvider),
+    ).effectiveIncludedIds(kDefaultLedgerId, all);
     final repo = _ref.read(lineItemRepositoryProvider);
     await repo.replaceLineAssignments(
       lineId: lineId,
       selectedParticipantIds: selectedParticipantIds,
-      allParticipantIds: participants.map((e) => e.id).toSet(),
+      allParticipantIds: effective,
     );
     await _load();
   }
@@ -202,8 +209,20 @@ final participantsProvider =
       return ParticipantsNotifier(ref);
     });
 
+/// Ledger participants **on the current draft bill** (subset when toggled).
+final draftBillActiveParticipantsProvider =
+    FutureProvider<List<ParticipantEntry>>((ref) async {
+  ref.watch(participantsProvider);
+  ref.watch(draftBillInclusionRevisionProvider);
+  final all = ref.read(participantsProvider);
+  final ids = await DraftBillInclusionRepository(
+    ref.read(appDatabaseProvider),
+  ).effectiveIncludedIds(kDefaultLedgerId, all);
+  return all.where((p) => ids.contains(p.id)).toList();
+});
+
 final splitProvider = FutureProvider<List<SplitResult>>((ref) async {
-  final participants = ref.watch(participantsProvider);
+  final participants = await ref.watch(draftBillActiveParticipantsProvider.future);
   final items = ref.watch(itemsProvider);
   return calculateSplitAssigned(
     lines: items
@@ -268,7 +287,14 @@ final postedTransactionSplitProvider =
   return detailAsync.when(
     data: (d) {
       if (d == null || d.lines.isEmpty) return [];
-      final participants = ref.watch(participantsProvider);
+      final refs = d.transactionParticipantIds
+          .map(
+            (id) => ParticipantRef(
+              id: id,
+              displayName: d.participantNames[id] ?? '',
+            ),
+          )
+          .toList();
       return calculateSplitAssigned(
         lines: d.lines
             .map(
@@ -278,11 +304,7 @@ final postedTransactionSplitProvider =
               ),
             )
             .toList(),
-        participants: participants
-            .map(
-              (e) => ParticipantRef(id: e.id, displayName: e.displayName),
-            )
-            .toList(),
+        participants: refs,
       );
     },
     loading: () => [],
@@ -295,6 +317,7 @@ final suggestedSettlementEdgesProvider =
     FutureProvider.autoDispose<List<SettlementEdge>>((ref) async {
   ref.watch(itemsProvider);
   ref.watch(participantsProvider);
+  ref.watch(draftBillInclusionRevisionProvider);
   ref.watch(settlementTransfersListProvider);
   ref.watch(draftTransactionPaymentsProvider);
   final svc = LedgerSettlementService(ref.watch(appDatabaseProvider));

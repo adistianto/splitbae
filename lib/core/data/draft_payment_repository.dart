@@ -3,6 +3,7 @@ import 'package:uuid/uuid.dart';
 
 import '../database/app_database.dart';
 import '../domain/ledger_ids.dart';
+import '../domain/participant_entry.dart';
 import 'participant_repository.dart';
 
 /// Draft bill `transaction_payments` rows (per participant × currency).
@@ -10,6 +11,21 @@ class DraftPaymentRepository {
   DraftPaymentRepository(this._db);
 
   final AppDatabase _db;
+
+  Future<Set<String>> _effectiveIncludedIds(
+    String ledgerId,
+    List<ParticipantEntry> ledgerParticipants,
+  ) async {
+    final rows =
+        await (_db.select(_db.draftBillIncludedParticipants)
+              ..where((t) => t.ledgerId.equals(ledgerId)))
+            .get();
+    final explicit = rows.map((e) => e.participantId).toSet();
+    if (explicit.isEmpty) {
+      return ledgerParticipants.map((e) => e.id).toSet();
+    }
+    return explicit;
+  }
 
   Future<List<TransactionPayment>> listForDraft(String ledgerId) async {
     final txId = draftTransactionIdForLedger(ledgerId);
@@ -77,7 +93,10 @@ class DraftPaymentRepository {
     final participants = await ParticipantRepository(_db).listParticipants(ledgerId);
     if (participants.isEmpty) return;
 
-    final payerId = participants.first.id;
+    final included = await _effectiveIncludedIds(ledgerId, participants);
+    if (included.isEmpty) return;
+
+    final payerId = participants.firstWhere((p) => included.contains(p.id)).id;
     final uuid = const Uuid();
     await _db.transaction(() async {
       for (final e in totals.entries) {
@@ -98,7 +117,45 @@ class DraftPaymentRepository {
   Future<void> resetToFirstPayerFull(String ledgerId) async {
     final participants = await ParticipantRepository(_db).listParticipants(ledgerId);
     if (participants.isEmpty) return;
-    await setSinglePayerFull(ledgerId, participants.first.id);
+    final included = await _effectiveIncludedIds(ledgerId, participants);
+    if (included.isEmpty) return;
+    final payerId = participants.firstWhere((p) => included.contains(p.id)).id;
+    await setSinglePayerFull(ledgerId, payerId);
+  }
+
+  /// Drops payment rows for participants not on this bill; **Who paid** is reset
+  /// to a single payer when the inclusion set changes.
+  Future<void> syncAfterInclusionChange(
+    String ledgerId,
+    Set<String> includedParticipantIds,
+  ) async {
+    final totals = await draftLineTotalsByCurrency(ledgerId);
+    if (!totals.values.any((v) => v > 0)) {
+      final draftTx = draftTransactionIdForLedger(ledgerId);
+      await (_db.delete(_db.transactionPayments)
+            ..where((t) => t.transactionId.equals(draftTx)))
+          .go();
+      return;
+    }
+    final participants = await ParticipantRepository(_db).listParticipants(ledgerId);
+    if (participants.isEmpty) return;
+    final payerId = participants
+        .firstWhere((p) => includedParticipantIds.contains(p.id))
+        .id;
+    await setSinglePayerFull(ledgerId, payerId);
+  }
+
+  /// Removes draft payment rows whose payers are not in [includedParticipantIds].
+  Future<void> pruneExcludedDraftPayments(
+    String ledgerId,
+    Set<String> includedParticipantIds,
+  ) async {
+    final existing = await listForDraft(ledgerId);
+    final kept = existing
+        .where((r) => includedParticipantIds.contains(r.participantId))
+        .toList();
+    if (kept.length == existing.length) return;
+    await replaceDraftPayments(ledgerId: ledgerId, rows: kept);
   }
 
   /// One participant pays the full line-total for each currency (no tax).

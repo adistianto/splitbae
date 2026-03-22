@@ -6,7 +6,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:splitbae/core/data/amount_minor.dart';
+import 'package:splitbae/core/data/draft_bill_inclusion_repository.dart';
+import 'package:splitbae/core/domain/ledger_ids.dart';
 import 'package:splitbae/core/domain/ledger_line_item.dart';
+import 'package:splitbae/core/domain/participant_entry.dart';
+import 'package:splitbae/core/providers/database_providers.dart';
 import 'package:splitbae/core/suggest/category_from_description.dart';
 import 'package:splitbae/core/theme/splitbae_semantic_colors.dart';
 import 'package:splitbae/core/theme/splitbae_v0_theme.dart';
@@ -89,6 +93,8 @@ class _AddTransactionSheetBodyState
           return l10n.postBillErrorEmpty;
         case 'empty_participants':
           return l10n.postBillErrorNoParticipants;
+        case 'no_one_on_bill':
+          return l10n.postBillErrorNoParticipants;
         default:
           break;
       }
@@ -118,6 +124,43 @@ class _AddTransactionSheetBodyState
     setState(() {
       _when = DateTime(y.year, y.month, y.day, t.hour, t.minute);
     });
+  }
+
+  Future<void> _onToggleSplittingPerson(
+    WidgetRef ref,
+    ParticipantEntry p,
+    List<ParticipantEntry> active,
+    List<ParticipantEntry> allPeople,
+  ) async {
+    if (allPeople.length <= 1) return;
+    final messenger = ScaffoldMessenger.of(widget.hostContext);
+    final l10n = AppLocalizations.of(context)!;
+    final effectiveIds = active.map((e) => e.id).toSet();
+    final next = Set<String>.from(effectiveIds);
+    if (next.contains(p.id)) {
+      if (next.length <= 1) {
+        messenger.showSnackBar(
+          SnackBar(content: Text(l10n.postBillErrorNoParticipants)),
+        );
+        return;
+      }
+      next.remove(p.id);
+    } else {
+      next.add(p.id);
+    }
+    try {
+      await DraftBillInclusionRepository(ref.read(appDatabaseProvider))
+          .setIncludedParticipants(kDefaultLedgerId, next);
+      ref.read(draftBillInclusionRevisionProvider.notifier).state++;
+      await ref.read(itemsProvider.notifier).reloadFromDatabase();
+      ref.read(draftPaymentsDbRevisionProvider.notifier).state++;
+    } catch (e) {
+      if (e is StateError && e.message == 'no_one_on_bill') {
+        messenger.showSnackBar(
+          SnackBar(content: Text(l10n.postBillErrorNoParticipants)),
+        );
+      }
+    }
   }
 
   Future<void> _pickDateTime() async {
@@ -221,7 +264,8 @@ class _AddTransactionSheetBodyState
     final l10n = AppLocalizations.of(context)!;
     final locale = Localizations.localeOf(context);
     final items = ref.watch(itemsProvider);
-    final people = ref.watch(participantsProvider);
+    final allPeople = ref.watch(participantsProvider);
+    final activeAsync = ref.watch(draftBillActiveParticipantsProvider);
     final ccy = _primaryCurrency(items);
     final bottom = MediaQuery.viewInsetsOf(context).bottom;
     final h = MediaQuery.sizeOf(context).height;
@@ -495,28 +539,46 @@ class _AddTransactionSheetBodyState
                               ),
                         ),
                         const SizedBox(height: 10),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            for (final p in people)
-                              Chip(
-                                avatar: CircleAvatar(
-                                  backgroundColor: scheme.primaryContainer,
-                                  child: Text(
-                                    splitBaeInitialGrapheme(p.displayName),
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: scheme.onPrimaryContainer,
+                        activeAsync.when(
+                          data: (active) {
+                            final effectiveIds =
+                                active.map((e) => e.id).toSet();
+                            return Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                for (final p in allPeople)
+                                  FilterChip(
+                                    showCheckmark: false,
+                                    selected: effectiveIds.contains(p.id),
+                                    onSelected: allPeople.length <= 1
+                                        ? null
+                                        : (_) => _onToggleSplittingPerson(
+                                              ref,
+                                              p,
+                                              active,
+                                              allPeople,
+                                            ),
+                                    avatar: CircleAvatar(
+                                      backgroundColor: scheme.primaryContainer,
+                                      child: Text(
+                                        splitBaeInitialGrapheme(p.displayName),
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: scheme.onPrimaryContainer,
+                                        ),
+                                      ),
+                                    ),
+                                    label: Text(
+                                      p.displayName,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
-                                ),
-                                label: Text(
-                                  p.displayName,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                          ],
+                              ],
+                            );
+                          },
+                          loading: () => const SizedBox(height: 8),
+                          error: (_, _) => const SizedBox.shrink(),
                         ),
                         const SizedBox(height: 20),
                         Row(
@@ -660,7 +722,8 @@ class _AddTransactionSheetBodyState
                         Text(
                           l10n.addTransactionDraftSummary(
                             items.length,
-                            people.length,
+                            activeAsync.valueOrNull?.length ??
+                                allPeople.length,
                           ),
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                 color: scheme.onSurfaceVariant,

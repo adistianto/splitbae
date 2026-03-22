@@ -9,6 +9,7 @@ import '../domain/ledger_ids.dart';
 import '../domain/ledger_line_item.dart';
 import '../domain/posted_bill_summary.dart';
 import 'amount_minor.dart';
+import 'draft_bill_inclusion_repository.dart';
 import 'draft_payment_repository.dart';
 import 'line_item_repository.dart';
 import 'participant_repository.dart';
@@ -94,9 +95,20 @@ class BillPostingRepository {
       throw StateError('empty_participants');
     }
 
+    final inclusionRepo = DraftBillInclusionRepository(_db);
+    final includedIds = await inclusionRepo.effectiveIncludedIds(
+      ledgerId,
+      participants,
+    );
+    if (includedIds.isEmpty) {
+      throw StateError('empty_participants');
+    }
+
     final draftPay = DraftPaymentRepository(_db);
+    await draftPay.pruneExcludedDraftPayments(ledgerId, includedIds);
+    var paymentRows = await draftPay.listForDraft(ledgerId);
+
     final totals = await draftPay.draftLineTotalsByCurrency(ledgerId);
-    final paymentRows = await draftPay.listForDraft(ledgerId);
 
     final lineTotalsForValidate = <rust.LineTotalMinor>[];
     for (final e in totals.entries) {
@@ -111,7 +123,8 @@ class BillPostingRepository {
     }
 
     final paymentsForValidate = <rust.DraftPaymentMinor>[];
-    final payerId = participants.first.id;
+    final payerId =
+        participants.firstWhere((p) => includedIds.contains(p.id)).id;
     if (paymentRows.isEmpty) {
       for (final e in totals.entries) {
         if (e.value <= 0) continue;
@@ -126,6 +139,7 @@ class BillPostingRepository {
     } else {
       for (final r in paymentRows) {
         if (r.amountMinor == 0) continue;
+        if (!includedIds.contains(r.participantId)) continue;
         paymentsForValidate.add(
           rust.DraftPaymentMinor(
             participantId: r.participantId,
@@ -136,10 +150,43 @@ class BillPostingRepository {
       }
     }
 
-    rust.validateBillPaymentsSum(
-      lineTotalsMinor: lineTotalsForValidate,
-      payments: paymentsForValidate,
-    );
+    try {
+      rust.validateBillPaymentsSum(
+        lineTotalsMinor: lineTotalsForValidate,
+        payments: paymentsForValidate,
+      );
+    } catch (_) {
+      await draftPay.syncAfterInclusionChange(ledgerId, includedIds);
+      paymentRows = await draftPay.listForDraft(ledgerId);
+      paymentsForValidate.clear();
+      if (paymentRows.isEmpty) {
+        for (final e in totals.entries) {
+          if (e.value <= 0) continue;
+          paymentsForValidate.add(
+            rust.DraftPaymentMinor(
+              participantId: payerId,
+              currencyCode: e.key,
+              amountMinor: PlatformInt64Util.from(e.value),
+            ),
+          );
+        }
+      } else {
+        for (final r in paymentRows) {
+          if (r.amountMinor == 0) continue;
+          paymentsForValidate.add(
+            rust.DraftPaymentMinor(
+              participantId: r.participantId,
+              currencyCode: r.currencyCode,
+              amountMinor: PlatformInt64Util.from(r.amountMinor),
+            ),
+          );
+        }
+      }
+      rust.validateBillPaymentsSum(
+        lineTotalsMinor: lineTotalsForValidate,
+        payments: paymentsForValidate,
+      );
+    }
 
     final primaryCcy = pickDominantCurrencyCode(
       totals,
@@ -167,6 +214,7 @@ class BillPostingRepository {
           );
 
       for (final p in participants) {
+        if (!includedIds.contains(p.id)) continue;
         await _db.into(_db.transactionParticipants).insert(
               TransactionParticipantsCompanion.insert(
                 transactionId: postedId,

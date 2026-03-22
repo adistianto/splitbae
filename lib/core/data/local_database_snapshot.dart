@@ -10,6 +10,7 @@ class LocalDatabaseSnapshot {
     required this.ledgers,
     required this.transactions,
     required this.participants,
+    required this.draftBillIncludedParticipants,
     required this.transactionParticipants,
     required this.transactionPayments,
     required this.settlementTransfers,
@@ -20,6 +21,7 @@ class LocalDatabaseSnapshot {
   final List<Ledger> ledgers;
   final List<Transaction> transactions;
   final List<Participant> participants;
+  final List<DraftBillIncludedParticipant> draftBillIncludedParticipants;
   final List<TransactionParticipant> transactionParticipants;
   final List<TransactionPayment> transactionPayments;
   final List<SettlementTransfer> settlementTransfers;
@@ -37,10 +39,13 @@ class LocalDatabaseSnapshot {
     final receiptLines = await db.select(db.receiptLines).get();
     final receiptLineAssignments =
         await db.select(db.receiptLineAssignments).get();
+    final draftBillIncludedParticipants =
+        await db.select(db.draftBillIncludedParticipants).get();
     return LocalDatabaseSnapshot(
       ledgers: ledgers,
       transactions: transactions,
       participants: participants,
+      draftBillIncludedParticipants: draftBillIncludedParticipants,
       transactionParticipants: transactionParticipants,
       transactionPayments: transactionPayments,
       settlementTransfers: settlementTransfers,
@@ -60,6 +65,9 @@ class LocalDatabaseSnapshot {
       }
       for (final row in participants) {
         await db.into(db.participants).insert(row);
+      }
+      for (final row in draftBillIncludedParticipants) {
+        await db.into(db.draftBillIncludedParticipants).insert(row);
       }
       for (final row in transactionParticipants) {
         await db.into(db.transactionParticipants).insert(row);
@@ -97,6 +105,7 @@ class LocalDatabaseSnapshot {
       ledgers: p.ledgers,
       transactions: p.transactions,
       participants: p.participants,
+      draftBillIncludedParticipants: p.draftBillIncludedParticipants,
       transactionParticipants: p.transactionParticipants,
       transactionPayments: p.transactionPayments,
       settlementTransfers: p.settlementTransfers,
@@ -129,6 +138,7 @@ class LocalDatabaseSnapshot {
       ledgers: p.ledgers,
       transactions: transactions,
       participants: p.participants,
+      draftBillIncludedParticipants: const [],
       transactionParticipants: const [],
       transactionPayments: const [],
       settlementTransfers: const [],
@@ -149,6 +159,7 @@ class LocalDatabaseSnapshot {
       settlementTransfers: settlementTransfers,
       receiptLines: receiptLines,
       receiptLineAssignments: receiptLineAssignments,
+      draftBillIncludedParticipants: draftBillIncludedParticipants,
     );
   }
 
@@ -160,6 +171,7 @@ class LocalDatabaseSnapshot {
       await db.delete(db.transactionPayments).go();
       await db.delete(db.transactionParticipants).go();
       await db.delete(db.settlementTransfers).go();
+      await db.delete(db.draftBillIncludedParticipants).go();
       await db.delete(db.transactions).go();
       await db.delete(db.participants).go();
       await db.delete(db.ledgers).go();

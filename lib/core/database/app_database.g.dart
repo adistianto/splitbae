@@ -3355,6 +3355,251 @@ class ReceiptLineAssignmentsCompanion
   }
 }
 
+class $DraftBillIncludedParticipantsTable extends DraftBillIncludedParticipants
+    with
+        TableInfo<
+          $DraftBillIncludedParticipantsTable,
+          DraftBillIncludedParticipant
+        > {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $DraftBillIncludedParticipantsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _ledgerIdMeta = const VerificationMeta(
+    'ledgerId',
+  );
+  @override
+  late final GeneratedColumn<String> ledgerId = GeneratedColumn<String>(
+    'ledger_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES ledgers (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _participantIdMeta = const VerificationMeta(
+    'participantId',
+  );
+  @override
+  late final GeneratedColumn<String> participantId = GeneratedColumn<String>(
+    'participant_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES participants (id) ON DELETE CASCADE',
+    ),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [ledgerId, participantId];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'draft_bill_included_participants';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<DraftBillIncludedParticipant> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('ledger_id')) {
+      context.handle(
+        _ledgerIdMeta,
+        ledgerId.isAcceptableOrUnknown(data['ledger_id']!, _ledgerIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_ledgerIdMeta);
+    }
+    if (data.containsKey('participant_id')) {
+      context.handle(
+        _participantIdMeta,
+        participantId.isAcceptableOrUnknown(
+          data['participant_id']!,
+          _participantIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_participantIdMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {ledgerId, participantId};
+  @override
+  DraftBillIncludedParticipant map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return DraftBillIncludedParticipant(
+      ledgerId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}ledger_id'],
+      )!,
+      participantId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}participant_id'],
+      )!,
+    );
+  }
+
+  @override
+  $DraftBillIncludedParticipantsTable createAlias(String alias) {
+    return $DraftBillIncludedParticipantsTable(attachedDatabase, alias);
+  }
+}
+
+class DraftBillIncludedParticipant extends DataClass
+    implements Insertable<DraftBillIncludedParticipant> {
+  final String ledgerId;
+  final String participantId;
+  const DraftBillIncludedParticipant({
+    required this.ledgerId,
+    required this.participantId,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['ledger_id'] = Variable<String>(ledgerId);
+    map['participant_id'] = Variable<String>(participantId);
+    return map;
+  }
+
+  DraftBillIncludedParticipantsCompanion toCompanion(bool nullToAbsent) {
+    return DraftBillIncludedParticipantsCompanion(
+      ledgerId: Value(ledgerId),
+      participantId: Value(participantId),
+    );
+  }
+
+  factory DraftBillIncludedParticipant.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return DraftBillIncludedParticipant(
+      ledgerId: serializer.fromJson<String>(json['ledgerId']),
+      participantId: serializer.fromJson<String>(json['participantId']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'ledgerId': serializer.toJson<String>(ledgerId),
+      'participantId': serializer.toJson<String>(participantId),
+    };
+  }
+
+  DraftBillIncludedParticipant copyWith({
+    String? ledgerId,
+    String? participantId,
+  }) => DraftBillIncludedParticipant(
+    ledgerId: ledgerId ?? this.ledgerId,
+    participantId: participantId ?? this.participantId,
+  );
+  DraftBillIncludedParticipant copyWithCompanion(
+    DraftBillIncludedParticipantsCompanion data,
+  ) {
+    return DraftBillIncludedParticipant(
+      ledgerId: data.ledgerId.present ? data.ledgerId.value : this.ledgerId,
+      participantId: data.participantId.present
+          ? data.participantId.value
+          : this.participantId,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DraftBillIncludedParticipant(')
+          ..write('ledgerId: $ledgerId, ')
+          ..write('participantId: $participantId')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(ledgerId, participantId);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is DraftBillIncludedParticipant &&
+          other.ledgerId == this.ledgerId &&
+          other.participantId == this.participantId);
+}
+
+class DraftBillIncludedParticipantsCompanion
+    extends UpdateCompanion<DraftBillIncludedParticipant> {
+  final Value<String> ledgerId;
+  final Value<String> participantId;
+  final Value<int> rowid;
+  const DraftBillIncludedParticipantsCompanion({
+    this.ledgerId = const Value.absent(),
+    this.participantId = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  DraftBillIncludedParticipantsCompanion.insert({
+    required String ledgerId,
+    required String participantId,
+    this.rowid = const Value.absent(),
+  }) : ledgerId = Value(ledgerId),
+       participantId = Value(participantId);
+  static Insertable<DraftBillIncludedParticipant> custom({
+    Expression<String>? ledgerId,
+    Expression<String>? participantId,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (ledgerId != null) 'ledger_id': ledgerId,
+      if (participantId != null) 'participant_id': participantId,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  DraftBillIncludedParticipantsCompanion copyWith({
+    Value<String>? ledgerId,
+    Value<String>? participantId,
+    Value<int>? rowid,
+  }) {
+    return DraftBillIncludedParticipantsCompanion(
+      ledgerId: ledgerId ?? this.ledgerId,
+      participantId: participantId ?? this.participantId,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (ledgerId.present) {
+      map['ledger_id'] = Variable<String>(ledgerId.value);
+    }
+    if (participantId.present) {
+      map['participant_id'] = Variable<String>(participantId.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DraftBillIncludedParticipantsCompanion(')
+          ..write('ledgerId: $ledgerId, ')
+          ..write('participantId: $participantId, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -3370,6 +3615,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ReceiptLinesTable receiptLines = $ReceiptLinesTable(this);
   late final $ReceiptLineAssignmentsTable receiptLineAssignments =
       $ReceiptLineAssignmentsTable(this);
+  late final $DraftBillIncludedParticipantsTable draftBillIncludedParticipants =
+      $DraftBillIncludedParticipantsTable(this);
   late final Index idxParticipantsLedgerId = Index(
     'idx_participants_ledger_id',
     'CREATE INDEX idx_participants_ledger_id ON participants (ledger_id)',
@@ -3402,6 +3649,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     'idx_receipt_line_assignments_line_id',
     'CREATE INDEX idx_receipt_line_assignments_line_id ON receipt_line_assignments (line_id)',
   );
+  late final Index idxDraftIncludedLedger = Index(
+    'idx_draft_included_ledger',
+    'CREATE INDEX idx_draft_included_ledger ON draft_bill_included_participants (ledger_id)',
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3415,6 +3666,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     settlementTransfers,
     receiptLines,
     receiptLineAssignments,
+    draftBillIncludedParticipants,
     idxParticipantsLedgerId,
     idxTransactionsLedgerCreated,
     idxTxParticipantsTx,
@@ -3423,6 +3675,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     idxReceiptLinesLedgerCreated,
     idxReceiptLinesTransactionId,
     idxReceiptLineAssignmentsLineId,
+    idxDraftIncludedLedger,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -3532,6 +3785,30 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         TableUpdate('receipt_line_assignments', kind: UpdateKind.delete),
       ],
     ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'ledgers',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [
+        TableUpdate(
+          'draft_bill_included_participants',
+          kind: UpdateKind.delete,
+        ),
+      ],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'participants',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [
+        TableUpdate(
+          'draft_bill_included_participants',
+          kind: UpdateKind.delete,
+        ),
+      ],
+    ),
   ]);
 }
 
@@ -3632,6 +3909,34 @@ final class $$LedgersTableReferences
     ).filter((f) => f.ledgerId.id.sqlEquals($_itemColumn<String>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_receiptLinesRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<
+    $DraftBillIncludedParticipantsTable,
+    List<DraftBillIncludedParticipant>
+  >
+  _draftBillIncludedParticipantsRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.draftBillIncludedParticipants,
+        aliasName: $_aliasNameGenerator(
+          db.ledgers.id,
+          db.draftBillIncludedParticipants.ledgerId,
+        ),
+      );
+
+  $$DraftBillIncludedParticipantsTableProcessedTableManager
+  get draftBillIncludedParticipantsRefs {
+    final manager = $$DraftBillIncludedParticipantsTableTableManager(
+      $_db,
+      $_db.draftBillIncludedParticipants,
+    ).filter((f) => f.ledgerId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _draftBillIncludedParticipantsRefsTable($_db),
+    );
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -3764,6 +4069,35 @@ class $$LedgersTableFilterComposer
                 $removeJoinBuilderFromRootComposer,
           ),
     );
+    return f(composer);
+  }
+
+  Expression<bool> draftBillIncludedParticipantsRefs(
+    Expression<bool> Function(
+      $$DraftBillIncludedParticipantsTableFilterComposer f,
+    )
+    f,
+  ) {
+    final $$DraftBillIncludedParticipantsTableFilterComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.draftBillIncludedParticipants,
+          getReferencedColumn: (t) => t.ledgerId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$DraftBillIncludedParticipantsTableFilterComposer(
+                $db: $db,
+                $table: $db.draftBillIncludedParticipants,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
     return f(composer);
   }
 }
@@ -3923,6 +4257,35 @@ class $$LedgersTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> draftBillIncludedParticipantsRefs<T extends Object>(
+    Expression<T> Function(
+      $$DraftBillIncludedParticipantsTableAnnotationComposer a,
+    )
+    f,
+  ) {
+    final $$DraftBillIncludedParticipantsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.draftBillIncludedParticipants,
+          getReferencedColumn: (t) => t.ledgerId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$DraftBillIncludedParticipantsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.draftBillIncludedParticipants,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
 }
 
 class $$LedgersTableTableManager
@@ -3943,6 +4306,7 @@ class $$LedgersTableTableManager
             bool transactionsRefs,
             bool settlementTransfersRefs,
             bool receiptLinesRefs,
+            bool draftBillIncludedParticipantsRefs,
           })
         > {
   $$LedgersTableTableManager(_$AppDatabase db, $LedgersTable table)
@@ -3998,6 +4362,7 @@ class $$LedgersTableTableManager
                 transactionsRefs = false,
                 settlementTransfersRefs = false,
                 receiptLinesRefs = false,
+                draftBillIncludedParticipantsRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -4006,6 +4371,8 @@ class $$LedgersTableTableManager
                     if (transactionsRefs) db.transactions,
                     if (settlementTransfersRefs) db.settlementTransfers,
                     if (receiptLinesRefs) db.receiptLines,
+                    if (draftBillIncludedParticipantsRefs)
+                      db.draftBillIncludedParticipants,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -4094,6 +4461,27 @@ class $$LedgersTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (draftBillIncludedParticipantsRefs)
+                        await $_getPrefetchedData<
+                          Ledger,
+                          $LedgersTable,
+                          DraftBillIncludedParticipant
+                        >(
+                          currentTable: table,
+                          referencedTable: $$LedgersTableReferences
+                              ._draftBillIncludedParticipantsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$LedgersTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).draftBillIncludedParticipantsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.ledgerId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -4119,6 +4507,7 @@ typedef $$LedgersTableProcessedTableManager =
         bool transactionsRefs,
         bool settlementTransfersRefs,
         bool receiptLinesRefs,
+        bool draftBillIncludedParticipantsRefs,
       })
     >;
 typedef $$ParticipantsTableCreateCompanionBuilder =
@@ -4307,6 +4696,34 @@ final class $$ParticipantsTableReferences
       manager.$state.copyWith(prefetchedData: cache),
     );
   }
+
+  static MultiTypedResultKey<
+    $DraftBillIncludedParticipantsTable,
+    List<DraftBillIncludedParticipant>
+  >
+  _draftBillIncludedParticipantsRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.draftBillIncludedParticipants,
+        aliasName: $_aliasNameGenerator(
+          db.participants.id,
+          db.draftBillIncludedParticipants.participantId,
+        ),
+      );
+
+  $$DraftBillIncludedParticipantsTableProcessedTableManager
+  get draftBillIncludedParticipantsRefs {
+    final manager = $$DraftBillIncludedParticipantsTableTableManager(
+      $_db,
+      $_db.draftBillIncludedParticipants,
+    ).filter((f) => f.participantId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _draftBillIncludedParticipantsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
 }
 
 class $$ParticipantsTableFilterComposer
@@ -4479,6 +4896,35 @@ class $$ParticipantsTableFilterComposer
               }) => $$ReceiptLineAssignmentsTableFilterComposer(
                 $db: $db,
                 $table: $db.receiptLineAssignments,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
+
+  Expression<bool> draftBillIncludedParticipantsRefs(
+    Expression<bool> Function(
+      $$DraftBillIncludedParticipantsTableFilterComposer f,
+    )
+    f,
+  ) {
+    final $$DraftBillIncludedParticipantsTableFilterComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.draftBillIncludedParticipants,
+          getReferencedColumn: (t) => t.participantId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$DraftBillIncludedParticipantsTableFilterComposer(
+                $db: $db,
+                $table: $db.draftBillIncludedParticipants,
                 $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
                 joinBuilder: joinBuilder,
                 $removeJoinBuilderFromRootComposer:
@@ -4720,6 +5166,35 @@ class $$ParticipantsTableAnnotationComposer
         );
     return f(composer);
   }
+
+  Expression<T> draftBillIncludedParticipantsRefs<T extends Object>(
+    Expression<T> Function(
+      $$DraftBillIncludedParticipantsTableAnnotationComposer a,
+    )
+    f,
+  ) {
+    final $$DraftBillIncludedParticipantsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.draftBillIncludedParticipants,
+          getReferencedColumn: (t) => t.participantId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$DraftBillIncludedParticipantsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.draftBillIncludedParticipants,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
 }
 
 class $$ParticipantsTableTableManager
@@ -4742,6 +5217,7 @@ class $$ParticipantsTableTableManager
             bool settlement_from_participant,
             bool settlement_to_participant,
             bool receiptLineAssignmentsRefs,
+            bool draftBillIncludedParticipantsRefs,
           })
         > {
   $$ParticipantsTableTableManager(_$AppDatabase db, $ParticipantsTable table)
@@ -4803,6 +5279,7 @@ class $$ParticipantsTableTableManager
                 settlement_from_participant = false,
                 settlement_to_participant = false,
                 receiptLineAssignmentsRefs = false,
+                draftBillIncludedParticipantsRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -4812,6 +5289,8 @@ class $$ParticipantsTableTableManager
                     if (settlement_from_participant) db.settlementTransfers,
                     if (settlement_to_participant) db.settlementTransfers,
                     if (receiptLineAssignmentsRefs) db.receiptLineAssignments,
+                    if (draftBillIncludedParticipantsRefs)
+                      db.draftBillIncludedParticipants,
                   ],
                   addJoins:
                       <
@@ -4954,6 +5433,27 @@ class $$ParticipantsTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (draftBillIncludedParticipantsRefs)
+                        await $_getPrefetchedData<
+                          Participant,
+                          $ParticipantsTable,
+                          DraftBillIncludedParticipant
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ParticipantsTableReferences
+                              ._draftBillIncludedParticipantsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ParticipantsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).draftBillIncludedParticipantsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.participantId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -4981,6 +5481,7 @@ typedef $$ParticipantsTableProcessedTableManager =
         bool settlement_from_participant,
         bool settlement_to_participant,
         bool receiptLineAssignmentsRefs,
+        bool draftBillIncludedParticipantsRefs,
       })
     >;
 typedef $$TransactionsTableCreateCompanionBuilder =
@@ -8336,6 +8837,392 @@ typedef $$ReceiptLineAssignmentsTableProcessedTableManager =
       ReceiptLineAssignment,
       PrefetchHooks Function({bool lineId, bool participantId})
     >;
+typedef $$DraftBillIncludedParticipantsTableCreateCompanionBuilder =
+    DraftBillIncludedParticipantsCompanion Function({
+      required String ledgerId,
+      required String participantId,
+      Value<int> rowid,
+    });
+typedef $$DraftBillIncludedParticipantsTableUpdateCompanionBuilder =
+    DraftBillIncludedParticipantsCompanion Function({
+      Value<String> ledgerId,
+      Value<String> participantId,
+      Value<int> rowid,
+    });
+
+final class $$DraftBillIncludedParticipantsTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $DraftBillIncludedParticipantsTable,
+          DraftBillIncludedParticipant
+        > {
+  $$DraftBillIncludedParticipantsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $LedgersTable _ledgerIdTable(_$AppDatabase db) =>
+      db.ledgers.createAlias(
+        $_aliasNameGenerator(
+          db.draftBillIncludedParticipants.ledgerId,
+          db.ledgers.id,
+        ),
+      );
+
+  $$LedgersTableProcessedTableManager get ledgerId {
+    final $_column = $_itemColumn<String>('ledger_id')!;
+
+    final manager = $$LedgersTableTableManager(
+      $_db,
+      $_db.ledgers,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_ledgerIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $ParticipantsTable _participantIdTable(_$AppDatabase db) =>
+      db.participants.createAlias(
+        $_aliasNameGenerator(
+          db.draftBillIncludedParticipants.participantId,
+          db.participants.id,
+        ),
+      );
+
+  $$ParticipantsTableProcessedTableManager get participantId {
+    final $_column = $_itemColumn<String>('participant_id')!;
+
+    final manager = $$ParticipantsTableTableManager(
+      $_db,
+      $_db.participants,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_participantIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$DraftBillIncludedParticipantsTableFilterComposer
+    extends Composer<_$AppDatabase, $DraftBillIncludedParticipantsTable> {
+  $$DraftBillIncludedParticipantsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  $$LedgersTableFilterComposer get ledgerId {
+    final $$LedgersTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.ledgerId,
+      referencedTable: $db.ledgers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$LedgersTableFilterComposer(
+            $db: $db,
+            $table: $db.ledgers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$ParticipantsTableFilterComposer get participantId {
+    final $$ParticipantsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.participantId,
+      referencedTable: $db.participants,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ParticipantsTableFilterComposer(
+            $db: $db,
+            $table: $db.participants,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$DraftBillIncludedParticipantsTableOrderingComposer
+    extends Composer<_$AppDatabase, $DraftBillIncludedParticipantsTable> {
+  $$DraftBillIncludedParticipantsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  $$LedgersTableOrderingComposer get ledgerId {
+    final $$LedgersTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.ledgerId,
+      referencedTable: $db.ledgers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$LedgersTableOrderingComposer(
+            $db: $db,
+            $table: $db.ledgers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$ParticipantsTableOrderingComposer get participantId {
+    final $$ParticipantsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.participantId,
+      referencedTable: $db.participants,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ParticipantsTableOrderingComposer(
+            $db: $db,
+            $table: $db.participants,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$DraftBillIncludedParticipantsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $DraftBillIncludedParticipantsTable> {
+  $$DraftBillIncludedParticipantsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  $$LedgersTableAnnotationComposer get ledgerId {
+    final $$LedgersTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.ledgerId,
+      referencedTable: $db.ledgers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$LedgersTableAnnotationComposer(
+            $db: $db,
+            $table: $db.ledgers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$ParticipantsTableAnnotationComposer get participantId {
+    final $$ParticipantsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.participantId,
+      referencedTable: $db.participants,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ParticipantsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.participants,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$DraftBillIncludedParticipantsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $DraftBillIncludedParticipantsTable,
+          DraftBillIncludedParticipant,
+          $$DraftBillIncludedParticipantsTableFilterComposer,
+          $$DraftBillIncludedParticipantsTableOrderingComposer,
+          $$DraftBillIncludedParticipantsTableAnnotationComposer,
+          $$DraftBillIncludedParticipantsTableCreateCompanionBuilder,
+          $$DraftBillIncludedParticipantsTableUpdateCompanionBuilder,
+          (
+            DraftBillIncludedParticipant,
+            $$DraftBillIncludedParticipantsTableReferences,
+          ),
+          DraftBillIncludedParticipant,
+          PrefetchHooks Function({bool ledgerId, bool participantId})
+        > {
+  $$DraftBillIncludedParticipantsTableTableManager(
+    _$AppDatabase db,
+    $DraftBillIncludedParticipantsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$DraftBillIncludedParticipantsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$DraftBillIncludedParticipantsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$DraftBillIncludedParticipantsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> ledgerId = const Value.absent(),
+                Value<String> participantId = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => DraftBillIncludedParticipantsCompanion(
+                ledgerId: ledgerId,
+                participantId: participantId,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String ledgerId,
+                required String participantId,
+                Value<int> rowid = const Value.absent(),
+              }) => DraftBillIncludedParticipantsCompanion.insert(
+                ledgerId: ledgerId,
+                participantId: participantId,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$DraftBillIncludedParticipantsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({ledgerId = false, participantId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (ledgerId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.ledgerId,
+                                referencedTable:
+                                    $$DraftBillIncludedParticipantsTableReferences
+                                        ._ledgerIdTable(db),
+                                referencedColumn:
+                                    $$DraftBillIncludedParticipantsTableReferences
+                                        ._ledgerIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+                    if (participantId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.participantId,
+                                referencedTable:
+                                    $$DraftBillIncludedParticipantsTableReferences
+                                        ._participantIdTable(db),
+                                referencedColumn:
+                                    $$DraftBillIncludedParticipantsTableReferences
+                                        ._participantIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$DraftBillIncludedParticipantsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $DraftBillIncludedParticipantsTable,
+      DraftBillIncludedParticipant,
+      $$DraftBillIncludedParticipantsTableFilterComposer,
+      $$DraftBillIncludedParticipantsTableOrderingComposer,
+      $$DraftBillIncludedParticipantsTableAnnotationComposer,
+      $$DraftBillIncludedParticipantsTableCreateCompanionBuilder,
+      $$DraftBillIncludedParticipantsTableUpdateCompanionBuilder,
+      (
+        DraftBillIncludedParticipant,
+        $$DraftBillIncludedParticipantsTableReferences,
+      ),
+      DraftBillIncludedParticipant,
+      PrefetchHooks Function({bool ledgerId, bool participantId})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -8361,5 +9248,11 @@ class $AppDatabaseManager {
       $$ReceiptLineAssignmentsTableTableManager(
         _db,
         _db.receiptLineAssignments,
+      );
+  $$DraftBillIncludedParticipantsTableTableManager
+  get draftBillIncludedParticipants =>
+      $$DraftBillIncludedParticipantsTableTableManager(
+        _db,
+        _db.draftBillIncludedParticipants,
       );
 }
