@@ -2,21 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:m3e_collection/m3e_collection.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:splitbae/app_settings.dart';
 import 'package:splitbae/core/data/amount_minor.dart';
 import 'package:splitbae/core/domain/bills_insights.dart';
+import 'package:splitbae/core/domain/posted_bill_summary.dart';
 import 'package:splitbae/core/theme/splitbae_semantic_colors.dart';
 import 'package:splitbae/core/theme/splitbae_v0_ui_contract.dart';
-import 'package:splitbae/core/domain/posted_bill_summary.dart';
 import 'package:splitbae/core/widgets/adaptive_app_bar.dart';
+import 'package:splitbae/features/bills/application/bills_provider.dart';
 import 'package:splitbae/l10n/app_localizations.dart';
 import 'package:splitbae/money_format.dart';
-import 'package:splitbae/app_settings.dart';
 import 'package:splitbae/providers.dart';
 import 'package:splitbae/screens/settings_screen.dart';
 import 'package:splitbae/widgets/posted_bill_expandable_card.dart';
 import 'package:splitbae/widgets/splitbae_v0_chrome.dart';
 
-/// Bills dashboard: v0 hero, insight chips, month groups, expandable cards, FAB speed dial.
+/// Bills dashboard: v0 hero (fixed), insight chips, month groups, M3E expense cards.
 class BillsScreen extends ConsumerStatefulWidget {
   const BillsScreen({
     super.key,
@@ -71,8 +74,7 @@ class _BillsScreenState extends ConsumerState<BillsScreen> {
       return false;
     }
     if (_selectedParticipants.isNotEmpty) {
-      final hit =
-          s.participantIds.any(_selectedParticipants.contains);
+      final hit = s.participantIds.any(_selectedParticipants.contains);
       if (!hit) return false;
     }
     return true;
@@ -290,39 +292,39 @@ class _BillsScreenState extends ConsumerState<BillsScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final locale = Localizations.localeOf(context);
-    final async = ref.watch(postedBillSummariesProvider);
+    final all = ref.watch(billsFeedProvider);
     final topPad = MediaQuery.paddingOf(context).top;
     final cs = Theme.of(context).colorScheme;
     final searchText = widget.v0ShellMode
         ? ref.watch(v0ShellSearchQueryProvider)
         : _searchCtrl.text;
 
+    final insights = computeBillsInsights(
+      all,
+      emptyStateCurrencyCode: ref.watch(defaultCurrencyProvider),
+    );
+    final filtered = _applyFiltersAndSearch(all, searchText);
+    final groups = _groupByMonth(filtered);
+    final keys = groups.keys.toList()..sort((a, b) => b.compareTo(a));
+    final noMatches = filtered.isEmpty && all.isNotEmpty;
+
     return Scaffold(
       backgroundColor: cs.surface,
-      body: async.when(
-        data: (all) {
-          final insights = computeBillsInsights(
-            all,
-            emptyStateCurrencyCode: ref.watch(defaultCurrencyProvider),
-          );
-          final filtered =
-              _applyFiltersAndSearch(all, searchText);
-          final groups = _groupByMonth(filtered);
-          final keys = groups.keys.toList()..sort((a, b) => b.compareTo(a));
-          final noMatches = filtered.isEmpty && all.isNotEmpty;
-
-          return Stack(
-            fit: StackFit.expand,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              NotificationListener<ScrollNotification>(
-                onNotification: _handleScroll,
-                child: ListView(
-                  padding: EdgeInsets.only(
-                    left: SplitBaeV0Layout.screenHorizontalPadding,
-                    right: SplitBaeV0Layout.screenHorizontalPadding,
-                    top: topPad + 8,
-                    bottom: SplitBaeV0Layout.listBottomInsetForShell,
-                  ),
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  SplitBaeV0Layout.screenHorizontalPadding,
+                  topPad + 8,
+                  SplitBaeV0Layout.screenHorizontalPadding,
+                  0,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
                       l10n.appTitle,
@@ -349,7 +351,7 @@ class _BillsScreenState extends ConsumerState<BillsScreen> {
                           icon: Badge(
                             isLabelVisible: _hasActiveFilters,
                             smallSize: 8,
-                            child: const Icon(Icons.tune),
+                            child: Icon(PhosphorIconsRegular.slidersHorizontal),
                           ),
                           tooltip: l10n.billsFiltersTitle,
                         ),
@@ -375,210 +377,226 @@ class _BillsScreenState extends ConsumerState<BillsScreen> {
                       ),
                       const SizedBox(height: 12),
                       _InsightChipsRow(insights: insights, locale: locale),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 16),
                     ] else
                       const SizedBox(height: 8),
-                    if (filtered.isEmpty)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 32),
-                        child: Column(
-                          children: [
-                            Icon(
-                              Icons.receipt_long_outlined,
-                              size: 48,
-                              color: cs.onSurfaceVariant,
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              all.isEmpty
-                                  ? l10n.billsEmptyHeroTitle
-                                  : l10n.billsSearchEmpty,
-                              textAlign: TextAlign.center,
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                            if (all.isEmpty) ...[
-                              const SizedBox(height: 8),
-                              Text(
-                                l10n.billsEmptyHeroSubtitle,
-                                textAlign: TextAlign.center,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
-                                    ?.copyWith(
-                                      color: cs.onSurfaceVariant,
-                                    ),
-                              ),
-                            ],
-                            if (noMatches) ...[
-                              const SizedBox(height: 8),
-                              Text(
-                                l10n.billsFiltersAdjustHint,
-                                textAlign: TextAlign.center,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
-                                    ?.copyWith(
-                                      color: cs.onSurfaceVariant,
-                                    ),
-                              ),
-                              if (_hasActiveFilters ||
-                                  searchText.isNotEmpty) ...[
-                                const SizedBox(height: 12),
-                                TextButton(
-                                  onPressed: () {
-                                    setState(() {
-                                      _selectedCategories.clear();
-                                      _selectedParticipants.clear();
-                                      if (widget.v0ShellMode) {
-                                        ref
-                                            .read(
-                                              v0ShellSearchQueryProvider
-                                                  .notifier,
-                                            )
-                                            .state = '';
-                                      } else {
-                                        _searchCtrl.clear();
-                                      }
-                                    });
-                                  },
-                                  child: Text(l10n.billsFiltersClearAll),
-                                ),
-                              ],
-                            ],
-                          ],
-                        ),
-                      )
-                    else
-                      ...[
-                        for (final k in keys) ...[
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 8, top: 8),
-                            child: Row(
-                              children: [
-                                Text(
-                                  DateFormat.yMMMM(
-                                    locale.toString(),
-                                  ).format(k).toUpperCase(),
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .labelLarge
-                                      ?.copyWith(
-                                        color: cs.onSurfaceVariant,
-                                        letterSpacing: 0.8,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          for (final s in groups[k]!)
-                            PostedBillExpandableCard(
-                              key: ValueKey(s.transaction.id),
-                              summary: s,
-                              locale: locale,
-                            ),
-                        ],
-                      ],
                   ],
                 ),
               ),
-              if (!widget.v0ShellMode) ...[
-                Positioned(
-                  top: topPad + 8,
-                  right: 16,
-                  child: AnimatedOpacity(
-                    opacity: _headerChromeVisible ? 1 : 0,
-                    duration: const Duration(milliseconds: 220),
-                    curve: Curves.easeOut,
-                    child: IgnorePointer(
-                      ignoring: !_headerChromeVisible,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          SplitBaeV0CircleIconButton(
-                            icon: _searchOpen ? Icons.close : Icons.search,
-                            semanticLabel: _searchOpen
-                                ? MaterialLocalizations.of(context)
-                                    .closeButtonLabel
-                                : l10n.billsSearchHint,
-                            onPressed: () {
-                              HapticFeedback.selectionClick();
-                              setState(() {
-                                _searchOpen = !_searchOpen;
-                                if (!_searchOpen) {
-                                  _searchCtrl.clear();
-                                }
-                              });
-                            },
-                          ),
-                          const SizedBox(width: 8),
-                          SplitBaeV0CircleIconButton(
-                            icon: Icons.person_outline,
-                            semanticLabel: l10n.settings,
-                            onPressed: () {
-                              HapticFeedback.selectionClick();
-                              Navigator.of(context).push(
-                                MaterialPageRoute<void>(
-                                  builder: (_) => const SettingsScreen(),
+              Expanded(
+                child: NotificationListener<ScrollNotification>(
+                  onNotification: _handleScroll,
+                  child: ListView(
+                    padding: EdgeInsets.fromLTRB(
+                      SplitBaeV0Layout.screenHorizontalPadding,
+                      0,
+                      SplitBaeV0Layout.screenHorizontalPadding,
+                      SplitBaeV0Layout.listBottomInsetForShell,
+                    ),
+                    children: [
+                      if (filtered.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 32),
+                          child: Column(
+                            children: [
+                              Icon(
+                                PhosphorIconsRegular.receipt,
+                                size: 48,
+                                color: cs.onSurfaceVariant,
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                all.isEmpty
+                                    ? l10n.billsEmptyHeroTitle
+                                    : l10n.billsSearchEmpty,
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                              if (all.isEmpty) ...[
+                                const SizedBox(height: 8),
+                                Text(
+                                  l10n.billsEmptyHeroSubtitle,
+                                  textAlign: TextAlign.center,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(
+                                        color: cs.onSurfaceVariant,
+                                      ),
                                 ),
-                              );
-                            },
+                              ],
+                              if (noMatches) ...[
+                                const SizedBox(height: 8),
+                                Text(
+                                  l10n.billsFiltersAdjustHint,
+                                  textAlign: TextAlign.center,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(
+                                        color: cs.onSurfaceVariant,
+                                      ),
+                                ),
+                                if (_hasActiveFilters ||
+                                    searchText.isNotEmpty) ...[
+                                  const SizedBox(height: 12),
+                                  TextButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        _selectedCategories.clear();
+                                        _selectedParticipants.clear();
+                                        if (widget.v0ShellMode) {
+                                          ref
+                                              .read(
+                                                v0ShellSearchQueryProvider
+                                                    .notifier,
+                                              )
+                                              .state = '';
+                                        } else {
+                                          _searchCtrl.clear();
+                                        }
+                                      });
+                                    },
+                                    child: Text(l10n.billsFiltersClearAll),
+                                  ),
+                                ],
+                              ],
+                            ],
                           ),
+                        )
+                      else
+                        ...[
+                          for (final k in keys) ...[
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 8, top: 8),
+                              child: Row(
+                                children: [
+                                  Text(
+                                    DateFormat.yMMMM(
+                                      locale.toString(),
+                                    ).format(k).toUpperCase(),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelLarge
+                                        ?.copyWith(
+                                          color: cs.onSurfaceVariant,
+                                          letterSpacing: 0.8,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            for (final s in groups[k]!)
+                              PostedBillExpandableCard(
+                                key: ValueKey(s.transaction.id),
+                                summary: s,
+                                locale: locale,
+                              ),
+                          ],
                         ],
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (!widget.v0ShellMode) ...[
+            Positioned(
+              top: topPad + 8,
+              right: 16,
+              child: AnimatedOpacity(
+                opacity: _headerChromeVisible ? 1 : 0,
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOut,
+                child: IgnorePointer(
+                  ignoring: !_headerChromeVisible,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SplitBaeV0CircleIconButton(
+                        icon: _searchOpen
+                            ? PhosphorIconsRegular.x
+                            : PhosphorIconsRegular.magnifyingGlass,
+                        semanticLabel: _searchOpen
+                            ? MaterialLocalizations.of(context)
+                                .closeButtonLabel
+                            : l10n.billsSearchHint,
+                        onPressed: () {
+                          HapticFeedback.selectionClick();
+                          setState(() {
+                            _searchOpen = !_searchOpen;
+                            if (!_searchOpen) {
+                              _searchCtrl.clear();
+                            }
+                          });
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      SplitBaeV0CircleIconButton(
+                        icon: PhosphorIconsRegular.user,
+                        semanticLabel: l10n.settings,
+                        onPressed: () {
+                          HapticFeedback.selectionClick();
+                          Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => const SettingsScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            if (_searchOpen)
+              Positioned(
+                top: topPad + 56,
+                left: 16,
+                right: 16,
+                child: Material(
+                  elevation: 8,
+                  borderRadius: BorderRadius.circular(16),
+                  color: cs.surface,
+                  child: TextField(
+                    controller: _searchCtrl,
+                    autofocus: true,
+                    onChanged: (_) => setState(() {}),
+                    decoration: InputDecoration(
+                      hintText: l10n.billsSearchHint,
+                      prefixIcon:
+                          Icon(PhosphorIconsRegular.magnifyingGlass, size: 22),
+                      suffixIcon: _searchCtrl.text.isEmpty
+                          ? null
+                          : IconButton(
+                              icon: Icon(PhosphorIconsRegular.x, size: 20),
+                              onPressed: () {
+                                setState(() => _searchCtrl.clear());
+                              },
+                            ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(color: cs.outlineVariant),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(color: cs.outlineVariant),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(color: cs.primary, width: 2),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 14,
                       ),
                     ),
                   ),
                 ),
-                if (_searchOpen)
-                  Positioned(
-                    top: topPad + 56,
-                    left: 16,
-                    right: 16,
-                    child: Material(
-                      elevation: 8,
-                      borderRadius: BorderRadius.circular(16),
-                      color: cs.surface,
-                      child: TextField(
-                        controller: _searchCtrl,
-                        autofocus: true,
-                        onChanged: (_) => setState(() {}),
-                        decoration: InputDecoration(
-                          hintText: l10n.billsSearchHint,
-                          prefixIcon: const Icon(Icons.search, size: 22),
-                          suffixIcon: _searchCtrl.text.isEmpty
-                              ? null
-                              : IconButton(
-                                  icon: const Icon(Icons.clear, size: 20),
-                                  onPressed: () {
-                                    setState(() => _searchCtrl.clear());
-                                  },
-                                ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide(color: cs.outlineVariant),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide(color: cs.outlineVariant),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide(color: cs.primary, width: 2),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 14,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ],
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('$e')),
+              ),
+          ],
+        ],
       ),
     );
   }
@@ -649,7 +667,11 @@ class _TotalExpensesHero extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Icon(Icons.auto_awesome, size: 16, color: cs.onPrimary.withValues(alpha: 0.85)),
+                  Icon(
+                    PhosphorIconsRegular.sparkle,
+                    size: 16,
+                    color: cs.onPrimary.withValues(alpha: 0.85),
+                  ),
                   const SizedBox(width: 6),
                   Text(
                     l10n.billsTotalExpenses.toUpperCase(),
@@ -754,6 +776,7 @@ class _InsightChipsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final sem = context.splitBaeSemantic;
+    final m3e = context.m3e;
     final chips = <Widget>[];
 
     final sign = insights.weekTrendPercent > 0
@@ -771,18 +794,18 @@ class _InsightChipsRow extends StatelessWidget {
         ? sem.insightTrendWorseBg
         : insights.weekTrendPercent < 0
             ? sem.insightTrendBetterBg
-            : Theme.of(context).colorScheme.surfaceContainerHighest;
+            : m3e.colors.surfaceContainerHighest;
 
     chips.add(
-      _Chip(
+      _M3eInsightChip(
         background: trendBg,
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               insights.weekTrendPercent < 0
-                  ? Icons.south_east
-                  : Icons.north_east,
+                  ? PhosphorIconsRegular.arrowDownRight
+                  : PhosphorIconsRegular.arrowUpRight,
               size: 16,
               color: trendColor,
             ),
@@ -805,12 +828,12 @@ class _InsightChipsRow extends StatelessWidget {
       locale: locale,
     );
     chips.add(
-      _Chip(
+      _M3eInsightChip(
         background: sem.insightTopBg,
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.show_chart, size: 16, color: sem.insightTopFg),
+            Icon(PhosphorIconsRegular.chartLineUp, size: 16, color: sem.insightTopFg),
             const SizedBox(width: 6),
             Text(
               l10n.billsInsightTop(topAmt),
@@ -826,13 +849,13 @@ class _InsightChipsRow extends StatelessWidget {
 
     if (insights.streakDays > 0) {
       chips.add(
-        _Chip(
+        _M3eInsightChip(
           background: sem.insightStreakBg,
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                Icons.local_fire_department,
+                PhosphorIconsRegular.flame,
                 size: 16,
                 color: sem.insightStreakFg,
               ),
@@ -851,15 +874,15 @@ class _InsightChipsRow extends StatelessWidget {
     }
 
     chips.add(
-      _Chip(
-        background: Theme.of(context).colorScheme.surfaceContainerHighest,
+      _M3eInsightChip(
+        background: m3e.colors.surfaceContainerHighest,
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              Icons.receipt_long_outlined,
+              PhosphorIconsRegular.receipt,
               size: 16,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              color: m3e.colors.onSurfaceVariant,
             ),
             const SizedBox(width: 6),
             Text(
@@ -890,8 +913,8 @@ List<Widget> _intersperse(List<Widget> items, Widget spacer) {
   return o;
 }
 
-class _Chip extends StatelessWidget {
-  const _Chip({required this.background, required this.child});
+class _M3eInsightChip extends StatelessWidget {
+  const _M3eInsightChip({required this.background, required this.child});
 
   final Color background;
   final Widget child;
@@ -900,8 +923,9 @@ class _Chip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: background,
-      borderRadius:
-          BorderRadius.circular(SplitBaeV0Layout.insightChipRadius),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(SplitBaeV0Layout.insightChipRadius),
+      ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         child: child,

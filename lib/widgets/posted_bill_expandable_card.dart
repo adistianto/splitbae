@@ -4,12 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:m3e_collection/m3e_collection.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:share_plus/share_plus.dart' show ShareParams, SharePlus;
 import 'package:splitbae/core/data/amount_minor.dart';
 import 'package:splitbae/core/domain/posted_bill_summary.dart';
 import 'package:splitbae/core/theme/splitbae_semantic_colors.dart';
+import 'package:splitbae/core/ui/category_phosphor_icons.dart';
 import 'package:splitbae/core/ui/splitbae_motion.dart';
-import 'package:splitbae/core/ui/category_icons.dart';
 import 'package:splitbae/l10n/app_localizations.dart';
 import 'package:splitbae/money_format.dart';
 import 'package:splitbae/providers.dart';
@@ -192,24 +194,27 @@ class _PostedBillExpandableCardState extends ConsumerState<PostedBillExpandableC
       currencyCode: t.currencyCode,
       locale: widget.locale,
     );
-    final icon = splitBaeCategoryIcon(t.category);
+    final icon = splitBaeCategoryPhosphorIcon(t.category);
     final id = t.id;
     final receiptPath = t.receiptImagePath;
     final (catBg, catFg) = context.splitBaeSemantic.categoryIconColors(t.category);
 
-    final card = Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
-        side: BorderSide(
-          color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.5),
+    final m3e = context.m3e;
+    final card = Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Material(
+        color: m3e.colors.surfaceContainerLow,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(
+            color: m3e.colors.outlineVariant.withValues(alpha: 0.45),
+          ),
         ),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
           InkWell(
             onTap: () {
               HapticFeedback.selectionClick();
@@ -228,6 +233,7 @@ class _PostedBillExpandableCardState extends ConsumerState<PostedBillExpandableC
                     ),
                     child: Icon(
                       icon,
+                      size: 22,
                       color: catFg,
                     ),
                   ),
@@ -260,7 +266,7 @@ class _PostedBillExpandableCardState extends ConsumerState<PostedBillExpandableC
                                   ),
                             ),
                             Icon(
-                              Icons.people_outline,
+                              PhosphorIconsRegular.users,
                               size: 14,
                               color: Theme.of(context).colorScheme.onSurfaceVariant,
                             ),
@@ -296,7 +302,8 @@ class _PostedBillExpandableCardState extends ConsumerState<PostedBillExpandableC
                           ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.12)
                           : Colors.transparent,
                       child: Icon(
-                        Icons.keyboard_arrow_down_rounded,
+                        PhosphorIconsRegular.caretDown,
+                        size: 22,
                         color: _expanded
                             ? Theme.of(context).colorScheme.primary
                             : Theme.of(context).colorScheme.onSurfaceVariant,
@@ -460,6 +467,7 @@ class _PostedBillExpandableCardState extends ConsumerState<PostedBillExpandableC
             ),
           ],
         ],
+        ),
       ),
     );
 
