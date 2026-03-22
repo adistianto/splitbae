@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:splitbae/core/theme/splitbae_v0_ui_contract.dart';
 import 'package:splitbae/core/ui/splitbae_motion.dart';
 import 'package:splitbae/l10n/app_localizations.dart';
 
@@ -37,7 +38,7 @@ class _SplitBaeFabMenuState extends State<SplitBaeFabMenu> {
     final l10n = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
     final bottomSafe = MediaQuery.paddingOf(context).bottom;
-    const navBarReserve = 80.0;
+    const navBarReserve = SplitBaeV0Layout.fabBottomNavReserve;
 
     return SizedBox.expand(
       child: Stack(
@@ -112,11 +113,15 @@ class _SplitBaeFabMenuState extends State<SplitBaeFabMenu> {
                         const Duration(milliseconds: 200),
                       ),
                       curve: splitBaeAnimationCurve(context),
-                      width: 64,
-                      height: 64,
+                      width: SplitBaeV0Layout.fabMainSize,
+                      height: SplitBaeV0Layout.fabMainSize,
                       decoration: BoxDecoration(
                         color: _open ? cs.onSurface : cs.primary,
-                        borderRadius: BorderRadius.circular(_open ? 28 : 20),
+                        borderRadius: BorderRadius.circular(
+                          _open
+                              ? SplitBaeV0Layout.fabMainCornerRadiusOpen
+                              : SplitBaeV0Layout.fabMainCornerRadiusClosed,
+                        ),
                         boxShadow: [
                           BoxShadow(
                             color: cs.primary.withValues(alpha: 0.35),
@@ -132,7 +137,11 @@ class _SplitBaeFabMenuState extends State<SplitBaeFabMenu> {
                             HapticFeedback.mediumImpact();
                             setState(() => _open = !_open);
                           },
-                          borderRadius: BorderRadius.circular(_open ? 28 : 20),
+                          borderRadius: BorderRadius.circular(
+                            _open
+                                ? SplitBaeV0Layout.fabMainCornerRadiusOpen
+                                : SplitBaeV0Layout.fabMainCornerRadiusClosed,
+                          ),
                           child: Center(
                             child: Icon(
                               _open ? Icons.close : Icons.add,
@@ -214,12 +223,14 @@ class _FabPill extends StatelessWidget {
         opacity: open ? 1 : 0,
         child: Material(
           elevation: 4,
-          borderRadius: BorderRadius.circular(28),
+          borderRadius:
+              BorderRadius.circular(SplitBaeV0Layout.fabPillRadius),
           color: background,
           shadowColor: Colors.black.withValues(alpha: 0.08),
           child: InkWell(
             onTap: onTap,
-            borderRadius: BorderRadius.circular(28),
+            borderRadius:
+                BorderRadius.circular(SplitBaeV0Layout.fabPillRadius),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
               child: Row(

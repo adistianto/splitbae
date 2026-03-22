@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:splitbae/core/data/amount_minor.dart';
 import 'package:splitbae/core/domain/bills_insights.dart';
 import 'package:splitbae/core/theme/splitbae_semantic_colors.dart';
+import 'package:splitbae/core/theme/splitbae_v0_ui_contract.dart';
 import 'package:splitbae/core/domain/posted_bill_summary.dart';
 import 'package:splitbae/core/widgets/adaptive_app_bar.dart';
 import 'package:splitbae/l10n/app_localizations.dart';
@@ -317,10 +318,10 @@ class _BillsScreenState extends ConsumerState<BillsScreen> {
                 onNotification: _handleScroll,
                 child: ListView(
                   padding: EdgeInsets.only(
-                    left: 20,
-                    right: 20,
+                    left: SplitBaeV0Layout.screenHorizontalPadding,
+                    right: SplitBaeV0Layout.screenHorizontalPadding,
                     top: topPad + 8,
-                    bottom: 120,
+                    bottom: SplitBaeV0Layout.listBottomInsetForShell,
                   ),
                   children: [
                     Text(
@@ -614,7 +615,8 @@ class _TotalExpensesHero extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
+        borderRadius:
+            BorderRadius.circular(SplitBaeV0Layout.heroBorderRadius),
         gradient: LinearGradient(
           colors: [
             cs.primary,
@@ -712,7 +714,8 @@ class _HeroStat extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius:
+            BorderRadius.circular(SplitBaeV0Layout.heroStatBorderRadius),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -897,7 +900,8 @@ class _Chip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: background,
-      borderRadius: BorderRadius.circular(999),
+      borderRadius:
+          BorderRadius.circular(SplitBaeV0Layout.insightChipRadius),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         child: child,
