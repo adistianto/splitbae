@@ -368,6 +368,18 @@ abstract class AppLocalizations {
   /// **'Continue to Split'**
   String get scanReceiptContinueToSplit;
 
+  /// Shown above editable OCR chips after multi-line scan.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap a line to fix the price, then confirm.'**
+  String get scanReceiptOcrReviewHint;
+
+  /// Dialog title when correcting a parsed receipt line amount.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit amount'**
+  String get scanReceiptEditOcrLineTitle;
+
   /// Image source option for receipt scan.
   ///
   /// In en, this message translates to:

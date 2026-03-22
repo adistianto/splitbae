@@ -50,10 +50,36 @@ class MainActivity : FlutterActivity() {
                     result.error("io", e.message, null)
                     return@setMethodCallHandler
                 }
+            val iw = image.width.coerceAtLeast(1).toFloat()
+            val ih = image.height.coerceAtLeast(1).toFloat()
             textRecognizer
                 .process(image)
                 .addOnSuccessListener { visionText ->
-                    result.success(visionText.text)
+                    val lines = mutableListOf<Map<String, Any>>()
+                    for (block in visionText.textBlocks) {
+                        for (line in block.lines) {
+                            val box = line.boundingBox ?: continue
+                            val left = box.left / iw
+                            val top = box.top / ih
+                            val w = box.width() / iw
+                            val h = box.height() / ih
+                            lines.add(
+                                mapOf(
+                                    "text" to line.text,
+                                    "left" to left.toDouble(),
+                                    "top" to top.toDouble(),
+                                    "width" to w.toDouble(),
+                                    "height" to h.toDouble(),
+                                ),
+                            )
+                        }
+                    }
+                    result.success(
+                        mapOf(
+                            "text" to visionText.text,
+                            "lines" to lines,
+                        ),
+                    )
                 }.addOnFailureListener { e ->
                     result.error("mlkit", e.message, null)
                 }

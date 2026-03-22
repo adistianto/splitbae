@@ -161,6 +161,13 @@ class AppLocalizationsId extends AppLocalizations {
   String get scanReceiptContinueToSplit => 'Lanjut ke bagi tagihan';
 
   @override
+  String get scanReceiptOcrReviewHint =>
+      'Ketuk baris untuk memperbaiki harga, lalu konfirmasi.';
+
+  @override
+  String get scanReceiptEditOcrLineTitle => 'Ubah jumlah';
+
+  @override
   String get scanReceiptCamera => 'Ambil foto';
 
   @override

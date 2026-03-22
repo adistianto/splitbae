@@ -253,6 +253,7 @@ class _AddItemFormCupertinoState extends ConsumerState<_AddItemFormCupertino> {
   Future<void> _addOcrLinesToDraft(
     List<ReceiptLineCandidate> candidates,
   ) async {
+    final currency = ref.read(draftBillCurrencyProvider);
     final participants =
         await ref.read(draftBillActiveParticipantsProvider.future);
     final allIds = participants.map((e) => e.id).toSet();
@@ -260,7 +261,7 @@ class _AddItemFormCupertinoState extends ConsumerState<_AddItemFormCupertino> {
     for (final c in candidates) {
       final id = await notifier.addItem(
         c.label,
-        c.amount,
+        minorUnitsToAmount(c.amountMinor, currency),
         quantity: c.quantity ?? 1,
       );
       await notifier.setLineAssignments(
@@ -607,6 +608,7 @@ class _AddItemFormMaterialState extends ConsumerState<_AddItemFormMaterial> {
   Future<void> _addOcrLinesToDraft(
     List<ReceiptLineCandidate> candidates,
   ) async {
+    final currency = ref.read(draftBillCurrencyProvider);
     final participants =
         await ref.read(draftBillActiveParticipantsProvider.future);
     final allIds = participants.map((e) => e.id).toSet();
@@ -614,7 +616,7 @@ class _AddItemFormMaterialState extends ConsumerState<_AddItemFormMaterial> {
     for (final c in candidates) {
       final id = await notifier.addItem(
         c.label,
-        c.amount,
+        minorUnitsToAmount(c.amountMinor, currency),
         quantity: c.quantity ?? 1,
       );
       await notifier.setLineAssignments(

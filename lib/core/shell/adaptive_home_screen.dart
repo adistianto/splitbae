@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:liquid_glass_easy/liquid_glass_easy.dart';
 import 'package:m3e_collection/m3e_collection.dart';
 import 'package:splitbae/core/layout/app_breakpoints.dart';
+import 'package:splitbae/core/data/amount_minor.dart';
 import 'package:splitbae/core/ocr/receipt_line_parse.dart';
 import 'package:splitbae/core/ocr/receipt_ocr_probe_provider.dart';
 import 'package:splitbae/core/platform/host_platform.dart';
@@ -95,6 +96,7 @@ class _AdaptiveHomeScreenState extends ConsumerState<AdaptiveHomeScreen> {
     WidgetRef ref,
     List<ReceiptLineCandidate> candidates,
   ) async {
+    final currency = ref.read(draftBillCurrencyProvider);
     final participants =
         await ref.read(draftBillActiveParticipantsProvider.future);
     final allIds = participants.map((e) => e.id).toSet();
@@ -102,7 +104,7 @@ class _AdaptiveHomeScreenState extends ConsumerState<AdaptiveHomeScreen> {
     for (final c in candidates) {
       final id = await notifier.addItem(
         c.label,
-        c.amount,
+        minorUnitsToAmount(c.amountMinor, currency),
         quantity: c.quantity ?? 1,
       );
       await notifier.setLineAssignments(

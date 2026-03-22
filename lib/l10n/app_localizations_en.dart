@@ -160,6 +160,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get scanReceiptContinueToSplit => 'Continue to Split';
 
   @override
+  String get scanReceiptOcrReviewHint =>
+      'Tap a line to fix the price, then confirm.';
+
+  @override
+  String get scanReceiptEditOcrLineTitle => 'Edit amount';
+
+  @override
   String get scanReceiptCamera => 'Take photo';
 
   @override

@@ -169,6 +169,14 @@
   "@scanReceiptContinueToSplit": {
     "description": "Primary action after OCR when opening the draft split flow (FAB)."
   },
+  "scanReceiptOcrReviewHint": "Tap a line to fix the price, then confirm.",
+  "@scanReceiptOcrReviewHint": {
+    "description": "Shown above editable OCR chips after multi-line scan."
+  },
+  "scanReceiptEditOcrLineTitle": "Edit amount",
+  "@scanReceiptEditOcrLineTitle": {
+    "description": "Dialog title when correcting a parsed receipt line amount."
+  },
   "scanReceiptCamera": "Take photo",
   "@scanReceiptCamera": {
     "description": "Image source option for receipt scan."

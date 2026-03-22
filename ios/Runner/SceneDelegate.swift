@@ -66,13 +66,32 @@ enum ReceiptOcrChannelPlugin {
             return
           }
           guard let observations = request.results as? [VNRecognizedTextObservation] else {
-            result("")
+            result(["text": "", "lines": []] as [String: Any])
             return
           }
-          // Vision uses bottom-left origin; top-to-bottom reading order ≈ descending maxY.
+          // Vision uses bottom-left origin; sort top-to-bottom by maxY.
           let sorted = observations.sorted { $0.boundingBox.maxY > $1.boundingBox.maxY }
-          let lines = sorted.compactMap { $0.topCandidates(1).first?.string }
-          result(lines.joined(separator: "\n"))
+          var linesOut: [[String: Any]] = []
+          var joined: [String] = []
+          for obs in sorted {
+            guard let line = obs.topCandidates(1).first else { continue }
+            joined.append(line.string)
+            let b = obs.boundingBox
+            let left = b.origin.x
+            let topFromTop = 1.0 - b.origin.y - b.size.height
+            linesOut.append([
+              "text": line.string,
+              "left": left,
+              "top": topFromTop,
+              "width": b.size.width,
+              "height": b.size.height,
+            ])
+          }
+          let fullText = joined.joined(separator: "\n")
+          result([
+            "text": fullText,
+            "lines": linesOut,
+          ] as [String: Any])
         }
       }
       request.recognitionLevel = .accurate

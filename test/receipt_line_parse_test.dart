@@ -1,21 +1,54 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:splitbae/core/data/amount_minor.dart';
 import 'package:splitbae/core/ocr/receipt_line_parse.dart';
 
 void main() {
-  test('parseReceiptLineCandidates extracts trailing amounts', () {
+  setUpAll(() {
+    // VM tests do not load `rust_lib_splitbae`; mirror Rust minor-unit rules here.
+    debugSetAmountMinorOverridesForTest(
+      amountToMinor: (amount, currencyCode) {
+        final c = currencyCode.toUpperCase();
+        if (c == 'IDR' || c == 'JPY' || c == 'KRW') {
+          return amount.round();
+        }
+        return (amount * 100).round();
+      },
+      minorToAmount: (minor, currencyCode) {
+        final c = currencyCode.toUpperCase();
+        if (c == 'IDR' || c == 'JPY' || c == 'KRW') {
+          return minor.toDouble();
+        }
+        return minor / 100.0;
+      },
+    );
+  });
+
+  tearDownAll(() {
+    debugSetAmountMinorOverridesForTest();
+  });
+
+  test('parseReceiptLineCandidates extracts trailing amounts (IDR)', () {
     const ocr = '''
 Nasi Goreng    45000
 Es Teh 15000
-Coffee 3.50
+Kopi 25000
 ''';
-    final list = parseReceiptLineCandidates(ocr);
+    final list = parseReceiptLineCandidates(ocr, currencyCode: 'IDR');
     expect(list.length, 3);
     expect(list[0].label, 'Nasi Goreng');
-    expect(list[0].amount, 45000);
+    expect(list[0].amountMinor, 45000);
     expect(list[1].label, 'Es Teh');
-    expect(list[1].amount, 15000);
-    expect(list[2].label, 'Coffee');
-    expect(list[2].amount, closeTo(3.5, 1e-9));
+    expect(list[1].amountMinor, 15000);
+    expect(list[2].label, 'Kopi');
+    expect(list[2].amountMinor, 25000);
+  });
+
+  test('parse USD decimal lines', () {
+    const ocr = 'Coffee 3.50\nTea 2.00';
+    final list = parseReceiptLineCandidates(ocr, currencyCode: 'USD');
+    expect(list.length, 2);
+    expect(list[0].amountMinor, amountToMinorUnits(3.5, 'USD'));
+    expect(list[1].amountMinor, amountToMinorUnits(2, 'USD'));
   });
 
   test('parseReceiptLineCandidates returns empty when no amounts', () {
@@ -27,9 +60,9 @@ Coffee 3.50
     final list = parseReceiptLineCandidates(ocr, currencyCode: 'IDR');
     expect(list.length, 2);
     expect(list[0].label, 'Nasi Goreng');
-    expect(list[0].amount, 15000);
+    expect(list[0].amountMinor, 15000);
     expect(list[1].label, 'Mie Ayam');
-    expect(list[1].amount, 20000);
+    expect(list[1].amountMinor, 20000);
   });
 
   test('IDR groups multiple thousand dots', () {
@@ -38,7 +71,7 @@ Coffee 3.50
       currencyCode: 'IDR',
     );
     expect(list.length, 1);
-    expect(list.first.amount, 1234567);
+    expect(list.first.amountMinor, 1234567);
   });
 
   test('Qty / Item / Amount table: nine food lines, no metadata or totals', () {
@@ -73,19 +106,19 @@ Thank you for dining with us!
 
     expect(list[0].label, 'SOURDOUGH G&H');
     expect(list[0].quantity, 2);
-    expect(list[0].amount, 24.00);
-    expect(list[0].unitPrice, 12.00);
+    expect(list[0].amountMinor, amountToMinorUnits(24.00, 'AUD'));
+    expect(list[0].unitPriceMajor('AUD'), closeTo(12.00, 1e-6));
 
     expect(list[1].label, 'GRAZING PLATTER');
     expect(list[1].quantity, 1);
-    expect(list[1].amount, 38.00);
+    expect(list[1].amountMinor, amountToMinorUnits(38.00, 'AUD'));
 
     expect(list[7].label, 'ESPRESSO MARTINI');
     expect(list[7].quantity, 1);
-    expect(list[7].amount, 21.00);
+    expect(list[7].amountMinor, amountToMinorUnits(21.00, 'AUD'));
 
     expect(list[8].label, 'LEMON LIME BITTERS');
-    expect(list[8].amount, 6.50);
+    expect(list[8].amountMinor, amountToMinorUnits(6.50, 'AUD'));
   });
 
   test('heuristic rejects TOTAL and GST lines mixed with real lines', () {
@@ -97,7 +130,7 @@ GST 0.45
     final list = parseReceiptLineCandidates(ocr, currencyCode: 'AUD');
     expect(list.length, 1);
     expect(list.first.label, 'Beer');
-    expect(list.first.amount, 5.0);
+    expect(list.first.amountMinor, amountToMinorUnits(5.0, 'AUD'));
   });
 
   test('merges OCR-broken qty rows split across two lines', () {
@@ -110,7 +143,7 @@ AIOLI 42.00
     expect(list.length, 1);
     expect(list.single.label, 'LRG FRIES W/ AIOLI');
     expect(list.single.quantity, 3);
-    expect(list.single.amount, 42.0);
+    expect(list.single.amountMinor, amountToMinorUnits(42.0, 'AUD'));
   });
 
   test('merges qty-led line with orphan amount on the next line', () {
@@ -121,7 +154,7 @@ AIOLI 42.00
     final list = parseReceiptLineCandidates(ocr, currencyCode: 'AUD');
     expect(list.length, 1);
     expect(list.single.quantity, 2);
-    expect(list.single.amount, 24.0);
+    expect(list.single.amountMinor, amountToMinorUnits(24.0, 'AUD'));
   });
 
   test('headerless qty rows without Qty header when pattern is consistent', () {
@@ -134,6 +167,6 @@ TOTAL 104.00
     final list = parseReceiptLineCandidates(ocr, currencyCode: 'AUD');
     expect(list.length, 3);
     expect(list[0].quantity, 2);
-    expect(list[0].amount, 24.00);
+    expect(list[0].amountMinor, amountToMinorUnits(24.00, 'AUD'));
   });
 }

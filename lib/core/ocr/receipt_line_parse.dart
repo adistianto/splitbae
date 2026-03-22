@@ -1,34 +1,68 @@
+import 'package:splitbae/core/data/amount_minor.dart';
 import 'package:splitbae/core/ocr/receipt_ocr_refiner.dart';
 
 /// Heuristic parse of OCR text into (label, amount) candidates for receipt lines.
-/// [amount] is the **line total** for that row (qty × unit when a qty column exists).
+/// [amountMinor] is the **line total** in minor units (qty × unit when a qty column exists).
 /// [quantity] is set when a Qty / Item / Amount table is detected.
 class ReceiptLineCandidate {
   const ReceiptLineCandidate({
     required this.label,
-    required this.amount,
+    required this.amountMinor,
     this.quantity,
   });
 
   final String label;
-  final double amount;
+
+  /// Line total in minor units for [currencyCode] (from Rust [amountToMinorUnits] rules).
+  final int amountMinor;
 
   /// When parsed from a qty column; otherwise null (treat as 1 for display math).
   final int? quantity;
 
-  /// Unit price when [quantity] is known; otherwise same as [amount].
-  double get unitPrice {
+  ReceiptLineCandidate copyWith({
+    String? label,
+    int? amountMinor,
+    int? quantity,
+  }) {
+    return ReceiptLineCandidate(
+      label: label ?? this.label,
+      amountMinor: amountMinor ?? this.amountMinor,
+      quantity: quantity ?? this.quantity,
+    );
+  }
+
+  /// Unit price in major units when [quantity] is known; otherwise line total.
+  double unitPriceMajor(String currencyCode) {
     final q = quantity;
-    if (q != null && q > 0) return amount / q;
-    return amount;
+    if (q != null && q > 0) {
+      return minorUnitsToAmount(amountMinor, currencyCode) / q;
+    }
+    return minorUnitsToAmount(amountMinor, currencyCode);
+  }
+
+  /// Line total in major units (for persistence / display).
+  double lineTotalMajor(String currencyCode) {
+    return minorUnitsToAmount(amountMinor, currencyCode);
   }
 }
 
+int? _doubleToMinor(double? amt, String? currencyCode) {
+  if (amt == null || amt <= 0 || amt > 1e12) return null;
+  final cc = currencyCode?.trim();
+  if (cc == null || cc.isEmpty) return null;
+  return amountToMinorUnits(amt, cc);
+}
+
 /// Parses [ocrText] into line items. [currencyCode] refines numeric tails (e.g. IDR uses `.` as thousands).
+/// When omitted, **IDR** is assumed (product default).
 List<ReceiptLineCandidate> parseReceiptLineCandidates(
   String ocrText, {
   String? currencyCode,
 }) {
+  final cc = (currencyCode == null || currencyCode.trim().isEmpty)
+      ? 'IDR'
+      : currencyCode.trim();
+
   var lines = refineOcrText(ocrText)
       .split(RegExp(r'\r?\n'))
       .map((e) => e.trim())
@@ -36,12 +70,12 @@ List<ReceiptLineCandidate> parseReceiptLineCandidates(
       .toList();
   lines = _mergeBrokenTableRows(lines);
 
-  final structured = _parseStructuredReceipt(lines, currencyCode);
+  final structured = _parseStructuredReceipt(lines, cc);
   if (structured.isNotEmpty) {
     return structured.length > 40 ? structured.sublist(0, 40) : structured;
   }
 
-  return _parseHeuristicTrailingAmount(lines, currencyCode);
+  return _parseHeuristicTrailingAmount(lines, cc);
 }
 
 /// OCR often splits one table row across lines (e.g. `3 LRG FRIES W/` + `AIOLI 42.00`).
@@ -197,7 +231,8 @@ ReceiptLineCandidate? _parseQtyItemAmountLine(
   if (numStr.isEmpty) return null;
 
   final amt = _normalizeAndParseAmount(numStr, currencyCode);
-  if (amt == null || amt <= 0 || amt > 1e12) return null;
+  final minor = _doubleToMinor(amt, currencyCode);
+  if (minor == null) return null;
 
   final beforeAmount = trimmed.substring(0, amountMatch.start).trim();
   final qtyMatch = RegExp(r'^(\d{1,3})\s+(.+)$').firstMatch(beforeAmount);
@@ -211,7 +246,7 @@ ReceiptLineCandidate? _parseQtyItemAmountLine(
   if (name.length < 2) return null;
   if (_isLikelyNonItemLabel(name)) return null;
 
-  return ReceiptLineCandidate(label: name, amount: amt, quantity: q);
+  return ReceiptLineCandidate(label: name, amountMinor: minor, quantity: q);
 }
 
 bool _isLikelyNonItemLabel(String name) {
@@ -257,19 +292,20 @@ List<ReceiptLineCandidate> _parseHeuristicTrailingAmount(
     }
 
     final amt = _parseAmountWithCurrencyHint(numStr, currencyCode);
-    if (amt == null || amt <= 0 || amt > 1e12) continue;
+    final minor = _doubleToMinor(amt, currencyCode);
+    if (minor == null) continue;
 
     var label = line.substring(0, m.start).trim();
     label = label.replaceAll(RegExp(r'^[-–—•\s]+'), '').trim();
     if (label.isEmpty) continue;
     if (_shouldRejectHeuristicLine(label, amt)) continue;
 
-    out.add(ReceiptLineCandidate(label: label, amount: amt));
+    out.add(ReceiptLineCandidate(label: label, amountMinor: minor));
   }
   return out.length > 20 ? out.sublist(0, 20) : out;
 }
 
-bool _shouldRejectHeuristicLine(String label, double amount) {
+bool _shouldRejectHeuristicLine(String label, double? amount) {
   final l = label.toLowerCase().trim();
 
   if (RegExp(
@@ -293,6 +329,48 @@ bool _shouldRejectHeuristicLine(String label, double amount) {
   if (RegExp(r'\btax\s+invoice\b').hasMatch(l)) return true;
   if (l.length <= 2 && RegExp(r'^\d+$').hasMatch(l)) return true;
 
+  // Dates: DD/MM/YYYY, MM-DD-YY, ISO fragments often picked up with amounts.
+  if (RegExp(
+    r'^\d{1,4}[/.\-]\d{1,4}([/.\-]\d{1,4})?\s*$',
+  ).hasMatch(l.trim())) {
+    return true;
+  }
+  if (RegExp(
+    r'\b\d{1,2}\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+\d{2,4}\b',
+  ).hasMatch(l)) {
+    return true;
+  }
+
+  // Phone / fax / order numbers (long digit runs without a clear item name).
+  if (_looksLikePhoneOrOrderLine(l)) return true;
+
+  // Card last-4 style: ****1234
+  if (RegExp(r'\*+\d{4}\b').hasMatch(l)) return true;
+
+  // Register / transaction IDs: "Trans ID: 12345" already caught; lone long numbers.
+  if (RegExp(r'^\d{10,}$').hasMatch(l.replaceAll(RegExp(r'\s'), ''))) {
+    return true;
+  }
+
+  // Very small amounts with no alphabetic label (often OCR garbage).
+  if (amount != null &&
+      amount < 0.05 &&
+      !RegExp(r'[a-zA-Z]{2,}').hasMatch(l)) {
+    return true;
+  }
+
+  return false;
+}
+
+bool _looksLikePhoneOrOrderLine(String l) {
+  final digits = l.replaceAll(RegExp(r'\D'), '');
+  if (digits.length >= 10 &&
+      RegExp(r'^[\d\s().+\-]+$').hasMatch(l.replaceAll(RegExp(r'\s+'), ' '))) {
+    if (!RegExp(r'[a-zA-Z]{3,}').hasMatch(l)) return true;
+  }
+  if (RegExp(r'^\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\s*$').hasMatch(l)) {
+    return true;
+  }
   return false;
 }
 

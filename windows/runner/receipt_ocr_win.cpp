@@ -21,6 +21,7 @@
 #include <flutter/method_channel.h>
 #include <flutter/standard_method_codec.h>
 
+#include <algorithm>
 #include <memory>
 #include <optional>
 #include <sstream>
@@ -44,6 +45,7 @@
 
 namespace {
 
+using flutter::EncodableList;
 using flutter::EncodableMap;
 using flutter::EncodableValue;
 
@@ -115,7 +117,7 @@ std::optional<winrt::hstring> TryRecognizeWithAiImaging(
 
 #endif  // SPLITBAE_WASDK_AI_OCR
 
-winrt::hstring RecognizeWithMediaOcr(
+EncodableMap RecognizeWithMediaOcrMap(
     const winrt::Windows::Graphics::Imaging::SoftwareBitmap& bitmap) {
   using namespace winrt::Windows::Media::Ocr;
 
@@ -129,32 +131,98 @@ winrt::hstring RecognizeWithMediaOcr(
                                winrt::hstring(L"OcrEngine unavailable"));
   }
 
+  const float bw =
+      std::max(1.f, static_cast<float>(bitmap.PixelWidth()));
+  const float bh =
+      std::max(1.f, static_cast<float>(bitmap.PixelHeight()));
+
   OcrResult ocr_result = engine.RecognizeAsync(bitmap).get();
   std::wstringstream out;
+  EncodableList lines_out;
   for (const auto& line : ocr_result.Lines()) {
     out << std::wstring{line.Text()} << L'\n';
+
+    EncodableMap line_map;
+    std::string utf8 = winrt::to_string(winrt::hstring{line.Text()});
+    line_map[EncodableValue("text")] = EncodableValue(std::move(utf8));
+
+    float min_x = 1e9f;
+    float min_y = 1e9f;
+    float max_x = 0.f;
+    float max_y = 0.f;
+    bool has_rect = false;
+    for (const auto& word : line.Words()) {
+      auto r = word.BoundingRect();
+      min_x = std::min(min_x, r.X);
+      min_y = std::min(min_y, r.Y);
+      max_x = std::max(max_x, r.X + r.Width);
+      max_y = std::max(max_y, r.Y + r.Height);
+      has_rect = true;
+    }
+    if (has_rect && max_x > min_x && max_y > min_y) {
+      line_map[EncodableValue("left")] =
+          EncodableValue(static_cast<double>(min_x / bw));
+      line_map[EncodableValue("top")] =
+          EncodableValue(static_cast<double>(min_y / bh));
+      line_map[EncodableValue("width")] =
+          EncodableValue(static_cast<double>((max_x - min_x) / bw));
+      line_map[EncodableValue("height")] =
+          EncodableValue(static_cast<double>((max_y - min_y) / bh));
+    }
+    lines_out.push_back(EncodableValue(std::move(line_map)));
   }
   std::wstring text = out.str();
   if (!text.empty() && text.back() == L'\n') {
     text.pop_back();
   }
-  return winrt::hstring{text};
+  EncodableMap map;
+  map[EncodableValue("text")] =
+      EncodableValue(winrt::to_string(winrt::hstring{text}));
+  map[EncodableValue("lines")] = EncodableValue(std::move(lines_out));
+  return map;
 }
 
-winrt::hstring RecognizeFromWidePath(const std::wstring& wide_path) {
+EncodableMap AiHstringToMap(const winrt::hstring& h) {
+  std::string full = winrt::to_string(h);
+  EncodableList lines_out;
+  std::string cur;
+  for (char c : full) {
+    if (c == '\n') {
+      if (!cur.empty()) {
+        EncodableMap line_map;
+        line_map[EncodableValue("text")] = EncodableValue(cur);
+        lines_out.push_back(EncodableValue(std::move(line_map)));
+        cur.clear();
+      }
+    } else {
+      cur.push_back(c);
+    }
+  }
+  if (!cur.empty()) {
+    EncodableMap line_map;
+    line_map[EncodableValue("text")] = EncodableValue(cur);
+    lines_out.push_back(EncodableValue(std::move(line_map)));
+  }
+  EncodableMap map;
+  map[EncodableValue("text")] = EncodableValue(std::move(full));
+  map[EncodableValue("lines")] = EncodableValue(std::move(lines_out));
+  return map;
+}
+
+EncodableMap RecognizeFromWidePathMap(const std::wstring& wide_path) {
   auto bitmap = LoadSoftwareBitmapFromWidePath(wide_path);
 
 #if defined(SPLITBAE_WASDK_AI_OCR)
   try {
     if (auto ai_text = TryRecognizeWithAiImaging(bitmap)) {
-      return *ai_text;
+      return AiHstringToMap(*ai_text);
     }
   } catch (const winrt::hresult_error&) {
     // Fall through to Media OCR (runtime not bootstrapped, no NPU, etc.).
   }
 #endif
 
-  return RecognizeWithMediaOcr(bitmap);
+  return RecognizeWithMediaOcrMap(bitmap);
 }
 
 void FillProbeMap(EncodableMap& map) {
@@ -253,8 +321,8 @@ void RegisterReceiptOcrChannel(flutter::FlutterEngine* engine) {
             result->Error("bad_args", "Invalid UTF-8 path", nullptr);
             return;
           }
-          winrt::hstring text = RecognizeFromWidePath(wide);
-          result->Success(EncodableValue(winrt::to_string(text)));
+          EncodableMap payload = RecognizeFromWidePathMap(wide);
+          result->Success(EncodableValue(std::move(payload)));
         } catch (const winrt::hresult_error& e) {
           std::string msg = winrt::to_string(e.message());
           result->Error("ocr", msg, nullptr);
