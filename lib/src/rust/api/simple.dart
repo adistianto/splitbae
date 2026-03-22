@@ -58,7 +58,7 @@ String amountToInputText({
 );
 
 class AssignedReceiptLine {
-  final ReceiptItem item;
+  final DraftLineItem item;
 
   /// Empty = all current participants split this line equally.
   final List<String> assigneeIds;
@@ -75,6 +75,33 @@ class AssignedReceiptLine {
           runtimeType == other.runtimeType &&
           item == other.item &&
           assigneeIds == other.assigneeIds;
+}
+
+/// Draft line payload for UI / persistence bridges (`f64` only at the FRB boundary for display).
+class DraftLineItem {
+  final String name;
+  final double price;
+
+  /// ISO 4217 code (e.g. IDR, USD).
+  final String currencyCode;
+
+  const DraftLineItem({
+    required this.name,
+    required this.price,
+    required this.currencyCode,
+  });
+
+  @override
+  int get hashCode => name.hashCode ^ price.hashCode ^ currencyCode.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is DraftLineItem &&
+          runtimeType == other.runtimeType &&
+          name == other.name &&
+          price == other.price &&
+          currencyCode == other.currencyCode;
 }
 
 /// One payment slice toward the bill (participant × currency).
@@ -138,32 +165,6 @@ class ParticipantRef {
           runtimeType == other.runtimeType &&
           id == other.id &&
           displayName == other.displayName;
-}
-
-class ReceiptItem {
-  final String name;
-  final double price;
-
-  /// ISO 4217 code (e.g. IDR, USD).
-  final String currencyCode;
-
-  const ReceiptItem({
-    required this.name,
-    required this.price,
-    required this.currencyCode,
-  });
-
-  @override
-  int get hashCode => name.hashCode ^ price.hashCode ^ currencyCode.hashCode;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is ReceiptItem &&
-          runtimeType == other.runtimeType &&
-          name == other.name &&
-          price == other.price &&
-          currencyCode == other.currencyCode;
 }
 
 class SplitResult {

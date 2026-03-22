@@ -37,7 +37,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.11.1";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -197485636;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 1805260666;
 
 // Section: executor
 
@@ -140,6 +140,36 @@ fn wire__crate__api__settlement__calculate_minimal_settlement_edges_impl(
             transform_result_sse::<_, String>((move || {
                 let output_ok =
                     crate::api::settlement::calculate_minimal_settlement_edges(api_balances)?;
+                Ok(output_ok)
+            })())
+        },
+    )
+}
+fn wire__crate__api__receipt_split__calculate_split_impl(
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "calculate_split",
+            port: None,
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_receipt = <crate::api::receipt_split::Receipt>::sse_decode(&mut deserializer);
+            deserializer.end();
+            transform_result_sse::<_, String>((move || {
+                let output_ok = crate::api::receipt_split::calculate_split(api_receipt)?;
                 Ok(output_ok)
             })())
         },
@@ -329,11 +359,39 @@ impl SseDecode for String {
 impl SseDecode for crate::api::simple::AssignedReceiptLine {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
-        let mut var_item = <crate::api::simple::ReceiptItem>::sse_decode(deserializer);
+        let mut var_item = <crate::api::simple::DraftLineItem>::sse_decode(deserializer);
         let mut var_assigneeIds = <Vec<String>>::sse_decode(deserializer);
         return crate::api::simple::AssignedReceiptLine {
             item: var_item,
             assignee_ids: var_assigneeIds,
+        };
+    }
+}
+
+impl SseDecode for crate::api::money::CurrencyAmount {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_amountMinor = <i64>::sse_decode(deserializer);
+        let mut var_currencyCode = <String>::sse_decode(deserializer);
+        let mut var_scale = <u8>::sse_decode(deserializer);
+        return crate::api::money::CurrencyAmount {
+            amount_minor: var_amountMinor,
+            currency_code: var_currencyCode,
+            scale: var_scale,
+        };
+    }
+}
+
+impl SseDecode for crate::api::simple::DraftLineItem {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_name = <String>::sse_decode(deserializer);
+        let mut var_price = <f64>::sse_decode(deserializer);
+        let mut var_currencyCode = <String>::sse_decode(deserializer);
+        return crate::api::simple::DraftLineItem {
+            name: var_name,
+            price: var_price,
+            currency_code: var_currencyCode,
         };
     }
 }
@@ -472,6 +530,20 @@ impl SseDecode for Vec<u8> {
     }
 }
 
+impl SseDecode for Vec<crate::api::receipt_split::ReceiptItem> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = vec![];
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::receipt_split::ReceiptItem>::sse_decode(
+                deserializer,
+            ));
+        }
+        return ans_;
+    }
+}
+
 impl SseDecode for Vec<crate::api::settlement::SettlementEdge> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -493,6 +565,20 @@ impl SseDecode for Vec<crate::api::simple::SplitResult> {
         let mut ans_ = vec![];
         for idx_ in 0..len_ {
             ans_.push(<crate::api::simple::SplitResult>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for Vec<crate::api::receipt_split::UserOwedMinor> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = vec![];
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::receipt_split::UserOwedMinor>::sse_decode(
+                deserializer,
+            ));
         }
         return ans_;
     }
@@ -524,16 +610,30 @@ impl SseDecode for crate::api::simple::ParticipantRef {
     }
 }
 
-impl SseDecode for crate::api::simple::ReceiptItem {
+impl SseDecode for crate::api::receipt_split::Receipt {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_items = <Vec<crate::api::receipt_split::ReceiptItem>>::sse_decode(deserializer);
+        let mut var_tax = <crate::api::money::CurrencyAmount>::sse_decode(deserializer);
+        let mut var_tip = <crate::api::money::CurrencyAmount>::sse_decode(deserializer);
+        return crate::api::receipt_split::Receipt {
+            items: var_items,
+            tax: var_tax,
+            tip: var_tip,
+        };
+    }
+}
+
+impl SseDecode for crate::api::receipt_split::ReceiptItem {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut var_name = <String>::sse_decode(deserializer);
-        let mut var_price = <f64>::sse_decode(deserializer);
-        let mut var_currencyCode = <String>::sse_decode(deserializer);
-        return crate::api::simple::ReceiptItem {
+        let mut var_cost = <crate::api::money::CurrencyAmount>::sse_decode(deserializer);
+        let mut var_assigneeIds = <Vec<String>>::sse_decode(deserializer);
+        return crate::api::receipt_split::ReceiptItem {
             name: var_name,
-            price: var_price,
-            currency_code: var_currencyCode,
+            cost: var_cost,
+            assignee_ids: var_assigneeIds,
         };
     }
 }
@@ -582,6 +682,22 @@ impl SseDecode for () {
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {}
 }
 
+impl SseDecode for crate::api::receipt_split::UserOwedMinor {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_userId = <String>::sse_decode(deserializer);
+        let mut var_amountMinor = <i64>::sse_decode(deserializer);
+        let mut var_currencyCode = <String>::sse_decode(deserializer);
+        let mut var_scale = <u8>::sse_decode(deserializer);
+        return crate::api::receipt_split::UserOwedMinor {
+            user_id: var_userId,
+            amount_minor: var_amountMinor,
+            currency_code: var_currencyCode,
+            scale: var_scale,
+        };
+    }
+}
+
 impl SseDecode for i32 {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -605,7 +721,7 @@ fn pde_ffi_dispatcher_primary_impl(
 ) {
     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
     match func_id {
-        6 => wire__crate__api__simple__init_app_impl(port, ptr, rust_vec_len, data_len),
+        7 => wire__crate__api__simple__init_app_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -625,10 +741,11 @@ fn pde_ffi_dispatcher_sync_impl(
             rust_vec_len,
             data_len,
         ),
-        4 => wire__crate__api__simple__calculate_split_assigned_impl(ptr, rust_vec_len, data_len),
-        5 => wire__crate__api__simple__greet_impl(ptr, rust_vec_len, data_len),
-        7 => wire__crate__api__simple__minor_units_to_amount_impl(ptr, rust_vec_len, data_len),
-        8 => wire__crate__api__simple__validate_bill_payments_sum_impl(ptr, rust_vec_len, data_len),
+        4 => wire__crate__api__receipt_split__calculate_split_impl(ptr, rust_vec_len, data_len),
+        5 => wire__crate__api__simple__calculate_split_assigned_impl(ptr, rust_vec_len, data_len),
+        6 => wire__crate__api__simple__greet_impl(ptr, rust_vec_len, data_len),
+        8 => wire__crate__api__simple__minor_units_to_amount_impl(ptr, rust_vec_len, data_len),
+        9 => wire__crate__api__simple__validate_bill_payments_sum_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -653,6 +770,50 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::simple::AssignedReceiptLine>
     for crate::api::simple::AssignedReceiptLine
 {
     fn into_into_dart(self) -> crate::api::simple::AssignedReceiptLine {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::money::CurrencyAmount {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.amount_minor.into_into_dart().into_dart(),
+            self.currency_code.into_into_dart().into_dart(),
+            self.scale.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::money::CurrencyAmount
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::money::CurrencyAmount>
+    for crate::api::money::CurrencyAmount
+{
+    fn into_into_dart(self) -> crate::api::money::CurrencyAmount {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::simple::DraftLineItem {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.name.into_into_dart().into_dart(),
+            self.price.into_into_dart().into_dart(),
+            self.currency_code.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::simple::DraftLineItem
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::simple::DraftLineItem>
+    for crate::api::simple::DraftLineItem
+{
+    fn into_into_dart(self) -> crate::api::simple::DraftLineItem {
         self
     }
 }
@@ -743,24 +904,46 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::simple::ParticipantRef>
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
-impl flutter_rust_bridge::IntoDart for crate::api::simple::ReceiptItem {
+impl flutter_rust_bridge::IntoDart for crate::api::receipt_split::Receipt {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
-            self.name.into_into_dart().into_dart(),
-            self.price.into_into_dart().into_dart(),
-            self.currency_code.into_into_dart().into_dart(),
+            self.items.into_into_dart().into_dart(),
+            self.tax.into_into_dart().into_dart(),
+            self.tip.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
 }
 impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
-    for crate::api::simple::ReceiptItem
+    for crate::api::receipt_split::Receipt
 {
 }
-impl flutter_rust_bridge::IntoIntoDart<crate::api::simple::ReceiptItem>
-    for crate::api::simple::ReceiptItem
+impl flutter_rust_bridge::IntoIntoDart<crate::api::receipt_split::Receipt>
+    for crate::api::receipt_split::Receipt
 {
-    fn into_into_dart(self) -> crate::api::simple::ReceiptItem {
+    fn into_into_dart(self) -> crate::api::receipt_split::Receipt {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::receipt_split::ReceiptItem {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.name.into_into_dart().into_dart(),
+            self.cost.into_into_dart().into_dart(),
+            self.assignee_ids.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::receipt_split::ReceiptItem
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::receipt_split::ReceiptItem>
+    for crate::api::receipt_split::ReceiptItem
+{
+    fn into_into_dart(self) -> crate::api::receipt_split::ReceiptItem {
         self
     }
 }
@@ -810,6 +993,29 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::simple::SplitResult>
         self
     }
 }
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::receipt_split::UserOwedMinor {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.user_id.into_into_dart().into_dart(),
+            self.amount_minor.into_into_dart().into_dart(),
+            self.currency_code.into_into_dart().into_dart(),
+            self.scale.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::receipt_split::UserOwedMinor
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::receipt_split::UserOwedMinor>
+    for crate::api::receipt_split::UserOwedMinor
+{
+    fn into_into_dart(self) -> crate::api::receipt_split::UserOwedMinor {
+        self
+    }
+}
 
 impl SseEncode for String {
     // Codec=Sse (Serialization based), see doc to use other codecs
@@ -821,8 +1027,26 @@ impl SseEncode for String {
 impl SseEncode for crate::api::simple::AssignedReceiptLine {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
-        <crate::api::simple::ReceiptItem>::sse_encode(self.item, serializer);
+        <crate::api::simple::DraftLineItem>::sse_encode(self.item, serializer);
         <Vec<String>>::sse_encode(self.assignee_ids, serializer);
+    }
+}
+
+impl SseEncode for crate::api::money::CurrencyAmount {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i64>::sse_encode(self.amount_minor, serializer);
+        <String>::sse_encode(self.currency_code, serializer);
+        <u8>::sse_encode(self.scale, serializer);
+    }
+}
+
+impl SseEncode for crate::api::simple::DraftLineItem {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.name, serializer);
+        <f64>::sse_encode(self.price, serializer);
+        <String>::sse_encode(self.currency_code, serializer);
     }
 }
 
@@ -927,6 +1151,16 @@ impl SseEncode for Vec<u8> {
     }
 }
 
+impl SseEncode for Vec<crate::api::receipt_split::ReceiptItem> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::receipt_split::ReceiptItem>::sse_encode(item, serializer);
+        }
+    }
+}
+
 impl SseEncode for Vec<crate::api::settlement::SettlementEdge> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -943,6 +1177,16 @@ impl SseEncode for Vec<crate::api::simple::SplitResult> {
         <i32>::sse_encode(self.len() as _, serializer);
         for item in self {
             <crate::api::simple::SplitResult>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<crate::api::receipt_split::UserOwedMinor> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::receipt_split::UserOwedMinor>::sse_encode(item, serializer);
         }
     }
 }
@@ -964,12 +1208,21 @@ impl SseEncode for crate::api::simple::ParticipantRef {
     }
 }
 
-impl SseEncode for crate::api::simple::ReceiptItem {
+impl SseEncode for crate::api::receipt_split::Receipt {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <Vec<crate::api::receipt_split::ReceiptItem>>::sse_encode(self.items, serializer);
+        <crate::api::money::CurrencyAmount>::sse_encode(self.tax, serializer);
+        <crate::api::money::CurrencyAmount>::sse_encode(self.tip, serializer);
+    }
+}
+
+impl SseEncode for crate::api::receipt_split::ReceiptItem {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <String>::sse_encode(self.name, serializer);
-        <f64>::sse_encode(self.price, serializer);
-        <String>::sse_encode(self.currency_code, serializer);
+        <crate::api::money::CurrencyAmount>::sse_encode(self.cost, serializer);
+        <Vec<String>>::sse_encode(self.assignee_ids, serializer);
     }
 }
 
@@ -1003,6 +1256,16 @@ impl SseEncode for u8 {
 impl SseEncode for () {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {}
+}
+
+impl SseEncode for crate::api::receipt_split::UserOwedMinor {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.user_id, serializer);
+        <i64>::sse_encode(self.amount_minor, serializer);
+        <String>::sse_encode(self.currency_code, serializer);
+        <u8>::sse_encode(self.scale, serializer);
+    }
 }
 
 impl SseEncode for i32 {

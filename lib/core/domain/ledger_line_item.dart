@@ -1,4 +1,4 @@
-import 'package:splitbae/src/rust/api/simple.dart' show ReceiptItem;
+import 'package:splitbae/src/rust/api/simple.dart' show DraftLineItem;
 
 /// Stable row id + FRB payload for split math + optional assignees.
 class LedgerLineItem {
@@ -10,7 +10,7 @@ class LedgerLineItem {
   });
 
   final String id;
-  final ReceiptItem receiptItem;
+  final DraftLineItem receiptItem;
 
   /// Quantity for this receipt row (≥ 1). [price] on [receiptItem] is the **line total**.
   final int quantity;

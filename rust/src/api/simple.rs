@@ -8,9 +8,10 @@ pub fn init_app() {
     flutter_rust_bridge::setup_default_user_utils();
 }
 
+/// Draft line payload for UI / persistence bridges (`f64` only at the FRB boundary for display).
 #[flutter_rust_bridge::frb]
 #[derive(Clone, Debug)]
-pub struct ReceiptItem {
+pub struct DraftLineItem {
     pub name: String,
     pub price: f64,
     /// ISO 4217 code (e.g. IDR, USD).
@@ -36,7 +37,7 @@ pub struct ParticipantRef {
 #[flutter_rust_bridge::frb]
 #[derive(Clone, Debug)]
 pub struct AssignedReceiptLine {
-    pub item: ReceiptItem,
+    pub item: DraftLineItem,
     /// Empty = all current participants split this line equally.
     pub assignee_ids: Vec<String>,
 }
@@ -223,7 +224,7 @@ mod tests {
     fn split_assigned_single_item_one_person() {
         let participants = vec![p("a", "Alice"), p("b", "Bob")];
         let lines = vec![AssignedReceiptLine {
-            item: ReceiptItem {
+            item: DraftLineItem {
                 name: "Burger".into(),
                 price: 100.0,
                 currency_code: "USD".into(),
@@ -241,7 +242,7 @@ mod tests {
     fn split_assigned_empty_assignees_means_everyone() {
         let participants = vec![p("a", "Alice"), p("b", "Bob")];
         let lines = vec![AssignedReceiptLine {
-            item: ReceiptItem {
+            item: DraftLineItem {
                 name: "Pizza".into(),
                 price: 100.0,
                 currency_code: "USD".into(),

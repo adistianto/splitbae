@@ -6,6 +6,8 @@
 // Static analysis wrongly picks the IO variant, thus ignore this
 // ignore_for_file: argument_type_not_assignable
 
+import 'api/money.dart';
+import 'api/receipt_split.dart';
 import 'api/settlement.dart';
 import 'api/simple.dart';
 import 'dart:async';
@@ -26,6 +28,15 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   AssignedReceiptLine dco_decode_assigned_receipt_line(dynamic raw);
+
+  @protected
+  Receipt dco_decode_box_autoadd_receipt(dynamic raw);
+
+  @protected
+  CurrencyAmount dco_decode_currency_amount(dynamic raw);
+
+  @protected
+  DraftLineItem dco_decode_draft_line_item(dynamic raw);
 
   @protected
   DraftPaymentMinor dco_decode_draft_payment_minor(dynamic raw);
@@ -61,16 +72,25 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
 
   @protected
+  List<ReceiptItem> dco_decode_list_receipt_item(dynamic raw);
+
+  @protected
   List<SettlementEdge> dco_decode_list_settlement_edge(dynamic raw);
 
   @protected
   List<SplitResult> dco_decode_list_split_result(dynamic raw);
 
   @protected
+  List<UserOwedMinor> dco_decode_list_user_owed_minor(dynamic raw);
+
+  @protected
   NetBalance dco_decode_net_balance(dynamic raw);
 
   @protected
   ParticipantRef dco_decode_participant_ref(dynamic raw);
+
+  @protected
+  Receipt dco_decode_receipt(dynamic raw);
 
   @protected
   ReceiptItem dco_decode_receipt_item(dynamic raw);
@@ -88,12 +108,24 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void dco_decode_unit(dynamic raw);
 
   @protected
+  UserOwedMinor dco_decode_user_owed_minor(dynamic raw);
+
+  @protected
   String sse_decode_String(SseDeserializer deserializer);
 
   @protected
   AssignedReceiptLine sse_decode_assigned_receipt_line(
     SseDeserializer deserializer,
   );
+
+  @protected
+  Receipt sse_decode_box_autoadd_receipt(SseDeserializer deserializer);
+
+  @protected
+  CurrencyAmount sse_decode_currency_amount(SseDeserializer deserializer);
+
+  @protected
+  DraftLineItem sse_decode_draft_line_item(SseDeserializer deserializer);
 
   @protected
   DraftPaymentMinor sse_decode_draft_payment_minor(
@@ -139,6 +171,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
 
   @protected
+  List<ReceiptItem> sse_decode_list_receipt_item(SseDeserializer deserializer);
+
+  @protected
   List<SettlementEdge> sse_decode_list_settlement_edge(
     SseDeserializer deserializer,
   );
@@ -147,10 +182,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<SplitResult> sse_decode_list_split_result(SseDeserializer deserializer);
 
   @protected
+  List<UserOwedMinor> sse_decode_list_user_owed_minor(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   NetBalance sse_decode_net_balance(SseDeserializer deserializer);
 
   @protected
   ParticipantRef sse_decode_participant_ref(SseDeserializer deserializer);
+
+  @protected
+  Receipt sse_decode_receipt(SseDeserializer deserializer);
 
   @protected
   ReceiptItem sse_decode_receipt_item(SseDeserializer deserializer);
@@ -168,6 +211,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_decode_unit(SseDeserializer deserializer);
 
   @protected
+  UserOwedMinor sse_decode_user_owed_minor(SseDeserializer deserializer);
+
+  @protected
   int sse_decode_i_32(SseDeserializer deserializer);
 
   @protected
@@ -181,6 +227,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
     AssignedReceiptLine self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_box_autoadd_receipt(Receipt self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_currency_amount(
+    CurrencyAmount self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_draft_line_item(DraftLineItem self, SseSerializer serializer);
 
   @protected
   void sse_encode_draft_payment_minor(
@@ -240,6 +298,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_receipt_item(
+    List<ReceiptItem> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_settlement_edge(
     List<SettlementEdge> self,
     SseSerializer serializer,
@@ -252,6 +316,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_user_owed_minor(
+    List<UserOwedMinor> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_net_balance(NetBalance self, SseSerializer serializer);
 
   @protected
@@ -259,6 +329,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
     ParticipantRef self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_receipt(Receipt self, SseSerializer serializer);
 
   @protected
   void sse_encode_receipt_item(ReceiptItem self, SseSerializer serializer);
@@ -277,6 +350,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_unit(void self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_user_owed_minor(UserOwedMinor self, SseSerializer serializer);
 
   @protected
   void sse_encode_i_32(int self, SseSerializer serializer);

@@ -8,7 +8,7 @@ import '../database/app_database.dart';
 import '../domain/ledger_ids.dart';
 import '../domain/ledger_line_item.dart';
 import 'amount_minor.dart';
-import '../../src/rust/api/simple.dart' show ReceiptItem;
+import '../../src/rust/api/simple.dart' show DraftLineItem;
 
 class LineItemRepository {
   LineItemRepository(this._db);
@@ -86,7 +86,7 @@ class LineItemRepository {
                 raw.where((id) => effective.contains(id)).toList();
             return LedgerLineItem(
               id: row.id,
-              receiptItem: _toReceiptItem(row),
+              receiptItem: _toDraftLineItem(row),
               quantity: row.quantity,
               assignedParticipantIds: filtered,
             );
@@ -253,8 +253,8 @@ class LineItemRepository {
     });
   }
 
-  ReceiptItem _toReceiptItem(ReceiptLine row) {
-    return ReceiptItem(
+  DraftLineItem _toDraftLineItem(ReceiptLine row) {
+    return DraftLineItem(
       name: row.label,
       price: minorUnitsToAmount(row.amountMinor, row.currencyCode),
       currencyCode: row.currencyCode,
