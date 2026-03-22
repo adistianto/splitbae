@@ -13,7 +13,20 @@ import 'draft_bill_inclusion_repository.dart';
 import 'draft_payment_repository.dart';
 import 'line_item_repository.dart';
 import 'participant_repository.dart';
+import '../../src/rust/api/receipt_split.dart' show UserOwedMinor;
 import '../../src/rust/api/simple.dart' as rust;
+
+int _minorPlatformToInt(PlatformInt64 m) => m.toInt();
+
+Map<String, int> _sumOwedByCurrency(List<UserOwedMinor> rows) {
+  final out = <String, int>{};
+  for (final o in rows) {
+    final c = o.currencyCode.trim().toUpperCase();
+    if (c.isEmpty) continue;
+    out[c] = (out[c] ?? 0) + _minorPlatformToInt(o.amountMinor);
+  }
+  return out;
+}
 
 /// Moves the in-progress draft bill into a new [Transaction] row (history) and
 /// leaves the draft empty for the next bill.
@@ -78,14 +91,20 @@ class BillPostingRepository {
 
   /// Persists the current draft as a completed expense and clears the draft.
   ///
-  /// Throws if there are no lines, no participants, or payments do not match
-  /// line totals (same rules as settlement).
+  /// [splitOwedMinor] must be the exact Rust [calculate_split] output for this bill
+  /// (no Dart-side split math). [taxAmountMinor] and [tipAmountMinor] are persisted
+  /// on the transaction row as recorded.
+  ///
+  /// Throws if there are no lines, no participants, [splitOwedMinor] is empty, or
+  /// payments do not match the Rust bill total per currency.
   Future<void> postDraftBill({
     required String ledgerId,
     required String description,
+    required List<UserOwedMinor> splitOwedMinor,
+    required int taxAmountMinor,
+    required int tipAmountMinor,
     String category = 'other',
     int? createdAtMs,
-    int taxAmountMinor = 0,
     String? receiptSourcePath,
   }) async {
     final draftTx = draftTransactionIdForLedger(ledgerId);
@@ -110,14 +129,19 @@ class BillPostingRepository {
       throw StateError('empty_participants');
     }
 
+    if (splitOwedMinor.isEmpty) {
+      throw StateError('split_incomplete');
+    }
+
     final draftPay = DraftPaymentRepository(_db);
     await draftPay.pruneExcludedDraftPayments(ledgerId, includedIds);
     var paymentRows = await draftPay.listForDraft(ledgerId);
 
     final totals = await draftPay.draftLineTotalsByCurrency(ledgerId);
+    final owedByCcy = _sumOwedByCurrency(splitOwedMinor);
 
     final lineTotalsForValidate = <rust.LineTotalMinor>[];
-    for (final e in totals.entries) {
+    for (final e in owedByCcy.entries) {
       if (e.value > 0) {
         lineTotalsForValidate.add(
           rust.LineTotalMinor(
@@ -195,7 +219,7 @@ class BillPostingRepository {
     }
 
     final primaryCcy = pickDominantCurrencyCode(
-      totals,
+      owedByCcy,
       fallbackWhenEmpty: _fallbackCurrencyFromLines(lines),
     );
     final now = DateTime.now().millisecondsSinceEpoch;
@@ -211,6 +235,7 @@ class BillPostingRepository {
               description: Value(description.trim()),
               category: Value(category),
               taxAmountMinor: Value(taxAmountMinor),
+              tipAmountMinor: Value(tipAmountMinor),
               currencyCode: Value(primaryCcy),
               kind: const Value('normal'),
               createdAtMs: atMs,
@@ -225,6 +250,18 @@ class BillPostingRepository {
               TransactionParticipantsCompanion.insert(
                 transactionId: postedId,
                 participantId: p.id,
+              ),
+            );
+      }
+
+      for (final o in splitOwedMinor) {
+        final ccy = o.currencyCode.trim().toUpperCase();
+        await _db.into(_db.transactionSplitObligations).insert(
+              TransactionSplitObligationsCompanion.insert(
+                transactionId: postedId,
+                participantId: o.userId,
+                amountMinor: _minorPlatformToInt(o.amountMinor),
+                currencyCode: ccy,
               ),
             );
       }
@@ -314,6 +351,7 @@ class BillPostingRepository {
           description: Value(posted.description),
           category: Value(posted.category),
           taxAmountMinor: Value(posted.taxAmountMinor),
+          tipAmountMinor: Value(posted.tipAmountMinor),
           currencyCode: Value(posted.currencyCode),
           receiptImagePath: Value(persistedReceipt),
           updatedAtMs: Value(now),

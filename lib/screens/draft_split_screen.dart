@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:liquid_glass_easy/liquid_glass_easy.dart';
 import 'package:m3e_collection/m3e_collection.dart';
@@ -29,6 +30,44 @@ import 'package:splitbae/widgets/post_bill_sheet.dart';
 import 'package:splitbae/widgets/who_paid_sheet.dart';
 
 /// Opens the draft split workspace (v0: full-screen flow from Bills, not a tab).
+/// Opens the post-bill sheet; shows save progress on this button via [postBillInFlightProvider].
+class _PostBillTonalButton extends ConsumerWidget {
+  const _PostBillTonalButton({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final posting = ref.watch(postBillInFlightProvider);
+    return FilledButton.tonal(
+      onPressed: posting
+          ? null
+          : () {
+              HapticFeedback.mediumImpact();
+              showPostBillSheet(context, ref);
+            },
+      child: posting
+          ? Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                const SizedBox(width: 10),
+                Text(label),
+              ],
+            )
+          : Text(label),
+    ).animate(target: posting ? 1 : 0).shimmer(
+          duration: 950.ms,
+          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.28),
+        );
+  }
+}
+
 void openDraftSplitScreen(
   BuildContext context,
   WidgetRef ref, {
@@ -164,10 +203,7 @@ class _DraftSplitBody extends ConsumerWidget {
         SliverPadding(
           padding: EdgeInsets.fromLTRB(horizontalPadding, 8, horizontalPadding, 4),
           sliver: SliverToBoxAdapter(
-            child: FilledButton.tonal(
-              onPressed: () => showPostBillSheet(context, ref),
-              child: Text(l10n.postBillAction),
-            ),
+            child: _PostBillTonalButton(label: l10n.postBillAction),
           ),
         ),
       SliverPadding(

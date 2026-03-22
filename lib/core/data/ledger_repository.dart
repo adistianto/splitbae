@@ -37,6 +37,7 @@ class LedgerRepository {
               description: const Value(''),
               category: const Value('other'),
               taxAmountMinor: const Value(0),
+              tipAmountMinor: const Value(0),
               currencyCode: const Value('IDR'),
               kind: const Value('normal'),
               createdAtMs: now,

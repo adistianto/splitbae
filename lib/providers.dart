@@ -12,6 +12,7 @@ import 'package:splitbae/core/domain/transaction_detail_data.dart';
 import 'package:splitbae/core/providers/database_providers.dart';
 import 'package:splitbae/core/database/app_database.dart'
     show SettlementTransfer, TransactionPayment;
+import 'package:splitbae/src/rust/api/receipt_split.dart' show UserOwedMinor;
 import 'package:splitbae/src/rust/api/simple.dart'
     show
         AssignedReceiptLine,
@@ -29,6 +30,9 @@ final draftPaymentsDbRevisionProvider = StateProvider<int>((ref) => 0);
 
 /// Bumped when the posted-bills feed must refresh but [itemsProvider] may be unchanged.
 final postedBillsFeedRevisionProvider = StateProvider<int>((ref) => 0);
+
+/// True while [ItemsNotifier.postDraftBill] is running (UI: post / save affordances).
+final postBillInFlightProvider = StateProvider<bool>((ref) => false);
 
 void _bumpDraftPaymentsDbRevision(Ref ref) {
   ref.read(draftPaymentsDbRevisionProvider.notifier).state++;
@@ -133,23 +137,35 @@ class ItemsNotifier extends StateNotifier<List<LedgerLineItem>> {
   Future<void> reloadFromDatabase() => _load();
 
   /// Commits the draft bill to history and reloads the empty draft.
+  ///
+  /// [splitOwedMinor] must be the exact output of Rust [calculateSplit] for the
+  /// same receipt; [taxAmountMinor] / [tipAmountMinor] must match that receipt.
   Future<void> postDraftBill(
     String description, {
+    required List<UserOwedMinor> splitOwedMinor,
+    required int taxAmountMinor,
+    required int tipAmountMinor,
     String category = 'other',
     int? createdAtMs,
-    int taxAmountMinor = 0,
     String? receiptSourcePath,
   }) async {
-    await _ref.read(billPostingRepositoryProvider).postDraftBill(
-          ledgerId: kDefaultLedgerId,
-          description: description,
-          category: category,
-          createdAtMs: createdAtMs,
-          taxAmountMinor: taxAmountMinor,
-          receiptSourcePath: receiptSourcePath,
-        );
-    await _load();
-    _bumpPostedBillsFeedRevision(_ref);
+    _ref.read(postBillInFlightProvider.notifier).state = true;
+    try {
+      await _ref.read(billPostingRepositoryProvider).postDraftBill(
+            ledgerId: kDefaultLedgerId,
+            description: description,
+            splitOwedMinor: splitOwedMinor,
+            taxAmountMinor: taxAmountMinor,
+            tipAmountMinor: tipAmountMinor,
+            category: category,
+            createdAtMs: createdAtMs,
+            receiptSourcePath: receiptSourcePath,
+          );
+      await _load();
+      _bumpPostedBillsFeedRevision(_ref);
+    } finally {
+      _ref.read(postBillInFlightProvider.notifier).state = false;
+    }
   }
 
   Future<void> deletePostedBill(String transactionId) async {

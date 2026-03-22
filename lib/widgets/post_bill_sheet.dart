@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:splitbae/features/split/application/draft_split_provider.dart';
 import 'package:splitbae/l10n/app_localizations.dart';
 import 'package:splitbae/providers.dart';
 
@@ -42,6 +43,8 @@ class _PostBillSheetBodyState extends ConsumerState<_PostBillSheetBody> {
           return l10n.postBillErrorEmpty;
         case 'empty_participants':
           return l10n.postBillErrorNoParticipants;
+        case 'split_incomplete':
+          return l10n.postBillErrorSplitIncomplete;
         default:
           break;
       }
@@ -51,25 +54,51 @@ class _PostBillSheetBodyState extends ConsumerState<_PostBillSheetBody> {
 
   Future<void> _submit(AppLocalizations l10n) async {
     final messenger = ScaffoldMessenger.of(widget.hostContext);
-    try {
-      await ref.read(itemsProvider.notifier).postDraftBill(_controller.text.trim());
-      if (!mounted) return;
-      Navigator.of(context).pop();
-      messenger.showSnackBar(
-        SnackBar(content: Text(l10n.postBillSuccess)),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      messenger.showSnackBar(
-        SnackBar(content: Text(_errorMessage(e, l10n))),
-      );
-    }
+    final splitAsync = ref.read(splitResultProvider);
+    final adj = ref.read(draftSplitNotifierProvider);
+    await splitAsync.when(
+      data: (split) async {
+        if (split.isEmpty) {
+          messenger.showSnackBar(
+            SnackBar(content: Text(l10n.postBillErrorSplitIncomplete)),
+          );
+          return;
+        }
+        try {
+          await ref.read(itemsProvider.notifier).postDraftBill(
+                _controller.text.trim(),
+                splitOwedMinor: split,
+                taxAmountMinor: adj.taxAmountMinor,
+                tipAmountMinor: adj.tipAmountMinor,
+              );
+          if (!mounted) return;
+          Navigator.of(context).pop();
+          messenger.showSnackBar(
+            SnackBar(content: Text(l10n.postBillSuccess)),
+          );
+        } catch (e) {
+          if (!mounted) return;
+          messenger.showSnackBar(
+            SnackBar(content: Text(_errorMessage(e, l10n))),
+          );
+        }
+      },
+      loading: () {
+        messenger.showSnackBar(
+          SnackBar(content: Text(l10n.draftSplitCalculateError)),
+        );
+      },
+      error: (e, _) {
+        messenger.showSnackBar(SnackBar(content: Text('$e')));
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final bottom = MediaQuery.viewInsetsOf(context).bottom;
+    final posting = ref.watch(postBillInFlightProvider);
     return Padding(
       padding: EdgeInsets.fromLTRB(24, 8, 24, 24 + bottom),
       child: Column(
@@ -97,12 +126,20 @@ class _PostBillSheetBodyState extends ConsumerState<_PostBillSheetBody> {
             ),
             textCapitalization: TextCapitalization.sentences,
             autofocus: true,
-            onSubmitted: (_) => _submit(l10n),
+            onSubmitted: (_) {
+              if (!posting) _submit(l10n);
+            },
           ),
           const SizedBox(height: 20),
           FilledButton.icon(
-            icon: const Icon(Icons.check_circle_outline),
-            onPressed: () => _submit(l10n),
+            icon: posting
+                ? const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.check_circle_outline),
+            onPressed: posting ? null : () => _submit(l10n),
             label: Text(l10n.postBillAction),
           ),
         ],

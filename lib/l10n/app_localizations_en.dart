@@ -625,6 +625,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get postBillErrorNoParticipants => 'Add people before posting.';
 
   @override
+  String get postBillErrorSplitIncomplete =>
+      'The split could not be saved. Check items, people, and tax/tip, then try again.';
+
+  @override
   String get postedBillsTitle => 'Recent bills';
 
   @override

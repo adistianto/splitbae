@@ -717,6 +717,10 @@
   "@postBillErrorNoParticipants": {
     "description": "Error when posting with no participants."
   },
+  "postBillErrorSplitIncomplete": "The split could not be saved. Check items, people, and tax/tip, then try again.",
+  "@postBillErrorSplitIncomplete": {
+    "description": "Error when Rust split output is missing or invalid at post time."
+  },
   "postedBillsTitle": "Recent bills",
   "@postedBillsTitle": {
     "description": "Section header for posted (non-draft) transactions."

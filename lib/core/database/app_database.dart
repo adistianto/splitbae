@@ -41,6 +41,8 @@ class Transactions extends Table {
   /// v0 category id: food, transport, accommodation, …, settlement, other.
   TextColumn get category => text().withDefault(const Constant('other'))();
   IntColumn get taxAmountMinor => integer().withDefault(const Constant(0))();
+  /// Recorded tip total in minor units (same semantics as [taxAmountMinor]).
+  IntColumn get tipAmountMinor => integer().withDefault(const Constant(0))();
   /// ISO 4217 **recording currency** for this bill (immutable for posted rows).
   /// Independent of the app “default currency” setting; lines store their own code too.
   TextColumn get currencyCode => text().withDefault(const Constant('IDR'))();
@@ -167,6 +169,20 @@ class DraftBillIncludedParticipants extends Table {
   Set<Column<Object>> get primaryKey => {ledgerId, participantId};
 }
 
+/// Frozen per-participant share from Rust [calculateSplit] at post time (minor units).
+@TableIndex(name: 'idx_tx_split_obligations_tx', columns: {#transactionId})
+class TransactionSplitObligations extends Table {
+  TextColumn get transactionId =>
+      text().references(Transactions, #id, onDelete: KeyAction.cascade)();
+  TextColumn get participantId =>
+      text().references(Participants, #id, onDelete: KeyAction.cascade)();
+  IntColumn get amountMinor => integer()();
+  TextColumn get currencyCode => text()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {transactionId, participantId};
+}
+
 @DriftDatabase(
   tables: [
     Ledgers,
@@ -178,13 +194,14 @@ class DraftBillIncludedParticipants extends Table {
     ReceiptLines,
     ReceiptLineAssignments,
     DraftBillIncludedParticipants,
+    TransactionSplitObligations,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -221,6 +238,7 @@ class AppDatabase extends _$AppDatabase {
               description: const Value(''),
               category: const Value('other'),
               taxAmountMinor: const Value(0),
+              tipAmountMinor: const Value(0),
               currencyCode: const Value('IDR'),
               kind: const Value('normal'),
               createdAtMs: now,
@@ -250,6 +268,11 @@ class AppDatabase extends _$AppDatabase {
       if (from < 8) {
         await m.createTable(draftBillIncludedParticipants);
         await m.createIndex(idxDraftIncludedLedger);
+      }
+      if (from < 9) {
+        await m.addColumn(transactions, transactions.tipAmountMinor);
+        await m.createTable(transactionSplitObligations);
+        await m.createIndex(idxTxSplitObligationsTx);
       }
     },
   );

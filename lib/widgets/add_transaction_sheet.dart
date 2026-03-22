@@ -19,10 +19,12 @@ import 'package:splitbae/core/theme/splitbae_v0_theme.dart';
 import 'package:splitbae/core/ui/category_icons.dart';
 import 'package:splitbae/app_settings.dart';
 import 'package:splitbae/core/widgets/adaptive_app_bar.dart';
+import 'package:splitbae/features/split/application/draft_split_provider.dart';
 import 'package:splitbae/l10n/app_localizations.dart';
 import 'package:splitbae/money_format.dart';
 import 'package:splitbae/providers.dart';
 import 'package:splitbae/screens/draft_split_screen.dart';
+import 'package:splitbae/src/rust/api/receipt_split.dart' show calculateSplit;
 import 'package:splitbae/widgets/add_receipt_item_sheet.dart';
 import 'package:splitbae/widgets/item_assignee_chips.dart';
 import 'package:splitbae/widgets/draft_paid_by_compact.dart';
@@ -144,6 +146,8 @@ class _AddTransactionSheetBodyState
           return l10n.postBillErrorNoParticipants;
         case 'no_one_on_bill':
           return l10n.postBillErrorNoParticipants;
+        case 'split_incomplete':
+          return l10n.postBillErrorSplitIncomplete;
         default:
           break;
       }
@@ -312,11 +316,24 @@ class _AddTransactionSheetBodyState
       description = items.first.receiptItem.name;
     }
     try {
+      final active = await ref.read(draftBillActiveParticipantsProvider.future);
+      final taxMinor = _taxMinor(ccy);
+      final split = calculateSplit(
+        receipt: receiptForRustSplit(
+          items: items,
+          activeParticipants: active,
+          currencyCode: ccy,
+          taxAmountMinor: taxMinor,
+          tipAmountMinor: 0,
+        ),
+      );
       await ref.read(itemsProvider.notifier).postDraftBill(
             description,
+            splitOwedMinor: split,
+            taxAmountMinor: taxMinor,
+            tipAmountMinor: 0,
             category: _category,
             createdAtMs: _when.millisecondsSinceEpoch,
-            taxAmountMinor: _taxMinor(ccy),
             receiptSourcePath: _receiptPath,
           );
       if (!mounted) return;

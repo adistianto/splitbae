@@ -153,6 +153,39 @@ List<String> _assigneeIdsForLine(
   return filtered;
 }
 
+/// Same [Receipt] as [draftReceiptProvider], for posting flows that pass tax/tip explicitly
+/// (e.g. add-transaction sheet tax field vs. draft split adjustments).
+Receipt receiptForRustSplit({
+  required List<LedgerLineItem> items,
+  required List<ParticipantEntry> activeParticipants,
+  required String currencyCode,
+  required int taxAmountMinor,
+  required int tipAmountMinor,
+}) {
+  final tax = _currencyAmountFromMinor(taxAmountMinor, currencyCode);
+  final tip = _currencyAmountFromMinor(tipAmountMinor, currencyCode);
+  final receiptItems = <ReceiptItem>[];
+  for (final line in items) {
+    final costMinor = amountToMinorUnits(
+      amount: line.receiptItem.price,
+      currencyCode: currencyCode,
+    );
+    final cc = currencyCode.trim().toUpperCase();
+    receiptItems.add(
+      ReceiptItem(
+        name: line.receiptItem.name,
+        cost: CurrencyAmount(
+          amountMinor: costMinor,
+          currencyCode: cc,
+          scale: _expectedMinorScale(cc),
+        ),
+        assigneeIds: _assigneeIdsForLine(line, activeParticipants),
+      ),
+    );
+  }
+  return Receipt(items: receiptItems, tax: tax, tip: tip);
+}
+
 /// Live [Receipt] for Rust [calculateSplit], rebuilt when lines, participants, or tax/tip change.
 final draftReceiptProvider = Provider<Receipt>((ref) {
   final items = ref.watch(itemsProvider);
@@ -165,30 +198,13 @@ final draftReceiptProvider = Provider<Receipt>((ref) {
         error: (_, _) => <ParticipantEntry>[],
       );
 
-  final tax = _currencyAmountFromMinor(adjustments.taxAmountMinor, currency);
-  final tip = _currencyAmountFromMinor(adjustments.tipAmountMinor, currency);
-
-  final receiptItems = <ReceiptItem>[];
-  for (final line in items) {
-    final costMinor = amountToMinorUnits(
-      amount: line.receiptItem.price,
-      currencyCode: currency,
-    );
-    final cc = currency.trim().toUpperCase();
-    receiptItems.add(
-      ReceiptItem(
-        name: line.receiptItem.name,
-        cost: CurrencyAmount(
-          amountMinor: costMinor,
-          currencyCode: cc,
-          scale: _expectedMinorScale(cc),
-        ),
-        assigneeIds: _assigneeIdsForLine(line, active),
-      ),
-    );
-  }
-
-  return Receipt(items: receiptItems, tax: tax, tip: tip);
+  return receiptForRustSplit(
+    items: items,
+    activeParticipants: active,
+    currencyCode: currency,
+    taxAmountMinor: adjustments.taxAmountMinor,
+    tipAmountMinor: adjustments.tipAmountMinor,
+  );
 });
 
 /// Real-time per-user totals from [calculateSplit] (items + proportional tax/tip).

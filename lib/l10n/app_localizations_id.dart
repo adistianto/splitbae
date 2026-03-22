@@ -630,6 +630,10 @@ class AppLocalizationsId extends AppLocalizations {
       'Tambah orang dulu sebelum posting.';
 
   @override
+  String get postBillErrorSplitIncomplete =>
+      'The split could not be saved. Check items, people, and tax/tip, then try again.';
+
+  @override
   String get postedBillsTitle => 'Tagihan terbaru';
 
   @override

@@ -759,6 +759,18 @@ class $TransactionsTable extends Transactions
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _tipAmountMinorMeta = const VerificationMeta(
+    'tipAmountMinor',
+  );
+  @override
+  late final GeneratedColumn<int> tipAmountMinor = GeneratedColumn<int>(
+    'tip_amount_minor',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   static const VerificationMeta _currencyCodeMeta = const VerificationMeta(
     'currencyCode',
   );
@@ -821,6 +833,7 @@ class $TransactionsTable extends Transactions
     description,
     category,
     taxAmountMinor,
+    tipAmountMinor,
     currencyCode,
     kind,
     createdAtMs,
@@ -873,6 +886,15 @@ class $TransactionsTable extends Transactions
         taxAmountMinor.isAcceptableOrUnknown(
           data['tax_amount_minor']!,
           _taxAmountMinorMeta,
+        ),
+      );
+    }
+    if (data.containsKey('tip_amount_minor')) {
+      context.handle(
+        _tipAmountMinorMeta,
+        tipAmountMinor.isAcceptableOrUnknown(
+          data['tip_amount_minor']!,
+          _tipAmountMinorMeta,
         ),
       );
     }
@@ -951,6 +973,10 @@ class $TransactionsTable extends Transactions
         DriftSqlType.int,
         data['${effectivePrefix}tax_amount_minor'],
       )!,
+      tipAmountMinor: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}tip_amount_minor'],
+      )!,
       currencyCode: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}currency_code'],
@@ -989,6 +1015,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
   final String category;
   final int taxAmountMinor;
 
+  /// Recorded tip total in minor units (same semantics as [taxAmountMinor]).
+  final int tipAmountMinor;
+
   /// ISO 4217 **recording currency** for this bill (immutable for posted rows).
   /// Independent of the app “default currency” setting; lines store their own code too.
   final String currencyCode;
@@ -1006,6 +1035,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     required this.description,
     required this.category,
     required this.taxAmountMinor,
+    required this.tipAmountMinor,
     required this.currencyCode,
     required this.kind,
     required this.createdAtMs,
@@ -1020,6 +1050,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     map['description'] = Variable<String>(description);
     map['category'] = Variable<String>(category);
     map['tax_amount_minor'] = Variable<int>(taxAmountMinor);
+    map['tip_amount_minor'] = Variable<int>(tipAmountMinor);
     map['currency_code'] = Variable<String>(currencyCode);
     map['kind'] = Variable<String>(kind);
     map['created_at_ms'] = Variable<int>(createdAtMs);
@@ -1037,6 +1068,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       description: Value(description),
       category: Value(category),
       taxAmountMinor: Value(taxAmountMinor),
+      tipAmountMinor: Value(tipAmountMinor),
       currencyCode: Value(currencyCode),
       kind: Value(kind),
       createdAtMs: Value(createdAtMs),
@@ -1058,6 +1090,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       description: serializer.fromJson<String>(json['description']),
       category: serializer.fromJson<String>(json['category']),
       taxAmountMinor: serializer.fromJson<int>(json['taxAmountMinor']),
+      tipAmountMinor: serializer.fromJson<int>(json['tipAmountMinor']),
       currencyCode: serializer.fromJson<String>(json['currencyCode']),
       kind: serializer.fromJson<String>(json['kind']),
       createdAtMs: serializer.fromJson<int>(json['createdAtMs']),
@@ -1074,6 +1107,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       'description': serializer.toJson<String>(description),
       'category': serializer.toJson<String>(category),
       'taxAmountMinor': serializer.toJson<int>(taxAmountMinor),
+      'tipAmountMinor': serializer.toJson<int>(tipAmountMinor),
       'currencyCode': serializer.toJson<String>(currencyCode),
       'kind': serializer.toJson<String>(kind),
       'createdAtMs': serializer.toJson<int>(createdAtMs),
@@ -1088,6 +1122,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     String? description,
     String? category,
     int? taxAmountMinor,
+    int? tipAmountMinor,
     String? currencyCode,
     String? kind,
     int? createdAtMs,
@@ -1099,6 +1134,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     description: description ?? this.description,
     category: category ?? this.category,
     taxAmountMinor: taxAmountMinor ?? this.taxAmountMinor,
+    tipAmountMinor: tipAmountMinor ?? this.tipAmountMinor,
     currencyCode: currencyCode ?? this.currencyCode,
     kind: kind ?? this.kind,
     createdAtMs: createdAtMs ?? this.createdAtMs,
@@ -1118,6 +1154,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       taxAmountMinor: data.taxAmountMinor.present
           ? data.taxAmountMinor.value
           : this.taxAmountMinor,
+      tipAmountMinor: data.tipAmountMinor.present
+          ? data.tipAmountMinor.value
+          : this.tipAmountMinor,
       currencyCode: data.currencyCode.present
           ? data.currencyCode.value
           : this.currencyCode,
@@ -1142,6 +1181,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           ..write('description: $description, ')
           ..write('category: $category, ')
           ..write('taxAmountMinor: $taxAmountMinor, ')
+          ..write('tipAmountMinor: $tipAmountMinor, ')
           ..write('currencyCode: $currencyCode, ')
           ..write('kind: $kind, ')
           ..write('createdAtMs: $createdAtMs, ')
@@ -1158,6 +1198,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     description,
     category,
     taxAmountMinor,
+    tipAmountMinor,
     currencyCode,
     kind,
     createdAtMs,
@@ -1173,6 +1214,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           other.description == this.description &&
           other.category == this.category &&
           other.taxAmountMinor == this.taxAmountMinor &&
+          other.tipAmountMinor == this.tipAmountMinor &&
           other.currencyCode == this.currencyCode &&
           other.kind == this.kind &&
           other.createdAtMs == this.createdAtMs &&
@@ -1186,6 +1228,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
   final Value<String> description;
   final Value<String> category;
   final Value<int> taxAmountMinor;
+  final Value<int> tipAmountMinor;
   final Value<String> currencyCode;
   final Value<String> kind;
   final Value<int> createdAtMs;
@@ -1198,6 +1241,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     this.description = const Value.absent(),
     this.category = const Value.absent(),
     this.taxAmountMinor = const Value.absent(),
+    this.tipAmountMinor = const Value.absent(),
     this.currencyCode = const Value.absent(),
     this.kind = const Value.absent(),
     this.createdAtMs = const Value.absent(),
@@ -1211,6 +1255,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     this.description = const Value.absent(),
     this.category = const Value.absent(),
     this.taxAmountMinor = const Value.absent(),
+    this.tipAmountMinor = const Value.absent(),
     this.currencyCode = const Value.absent(),
     this.kind = const Value.absent(),
     required int createdAtMs,
@@ -1227,6 +1272,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Expression<String>? description,
     Expression<String>? category,
     Expression<int>? taxAmountMinor,
+    Expression<int>? tipAmountMinor,
     Expression<String>? currencyCode,
     Expression<String>? kind,
     Expression<int>? createdAtMs,
@@ -1240,6 +1286,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       if (description != null) 'description': description,
       if (category != null) 'category': category,
       if (taxAmountMinor != null) 'tax_amount_minor': taxAmountMinor,
+      if (tipAmountMinor != null) 'tip_amount_minor': tipAmountMinor,
       if (currencyCode != null) 'currency_code': currencyCode,
       if (kind != null) 'kind': kind,
       if (createdAtMs != null) 'created_at_ms': createdAtMs,
@@ -1255,6 +1302,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Value<String>? description,
     Value<String>? category,
     Value<int>? taxAmountMinor,
+    Value<int>? tipAmountMinor,
     Value<String>? currencyCode,
     Value<String>? kind,
     Value<int>? createdAtMs,
@@ -1268,6 +1316,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       description: description ?? this.description,
       category: category ?? this.category,
       taxAmountMinor: taxAmountMinor ?? this.taxAmountMinor,
+      tipAmountMinor: tipAmountMinor ?? this.tipAmountMinor,
       currencyCode: currencyCode ?? this.currencyCode,
       kind: kind ?? this.kind,
       createdAtMs: createdAtMs ?? this.createdAtMs,
@@ -1294,6 +1343,9 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     }
     if (taxAmountMinor.present) {
       map['tax_amount_minor'] = Variable<int>(taxAmountMinor.value);
+    }
+    if (tipAmountMinor.present) {
+      map['tip_amount_minor'] = Variable<int>(tipAmountMinor.value);
     }
     if (currencyCode.present) {
       map['currency_code'] = Variable<String>(currencyCode.value);
@@ -1324,6 +1376,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
           ..write('description: $description, ')
           ..write('category: $category, ')
           ..write('taxAmountMinor: $taxAmountMinor, ')
+          ..write('tipAmountMinor: $tipAmountMinor, ')
           ..write('currencyCode: $currencyCode, ')
           ..write('kind: $kind, ')
           ..write('createdAtMs: $createdAtMs, ')
@@ -3600,6 +3653,364 @@ class DraftBillIncludedParticipantsCompanion
   }
 }
 
+class $TransactionSplitObligationsTable extends TransactionSplitObligations
+    with
+        TableInfo<
+          $TransactionSplitObligationsTable,
+          TransactionSplitObligation
+        > {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TransactionSplitObligationsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _transactionIdMeta = const VerificationMeta(
+    'transactionId',
+  );
+  @override
+  late final GeneratedColumn<String> transactionId = GeneratedColumn<String>(
+    'transaction_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES transactions (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _participantIdMeta = const VerificationMeta(
+    'participantId',
+  );
+  @override
+  late final GeneratedColumn<String> participantId = GeneratedColumn<String>(
+    'participant_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES participants (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _amountMinorMeta = const VerificationMeta(
+    'amountMinor',
+  );
+  @override
+  late final GeneratedColumn<int> amountMinor = GeneratedColumn<int>(
+    'amount_minor',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _currencyCodeMeta = const VerificationMeta(
+    'currencyCode',
+  );
+  @override
+  late final GeneratedColumn<String> currencyCode = GeneratedColumn<String>(
+    'currency_code',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    transactionId,
+    participantId,
+    amountMinor,
+    currencyCode,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'transaction_split_obligations';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<TransactionSplitObligation> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('transaction_id')) {
+      context.handle(
+        _transactionIdMeta,
+        transactionId.isAcceptableOrUnknown(
+          data['transaction_id']!,
+          _transactionIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_transactionIdMeta);
+    }
+    if (data.containsKey('participant_id')) {
+      context.handle(
+        _participantIdMeta,
+        participantId.isAcceptableOrUnknown(
+          data['participant_id']!,
+          _participantIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_participantIdMeta);
+    }
+    if (data.containsKey('amount_minor')) {
+      context.handle(
+        _amountMinorMeta,
+        amountMinor.isAcceptableOrUnknown(
+          data['amount_minor']!,
+          _amountMinorMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_amountMinorMeta);
+    }
+    if (data.containsKey('currency_code')) {
+      context.handle(
+        _currencyCodeMeta,
+        currencyCode.isAcceptableOrUnknown(
+          data['currency_code']!,
+          _currencyCodeMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_currencyCodeMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {transactionId, participantId};
+  @override
+  TransactionSplitObligation map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return TransactionSplitObligation(
+      transactionId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}transaction_id'],
+      )!,
+      participantId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}participant_id'],
+      )!,
+      amountMinor: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}amount_minor'],
+      )!,
+      currencyCode: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}currency_code'],
+      )!,
+    );
+  }
+
+  @override
+  $TransactionSplitObligationsTable createAlias(String alias) {
+    return $TransactionSplitObligationsTable(attachedDatabase, alias);
+  }
+}
+
+class TransactionSplitObligation extends DataClass
+    implements Insertable<TransactionSplitObligation> {
+  final String transactionId;
+  final String participantId;
+  final int amountMinor;
+  final String currencyCode;
+  const TransactionSplitObligation({
+    required this.transactionId,
+    required this.participantId,
+    required this.amountMinor,
+    required this.currencyCode,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['transaction_id'] = Variable<String>(transactionId);
+    map['participant_id'] = Variable<String>(participantId);
+    map['amount_minor'] = Variable<int>(amountMinor);
+    map['currency_code'] = Variable<String>(currencyCode);
+    return map;
+  }
+
+  TransactionSplitObligationsCompanion toCompanion(bool nullToAbsent) {
+    return TransactionSplitObligationsCompanion(
+      transactionId: Value(transactionId),
+      participantId: Value(participantId),
+      amountMinor: Value(amountMinor),
+      currencyCode: Value(currencyCode),
+    );
+  }
+
+  factory TransactionSplitObligation.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return TransactionSplitObligation(
+      transactionId: serializer.fromJson<String>(json['transactionId']),
+      participantId: serializer.fromJson<String>(json['participantId']),
+      amountMinor: serializer.fromJson<int>(json['amountMinor']),
+      currencyCode: serializer.fromJson<String>(json['currencyCode']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'transactionId': serializer.toJson<String>(transactionId),
+      'participantId': serializer.toJson<String>(participantId),
+      'amountMinor': serializer.toJson<int>(amountMinor),
+      'currencyCode': serializer.toJson<String>(currencyCode),
+    };
+  }
+
+  TransactionSplitObligation copyWith({
+    String? transactionId,
+    String? participantId,
+    int? amountMinor,
+    String? currencyCode,
+  }) => TransactionSplitObligation(
+    transactionId: transactionId ?? this.transactionId,
+    participantId: participantId ?? this.participantId,
+    amountMinor: amountMinor ?? this.amountMinor,
+    currencyCode: currencyCode ?? this.currencyCode,
+  );
+  TransactionSplitObligation copyWithCompanion(
+    TransactionSplitObligationsCompanion data,
+  ) {
+    return TransactionSplitObligation(
+      transactionId: data.transactionId.present
+          ? data.transactionId.value
+          : this.transactionId,
+      participantId: data.participantId.present
+          ? data.participantId.value
+          : this.participantId,
+      amountMinor: data.amountMinor.present
+          ? data.amountMinor.value
+          : this.amountMinor,
+      currencyCode: data.currencyCode.present
+          ? data.currencyCode.value
+          : this.currencyCode,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TransactionSplitObligation(')
+          ..write('transactionId: $transactionId, ')
+          ..write('participantId: $participantId, ')
+          ..write('amountMinor: $amountMinor, ')
+          ..write('currencyCode: $currencyCode')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(transactionId, participantId, amountMinor, currencyCode);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is TransactionSplitObligation &&
+          other.transactionId == this.transactionId &&
+          other.participantId == this.participantId &&
+          other.amountMinor == this.amountMinor &&
+          other.currencyCode == this.currencyCode);
+}
+
+class TransactionSplitObligationsCompanion
+    extends UpdateCompanion<TransactionSplitObligation> {
+  final Value<String> transactionId;
+  final Value<String> participantId;
+  final Value<int> amountMinor;
+  final Value<String> currencyCode;
+  final Value<int> rowid;
+  const TransactionSplitObligationsCompanion({
+    this.transactionId = const Value.absent(),
+    this.participantId = const Value.absent(),
+    this.amountMinor = const Value.absent(),
+    this.currencyCode = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  TransactionSplitObligationsCompanion.insert({
+    required String transactionId,
+    required String participantId,
+    required int amountMinor,
+    required String currencyCode,
+    this.rowid = const Value.absent(),
+  }) : transactionId = Value(transactionId),
+       participantId = Value(participantId),
+       amountMinor = Value(amountMinor),
+       currencyCode = Value(currencyCode);
+  static Insertable<TransactionSplitObligation> custom({
+    Expression<String>? transactionId,
+    Expression<String>? participantId,
+    Expression<int>? amountMinor,
+    Expression<String>? currencyCode,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (transactionId != null) 'transaction_id': transactionId,
+      if (participantId != null) 'participant_id': participantId,
+      if (amountMinor != null) 'amount_minor': amountMinor,
+      if (currencyCode != null) 'currency_code': currencyCode,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  TransactionSplitObligationsCompanion copyWith({
+    Value<String>? transactionId,
+    Value<String>? participantId,
+    Value<int>? amountMinor,
+    Value<String>? currencyCode,
+    Value<int>? rowid,
+  }) {
+    return TransactionSplitObligationsCompanion(
+      transactionId: transactionId ?? this.transactionId,
+      participantId: participantId ?? this.participantId,
+      amountMinor: amountMinor ?? this.amountMinor,
+      currencyCode: currencyCode ?? this.currencyCode,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (transactionId.present) {
+      map['transaction_id'] = Variable<String>(transactionId.value);
+    }
+    if (participantId.present) {
+      map['participant_id'] = Variable<String>(participantId.value);
+    }
+    if (amountMinor.present) {
+      map['amount_minor'] = Variable<int>(amountMinor.value);
+    }
+    if (currencyCode.present) {
+      map['currency_code'] = Variable<String>(currencyCode.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TransactionSplitObligationsCompanion(')
+          ..write('transactionId: $transactionId, ')
+          ..write('participantId: $participantId, ')
+          ..write('amountMinor: $amountMinor, ')
+          ..write('currencyCode: $currencyCode, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -3617,6 +4028,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $ReceiptLineAssignmentsTable(this);
   late final $DraftBillIncludedParticipantsTable draftBillIncludedParticipants =
       $DraftBillIncludedParticipantsTable(this);
+  late final $TransactionSplitObligationsTable transactionSplitObligations =
+      $TransactionSplitObligationsTable(this);
   late final Index idxParticipantsLedgerId = Index(
     'idx_participants_ledger_id',
     'CREATE INDEX idx_participants_ledger_id ON participants (ledger_id)',
@@ -3653,6 +4066,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     'idx_draft_included_ledger',
     'CREATE INDEX idx_draft_included_ledger ON draft_bill_included_participants (ledger_id)',
   );
+  late final Index idxTxSplitObligationsTx = Index(
+    'idx_tx_split_obligations_tx',
+    'CREATE INDEX idx_tx_split_obligations_tx ON transaction_split_obligations (transaction_id)',
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3667,6 +4084,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     receiptLines,
     receiptLineAssignments,
     draftBillIncludedParticipants,
+    transactionSplitObligations,
     idxParticipantsLedgerId,
     idxTransactionsLedgerCreated,
     idxTxParticipantsTx,
@@ -3676,6 +4094,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     idxReceiptLinesTransactionId,
     idxReceiptLineAssignmentsLineId,
     idxDraftIncludedLedger,
+    idxTxSplitObligationsTx,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -3807,6 +4226,24 @@ abstract class _$AppDatabase extends GeneratedDatabase {
           'draft_bill_included_participants',
           kind: UpdateKind.delete,
         ),
+      ],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'transactions',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [
+        TableUpdate('transaction_split_obligations', kind: UpdateKind.delete),
+      ],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'participants',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [
+        TableUpdate('transaction_split_obligations', kind: UpdateKind.delete),
       ],
     ),
   ]);
@@ -4724,6 +5161,34 @@ final class $$ParticipantsTableReferences
       manager.$state.copyWith(prefetchedData: cache),
     );
   }
+
+  static MultiTypedResultKey<
+    $TransactionSplitObligationsTable,
+    List<TransactionSplitObligation>
+  >
+  _transactionSplitObligationsRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.transactionSplitObligations,
+        aliasName: $_aliasNameGenerator(
+          db.participants.id,
+          db.transactionSplitObligations.participantId,
+        ),
+      );
+
+  $$TransactionSplitObligationsTableProcessedTableManager
+  get transactionSplitObligationsRefs {
+    final manager = $$TransactionSplitObligationsTableTableManager(
+      $_db,
+      $_db.transactionSplitObligations,
+    ).filter((f) => f.participantId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _transactionSplitObligationsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
 }
 
 class $$ParticipantsTableFilterComposer
@@ -4925,6 +5390,35 @@ class $$ParticipantsTableFilterComposer
               }) => $$DraftBillIncludedParticipantsTableFilterComposer(
                 $db: $db,
                 $table: $db.draftBillIncludedParticipants,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
+
+  Expression<bool> transactionSplitObligationsRefs(
+    Expression<bool> Function(
+      $$TransactionSplitObligationsTableFilterComposer f,
+    )
+    f,
+  ) {
+    final $$TransactionSplitObligationsTableFilterComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.transactionSplitObligations,
+          getReferencedColumn: (t) => t.participantId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$TransactionSplitObligationsTableFilterComposer(
+                $db: $db,
+                $table: $db.transactionSplitObligations,
                 $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
                 joinBuilder: joinBuilder,
                 $removeJoinBuilderFromRootComposer:
@@ -5195,6 +5689,35 @@ class $$ParticipantsTableAnnotationComposer
         );
     return f(composer);
   }
+
+  Expression<T> transactionSplitObligationsRefs<T extends Object>(
+    Expression<T> Function(
+      $$TransactionSplitObligationsTableAnnotationComposer a,
+    )
+    f,
+  ) {
+    final $$TransactionSplitObligationsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.transactionSplitObligations,
+          getReferencedColumn: (t) => t.participantId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$TransactionSplitObligationsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.transactionSplitObligations,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
 }
 
 class $$ParticipantsTableTableManager
@@ -5218,6 +5741,7 @@ class $$ParticipantsTableTableManager
             bool settlement_to_participant,
             bool receiptLineAssignmentsRefs,
             bool draftBillIncludedParticipantsRefs,
+            bool transactionSplitObligationsRefs,
           })
         > {
   $$ParticipantsTableTableManager(_$AppDatabase db, $ParticipantsTable table)
@@ -5280,6 +5804,7 @@ class $$ParticipantsTableTableManager
                 settlement_to_participant = false,
                 receiptLineAssignmentsRefs = false,
                 draftBillIncludedParticipantsRefs = false,
+                transactionSplitObligationsRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -5291,6 +5816,8 @@ class $$ParticipantsTableTableManager
                     if (receiptLineAssignmentsRefs) db.receiptLineAssignments,
                     if (draftBillIncludedParticipantsRefs)
                       db.draftBillIncludedParticipants,
+                    if (transactionSplitObligationsRefs)
+                      db.transactionSplitObligations,
                   ],
                   addJoins:
                       <
@@ -5454,6 +5981,27 @@ class $$ParticipantsTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (transactionSplitObligationsRefs)
+                        await $_getPrefetchedData<
+                          Participant,
+                          $ParticipantsTable,
+                          TransactionSplitObligation
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ParticipantsTableReferences
+                              ._transactionSplitObligationsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ParticipantsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).transactionSplitObligationsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.participantId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -5482,6 +6030,7 @@ typedef $$ParticipantsTableProcessedTableManager =
         bool settlement_to_participant,
         bool receiptLineAssignmentsRefs,
         bool draftBillIncludedParticipantsRefs,
+        bool transactionSplitObligationsRefs,
       })
     >;
 typedef $$TransactionsTableCreateCompanionBuilder =
@@ -5491,6 +6040,7 @@ typedef $$TransactionsTableCreateCompanionBuilder =
       Value<String> description,
       Value<String> category,
       Value<int> taxAmountMinor,
+      Value<int> tipAmountMinor,
       Value<String> currencyCode,
       Value<String> kind,
       required int createdAtMs,
@@ -5505,6 +6055,7 @@ typedef $$TransactionsTableUpdateCompanionBuilder =
       Value<String> description,
       Value<String> category,
       Value<int> taxAmountMinor,
+      Value<int> tipAmountMinor,
       Value<String> currencyCode,
       Value<String> kind,
       Value<int> createdAtMs,
@@ -5638,6 +6189,34 @@ final class $$TransactionsTableReferences
       manager.$state.copyWith(prefetchedData: cache),
     );
   }
+
+  static MultiTypedResultKey<
+    $TransactionSplitObligationsTable,
+    List<TransactionSplitObligation>
+  >
+  _transactionSplitObligationsRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.transactionSplitObligations,
+        aliasName: $_aliasNameGenerator(
+          db.transactions.id,
+          db.transactionSplitObligations.transactionId,
+        ),
+      );
+
+  $$TransactionSplitObligationsTableProcessedTableManager
+  get transactionSplitObligationsRefs {
+    final manager = $$TransactionSplitObligationsTableTableManager(
+      $_db,
+      $_db.transactionSplitObligations,
+    ).filter((f) => f.transactionId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _transactionSplitObligationsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
 }
 
 class $$TransactionsTableFilterComposer
@@ -5666,6 +6245,11 @@ class $$TransactionsTableFilterComposer
 
   ColumnFilters<int> get taxAmountMinor => $composableBuilder(
     column: $table.taxAmountMinor,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get tipAmountMinor => $composableBuilder(
+    column: $table.tipAmountMinor,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5817,6 +6401,35 @@ class $$TransactionsTableFilterComposer
     );
     return f(composer);
   }
+
+  Expression<bool> transactionSplitObligationsRefs(
+    Expression<bool> Function(
+      $$TransactionSplitObligationsTableFilterComposer f,
+    )
+    f,
+  ) {
+    final $$TransactionSplitObligationsTableFilterComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.transactionSplitObligations,
+          getReferencedColumn: (t) => t.transactionId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$TransactionSplitObligationsTableFilterComposer(
+                $db: $db,
+                $table: $db.transactionSplitObligations,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
 }
 
 class $$TransactionsTableOrderingComposer
@@ -5845,6 +6458,11 @@ class $$TransactionsTableOrderingComposer
 
   ColumnOrderings<int> get taxAmountMinor => $composableBuilder(
     column: $table.taxAmountMinor,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get tipAmountMinor => $composableBuilder(
+    column: $table.tipAmountMinor,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -5919,6 +6537,11 @@ class $$TransactionsTableAnnotationComposer
 
   GeneratedColumn<int> get taxAmountMinor => $composableBuilder(
     column: $table.taxAmountMinor,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get tipAmountMinor => $composableBuilder(
+    column: $table.tipAmountMinor,
     builder: (column) => column,
   );
 
@@ -6071,6 +6694,35 @@ class $$TransactionsTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> transactionSplitObligationsRefs<T extends Object>(
+    Expression<T> Function(
+      $$TransactionSplitObligationsTableAnnotationComposer a,
+    )
+    f,
+  ) {
+    final $$TransactionSplitObligationsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.transactionSplitObligations,
+          getReferencedColumn: (t) => t.transactionId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$TransactionSplitObligationsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.transactionSplitObligations,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
 }
 
 class $$TransactionsTableTableManager
@@ -6092,6 +6744,7 @@ class $$TransactionsTableTableManager
             bool transactionPaymentsRefs,
             bool settlementTransfersRefs,
             bool receiptLinesRefs,
+            bool transactionSplitObligationsRefs,
           })
         > {
   $$TransactionsTableTableManager(_$AppDatabase db, $TransactionsTable table)
@@ -6112,6 +6765,7 @@ class $$TransactionsTableTableManager
                 Value<String> description = const Value.absent(),
                 Value<String> category = const Value.absent(),
                 Value<int> taxAmountMinor = const Value.absent(),
+                Value<int> tipAmountMinor = const Value.absent(),
                 Value<String> currencyCode = const Value.absent(),
                 Value<String> kind = const Value.absent(),
                 Value<int> createdAtMs = const Value.absent(),
@@ -6124,6 +6778,7 @@ class $$TransactionsTableTableManager
                 description: description,
                 category: category,
                 taxAmountMinor: taxAmountMinor,
+                tipAmountMinor: tipAmountMinor,
                 currencyCode: currencyCode,
                 kind: kind,
                 createdAtMs: createdAtMs,
@@ -6138,6 +6793,7 @@ class $$TransactionsTableTableManager
                 Value<String> description = const Value.absent(),
                 Value<String> category = const Value.absent(),
                 Value<int> taxAmountMinor = const Value.absent(),
+                Value<int> tipAmountMinor = const Value.absent(),
                 Value<String> currencyCode = const Value.absent(),
                 Value<String> kind = const Value.absent(),
                 required int createdAtMs,
@@ -6150,6 +6806,7 @@ class $$TransactionsTableTableManager
                 description: description,
                 category: category,
                 taxAmountMinor: taxAmountMinor,
+                tipAmountMinor: tipAmountMinor,
                 currencyCode: currencyCode,
                 kind: kind,
                 createdAtMs: createdAtMs,
@@ -6172,6 +6829,7 @@ class $$TransactionsTableTableManager
                 transactionPaymentsRefs = false,
                 settlementTransfersRefs = false,
                 receiptLinesRefs = false,
+                transactionSplitObligationsRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -6180,6 +6838,8 @@ class $$TransactionsTableTableManager
                     if (transactionPaymentsRefs) db.transactionPayments,
                     if (settlementTransfersRefs) db.settlementTransfers,
                     if (receiptLinesRefs) db.receiptLines,
+                    if (transactionSplitObligationsRefs)
+                      db.transactionSplitObligations,
                   ],
                   addJoins:
                       <
@@ -6301,6 +6961,27 @@ class $$TransactionsTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (transactionSplitObligationsRefs)
+                        await $_getPrefetchedData<
+                          Transaction,
+                          $TransactionsTable,
+                          TransactionSplitObligation
+                        >(
+                          currentTable: table,
+                          referencedTable: $$TransactionsTableReferences
+                              ._transactionSplitObligationsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$TransactionsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).transactionSplitObligationsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.transactionId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -6327,6 +7008,7 @@ typedef $$TransactionsTableProcessedTableManager =
         bool transactionPaymentsRefs,
         bool settlementTransfersRefs,
         bool receiptLinesRefs,
+        bool transactionSplitObligationsRefs,
       })
     >;
 typedef $$TransactionParticipantsTableCreateCompanionBuilder =
@@ -9223,6 +9905,434 @@ typedef $$DraftBillIncludedParticipantsTableProcessedTableManager =
       DraftBillIncludedParticipant,
       PrefetchHooks Function({bool ledgerId, bool participantId})
     >;
+typedef $$TransactionSplitObligationsTableCreateCompanionBuilder =
+    TransactionSplitObligationsCompanion Function({
+      required String transactionId,
+      required String participantId,
+      required int amountMinor,
+      required String currencyCode,
+      Value<int> rowid,
+    });
+typedef $$TransactionSplitObligationsTableUpdateCompanionBuilder =
+    TransactionSplitObligationsCompanion Function({
+      Value<String> transactionId,
+      Value<String> participantId,
+      Value<int> amountMinor,
+      Value<String> currencyCode,
+      Value<int> rowid,
+    });
+
+final class $$TransactionSplitObligationsTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $TransactionSplitObligationsTable,
+          TransactionSplitObligation
+        > {
+  $$TransactionSplitObligationsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $TransactionsTable _transactionIdTable(_$AppDatabase db) =>
+      db.transactions.createAlias(
+        $_aliasNameGenerator(
+          db.transactionSplitObligations.transactionId,
+          db.transactions.id,
+        ),
+      );
+
+  $$TransactionsTableProcessedTableManager get transactionId {
+    final $_column = $_itemColumn<String>('transaction_id')!;
+
+    final manager = $$TransactionsTableTableManager(
+      $_db,
+      $_db.transactions,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_transactionIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $ParticipantsTable _participantIdTable(_$AppDatabase db) =>
+      db.participants.createAlias(
+        $_aliasNameGenerator(
+          db.transactionSplitObligations.participantId,
+          db.participants.id,
+        ),
+      );
+
+  $$ParticipantsTableProcessedTableManager get participantId {
+    final $_column = $_itemColumn<String>('participant_id')!;
+
+    final manager = $$ParticipantsTableTableManager(
+      $_db,
+      $_db.participants,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_participantIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$TransactionSplitObligationsTableFilterComposer
+    extends Composer<_$AppDatabase, $TransactionSplitObligationsTable> {
+  $$TransactionSplitObligationsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get amountMinor => $composableBuilder(
+    column: $table.amountMinor,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get currencyCode => $composableBuilder(
+    column: $table.currencyCode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$TransactionsTableFilterComposer get transactionId {
+    final $$TransactionsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.transactionId,
+      referencedTable: $db.transactions,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TransactionsTableFilterComposer(
+            $db: $db,
+            $table: $db.transactions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$ParticipantsTableFilterComposer get participantId {
+    final $$ParticipantsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.participantId,
+      referencedTable: $db.participants,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ParticipantsTableFilterComposer(
+            $db: $db,
+            $table: $db.participants,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$TransactionSplitObligationsTableOrderingComposer
+    extends Composer<_$AppDatabase, $TransactionSplitObligationsTable> {
+  $$TransactionSplitObligationsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get amountMinor => $composableBuilder(
+    column: $table.amountMinor,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get currencyCode => $composableBuilder(
+    column: $table.currencyCode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$TransactionsTableOrderingComposer get transactionId {
+    final $$TransactionsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.transactionId,
+      referencedTable: $db.transactions,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TransactionsTableOrderingComposer(
+            $db: $db,
+            $table: $db.transactions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$ParticipantsTableOrderingComposer get participantId {
+    final $$ParticipantsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.participantId,
+      referencedTable: $db.participants,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ParticipantsTableOrderingComposer(
+            $db: $db,
+            $table: $db.participants,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$TransactionSplitObligationsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $TransactionSplitObligationsTable> {
+  $$TransactionSplitObligationsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get amountMinor => $composableBuilder(
+    column: $table.amountMinor,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get currencyCode => $composableBuilder(
+    column: $table.currencyCode,
+    builder: (column) => column,
+  );
+
+  $$TransactionsTableAnnotationComposer get transactionId {
+    final $$TransactionsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.transactionId,
+      referencedTable: $db.transactions,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TransactionsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.transactions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$ParticipantsTableAnnotationComposer get participantId {
+    final $$ParticipantsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.participantId,
+      referencedTable: $db.participants,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ParticipantsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.participants,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$TransactionSplitObligationsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $TransactionSplitObligationsTable,
+          TransactionSplitObligation,
+          $$TransactionSplitObligationsTableFilterComposer,
+          $$TransactionSplitObligationsTableOrderingComposer,
+          $$TransactionSplitObligationsTableAnnotationComposer,
+          $$TransactionSplitObligationsTableCreateCompanionBuilder,
+          $$TransactionSplitObligationsTableUpdateCompanionBuilder,
+          (
+            TransactionSplitObligation,
+            $$TransactionSplitObligationsTableReferences,
+          ),
+          TransactionSplitObligation,
+          PrefetchHooks Function({bool transactionId, bool participantId})
+        > {
+  $$TransactionSplitObligationsTableTableManager(
+    _$AppDatabase db,
+    $TransactionSplitObligationsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TransactionSplitObligationsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$TransactionSplitObligationsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$TransactionSplitObligationsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> transactionId = const Value.absent(),
+                Value<String> participantId = const Value.absent(),
+                Value<int> amountMinor = const Value.absent(),
+                Value<String> currencyCode = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => TransactionSplitObligationsCompanion(
+                transactionId: transactionId,
+                participantId: participantId,
+                amountMinor: amountMinor,
+                currencyCode: currencyCode,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String transactionId,
+                required String participantId,
+                required int amountMinor,
+                required String currencyCode,
+                Value<int> rowid = const Value.absent(),
+              }) => TransactionSplitObligationsCompanion.insert(
+                transactionId: transactionId,
+                participantId: participantId,
+                amountMinor: amountMinor,
+                currencyCode: currencyCode,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$TransactionSplitObligationsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({transactionId = false, participantId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (transactionId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.transactionId,
+                                referencedTable:
+                                    $$TransactionSplitObligationsTableReferences
+                                        ._transactionIdTable(db),
+                                referencedColumn:
+                                    $$TransactionSplitObligationsTableReferences
+                                        ._transactionIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+                    if (participantId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.participantId,
+                                referencedTable:
+                                    $$TransactionSplitObligationsTableReferences
+                                        ._participantIdTable(db),
+                                referencedColumn:
+                                    $$TransactionSplitObligationsTableReferences
+                                        ._participantIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$TransactionSplitObligationsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $TransactionSplitObligationsTable,
+      TransactionSplitObligation,
+      $$TransactionSplitObligationsTableFilterComposer,
+      $$TransactionSplitObligationsTableOrderingComposer,
+      $$TransactionSplitObligationsTableAnnotationComposer,
+      $$TransactionSplitObligationsTableCreateCompanionBuilder,
+      $$TransactionSplitObligationsTableUpdateCompanionBuilder,
+      (
+        TransactionSplitObligation,
+        $$TransactionSplitObligationsTableReferences,
+      ),
+      TransactionSplitObligation,
+      PrefetchHooks Function({bool transactionId, bool participantId})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -9254,5 +10364,11 @@ class $AppDatabaseManager {
       $$DraftBillIncludedParticipantsTableTableManager(
         _db,
         _db.draftBillIncludedParticipants,
+      );
+  $$TransactionSplitObligationsTableTableManager
+  get transactionSplitObligations =>
+      $$TransactionSplitObligationsTableTableManager(
+        _db,
+        _db.transactionSplitObligations,
       );
 }

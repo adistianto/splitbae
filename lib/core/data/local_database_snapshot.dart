@@ -127,6 +127,7 @@ class LocalDatabaseSnapshot {
           description: '',
           category: 'other',
           taxAmountMinor: 0,
+          tipAmountMinor: 0,
           currencyCode: 'IDR',
           kind: 'normal',
           createdAtMs: now,

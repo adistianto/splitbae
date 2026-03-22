@@ -1198,6 +1198,12 @@ abstract class AppLocalizations {
   /// **'Add people before posting.'**
   String get postBillErrorNoParticipants;
 
+  /// Error when Rust split output is missing or invalid at post time.
+  ///
+  /// In en, this message translates to:
+  /// **'The split could not be saved. Check items, people, and tax/tip, then try again.'**
+  String get postBillErrorSplitIncomplete;
+
   /// Section header for posted (non-draft) transactions.
   ///
   /// In en, this message translates to:

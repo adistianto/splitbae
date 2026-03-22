@@ -31,6 +31,7 @@ List<PostedBillSummary> _dummyPostedBillSummaries() {
       description: description,
       category: category,
       taxAmountMinor: taxAmountMinor,
+      tipAmountMinor: 0,
       currencyCode: currencyCode,
       kind: kind,
       createdAtMs: createdAtMs,
