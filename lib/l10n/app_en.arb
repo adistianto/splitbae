@@ -826,6 +826,26 @@
   "@billsEmptyHeroSubtitle": {
     "description": "Empty state subtitle on Bills feed."
   },
+  "billsFiltersTitle": "Filters",
+  "@billsFiltersTitle": {
+    "description": "Title for Bills category/people filter sheet (v0 parity)."
+  },
+  "billsFiltersCategorySection": "Category",
+  "@billsFiltersCategorySection": {
+    "description": "Section label in Bills filter sheet."
+  },
+  "billsFiltersPeopleSection": "People",
+  "@billsFiltersPeopleSection": {
+    "description": "Section label in Bills filter sheet."
+  },
+  "billsFiltersClearAll": "Clear all",
+  "@billsFiltersClearAll": {
+    "description": "Reset category and people filters on Bills."
+  },
+  "billsFiltersAdjustHint": "Try adjusting filters or search.",
+  "@billsFiltersAdjustHint": {
+    "description": "Empty state when filters or search exclude all bills."
+  },
   "fabNewBill": "New Bill",
   "@fabNewBill": {
     "description": "FAB speed dial: open compose flow."

@@ -655,6 +655,21 @@ class AppLocalizationsId extends AppLocalizations {
   String get billsEmptyHeroSubtitle => 'Ketuk + untuk menambah tagihan.';
 
   @override
+  String get billsFiltersTitle => 'Filter';
+
+  @override
+  String get billsFiltersCategorySection => 'Kategori';
+
+  @override
+  String get billsFiltersPeopleSection => 'Orang';
+
+  @override
+  String get billsFiltersClearAll => 'Hapus semua';
+
+  @override
+  String get billsFiltersAdjustHint => 'Coba ubah filter atau pencarian.';
+
+  @override
   String get fabNewBill => 'Tagihan baru';
 
   @override

@@ -6,6 +6,7 @@ import 'package:splitbae/core/data/amount_minor.dart';
 import 'package:splitbae/core/domain/bills_insights.dart';
 import 'package:splitbae/core/theme/splitbae_semantic_colors.dart';
 import 'package:splitbae/core/domain/posted_bill_summary.dart';
+import 'package:splitbae/core/widgets/adaptive_app_bar.dart';
 import 'package:splitbae/l10n/app_localizations.dart';
 import 'package:splitbae/money_format.dart';
 import 'package:splitbae/app_settings.dart';
@@ -34,6 +35,21 @@ class BillsScreen extends ConsumerStatefulWidget {
 class _BillsScreenState extends ConsumerState<BillsScreen> {
   final _searchCtrl = TextEditingController();
   bool _searchOpen = false;
+  final Set<String> _selectedCategories = {};
+  final Set<String> _selectedParticipants = {};
+  bool _headerChromeVisible = true;
+  bool _fabVisible = true;
+
+  static const _categoryIds = <String>[
+    'food',
+    'transport',
+    'accommodation',
+    'entertainment',
+    'shopping',
+    'utilities',
+    'other',
+    'settlement',
+  ];
 
   @override
   void dispose() {
@@ -41,14 +57,224 @@ class _BillsScreenState extends ConsumerState<BillsScreen> {
     super.dispose();
   }
 
-  List<PostedBillSummary> _filter(List<PostedBillSummary> list, String q) {
+  bool get _hasActiveFilters =>
+      _selectedCategories.isNotEmpty || _selectedParticipants.isNotEmpty;
+
+  bool _passesCategoryPeople(PostedBillSummary s) {
+    if (_selectedCategories.isNotEmpty &&
+        !_selectedCategories.contains(s.transaction.category)) {
+      return false;
+    }
+    if (_selectedParticipants.isNotEmpty) {
+      final hit =
+          s.participantIds.any(_selectedParticipants.contains);
+      if (!hit) return false;
+    }
+    return true;
+  }
+
+  List<PostedBillSummary> _applyFiltersAndSearch(
+    List<PostedBillSummary> list,
+    String q,
+  ) {
+    final scoped = list.where(_passesCategoryPeople).toList();
     final t = q.trim().toLowerCase();
-    if (t.isEmpty) return list;
-    return list
-        .where(
-          (s) => s.transaction.description.toLowerCase().contains(t),
-        )
-        .toList();
+    if (t.isEmpty) return scoped;
+    return scoped.where((s) {
+      return s.transaction.description.toLowerCase().contains(t) ||
+          s.transaction.category.toLowerCase().contains(t) ||
+          s.lineLabelsSearchText.contains(t);
+    }).toList();
+  }
+
+  bool _handleScroll(ScrollNotification n) {
+    if (n is! ScrollUpdateNotification) return false;
+    final d = n.scrollDelta ?? 0;
+    final px = n.metrics.pixels;
+    if (px < 16) {
+      if (!_headerChromeVisible || !_fabVisible) {
+        setState(() {
+          _headerChromeVisible = true;
+          _fabVisible = true;
+        });
+      }
+      return false;
+    }
+    if (d > 3) {
+      if (_headerChromeVisible || _fabVisible) {
+        setState(() {
+          _headerChromeVisible = false;
+          _fabVisible = false;
+          _searchOpen = false;
+        });
+      }
+    } else if (d < -3) {
+      if (!_headerChromeVisible || !_fabVisible) {
+        setState(() {
+          _headerChromeVisible = true;
+          _fabVisible = true;
+        });
+      }
+    }
+    return false;
+  }
+
+  String _categoryLabel(String id, AppLocalizations l10n) {
+    switch (id) {
+      case 'food':
+        return l10n.categoryFood;
+      case 'transport':
+        return l10n.categoryTransport;
+      case 'accommodation':
+        return l10n.categoryAccommodation;
+      case 'entertainment':
+        return l10n.categoryEntertainment;
+      case 'shopping':
+        return l10n.categoryShopping;
+      case 'utilities':
+        return l10n.categoryUtilities;
+      case 'settlement':
+        return l10n.categorySettlement;
+      default:
+        return l10n.categoryOther;
+    }
+  }
+
+  Future<void> _openFiltersSheet() async {
+    final l10n = AppLocalizations.of(context)!;
+    final people = ref.read(participantsProvider);
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              20,
+              8,
+              20,
+              16 + MediaQuery.viewInsetsOf(ctx).bottom,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  l10n.billsFiltersTitle,
+                  style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    l10n.billsFiltersCategorySection,
+                    style: Theme.of(ctx).textTheme.labelSmall?.copyWith(
+                          letterSpacing: 0.6,
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final id in _categoryIds)
+                      FilterChip(
+                        showCheckmark: false,
+                        selected: _selectedCategories.contains(id),
+                        label: Text(_categoryLabel(id, l10n)),
+                        onSelected: (v) {
+                          setState(() {
+                            if (v) {
+                              _selectedCategories.add(id);
+                            } else {
+                              _selectedCategories.remove(id);
+                            }
+                          });
+                        },
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    l10n.billsFiltersPeopleSection,
+                    style: Theme.of(ctx).textTheme.labelSmall?.copyWith(
+                          letterSpacing: 0.6,
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                if (people.isEmpty)
+                  Text(
+                    l10n.emptyParticipantsHint,
+                    style: Theme.of(ctx).textTheme.bodySmall,
+                  )
+                else
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final p in people)
+                        FilterChip(
+                          showCheckmark: false,
+                          avatar: CircleAvatar(
+                            radius: 12,
+                            child: Text(
+                              splitBaeInitialGrapheme(p.displayName),
+                              style: const TextStyle(fontSize: 10),
+                            ),
+                          ),
+                          selected: _selectedParticipants.contains(p.id),
+                          label: Text(
+                            p.displayName.split(' ').first,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          onSelected: (v) {
+                            setState(() {
+                              if (v) {
+                                _selectedParticipants.add(p.id);
+                              } else {
+                                _selectedParticipants.remove(p.id);
+                              }
+                            });
+                          },
+                        ),
+                    ],
+                  ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          _selectedCategories.clear();
+                          _selectedParticipants.clear();
+                        });
+                        Navigator.of(ctx).pop();
+                      },
+                      child: Text(l10n.billsFiltersClearAll),
+                    ),
+                    const Spacer(),
+                    FilledButton(
+                      onPressed: () => Navigator.of(ctx).pop(),
+                      child: Text(MaterialLocalizations.of(ctx).closeButtonLabel),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -67,135 +293,213 @@ class _BillsScreenState extends ConsumerState<BillsScreen> {
             all,
             emptyStateCurrencyCode: ref.watch(defaultCurrencyProvider),
           );
-          final filtered = _filter(all, _searchCtrl.text);
+          final filtered =
+              _applyFiltersAndSearch(all, _searchCtrl.text);
           final groups = _groupByMonth(filtered);
           final keys = groups.keys.toList()..sort((a, b) => b.compareTo(a));
+          final noMatches = filtered.isEmpty && all.isNotEmpty;
 
           return Stack(
             fit: StackFit.expand,
             children: [
-              ListView(
-                padding: EdgeInsets.only(
-                  left: 20,
-                  right: 20,
-                  top: topPad + 8,
-                  bottom: 120,
-                ),
-                children: [
-                  Text(
-                    l10n.appTitle,
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.5,
-                        ),
+              NotificationListener<ScrollNotification>(
+                onNotification: _handleScroll,
+                child: ListView(
+                  padding: EdgeInsets.only(
+                    left: 20,
+                    right: 20,
+                    top: topPad + 8,
+                    bottom: 120,
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    l10n.appTagline,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: cs.onSurfaceVariant,
-                        ),
-                  ),
-                  const SizedBox(height: 20),
-                  _TotalExpensesHero(
-                    insights: insights,
-                    locale: locale,
-                  ),
-                  const SizedBox(height: 12),
-                  _InsightChipsRow(insights: insights, locale: locale),
-                  const SizedBox(height: 20),
-                  if (filtered.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 32),
-                      child: Column(
-                        children: [
-                          Icon(
-                            Icons.receipt_long_outlined,
-                            size: 48,
+                  children: [
+                    Text(
+                      l10n.appTitle,
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.5,
+                          ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      l10n.appTagline,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: cs.onSurfaceVariant,
                           ),
-                          const SizedBox(height: 12),
-                          Text(
-                            all.isEmpty
-                                ? l10n.billsEmptyHeroTitle
-                                : l10n.billsSearchEmpty,
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        IconButton.filledTonal(
+                          onPressed: () {
+                            HapticFeedback.selectionClick();
+                            _openFiltersSheet();
+                          },
+                          icon: Badge(
+                            isLabelVisible: _hasActiveFilters,
+                            smallSize: 8,
+                            child: const Icon(Icons.tune),
                           ),
-                          if (all.isEmpty) ...[
-                            const SizedBox(height: 8),
-                            Text(
-                              l10n.billsEmptyHeroSubtitle,
-                              textAlign: TextAlign.center,
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: cs.onSurfaceVariant,
-                                  ),
-                            ),
-                          ],
+                          tooltip: l10n.billsFiltersTitle,
+                        ),
+                        if (_hasActiveFilters) ...[
+                          const SizedBox(width: 4),
+                          TextButton(
+                            onPressed: () {
+                              setState(() {
+                                _selectedCategories.clear();
+                                _selectedParticipants.clear();
+                              });
+                            },
+                            child: Text(l10n.billsFiltersClearAll),
+                          ),
                         ],
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    if (!_hasActiveFilters) ...[
+                      _TotalExpensesHero(
+                        insights: insights,
+                        locale: locale,
                       ),
-                    )
-                  else
-                    ...[
-                      for (final k in keys) ...[
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 8, top: 8),
-                          child: Row(
-                            children: [
+                      const SizedBox(height: 12),
+                      _InsightChipsRow(insights: insights, locale: locale),
+                      const SizedBox(height: 20),
+                    ] else
+                      const SizedBox(height: 8),
+                    if (filtered.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 32),
+                        child: Column(
+                          children: [
+                            Icon(
+                              Icons.receipt_long_outlined,
+                              size: 48,
+                              color: cs.onSurfaceVariant,
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              all.isEmpty
+                                  ? l10n.billsEmptyHeroTitle
+                                  : l10n.billsSearchEmpty,
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            if (all.isEmpty) ...[
+                              const SizedBox(height: 8),
                               Text(
-                                DateFormat.yMMMM(
-                                  locale.toString(),
-                                ).format(k).toUpperCase(),
-                                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                                l10n.billsEmptyHeroSubtitle,
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(
                                       color: cs.onSurfaceVariant,
-                                      letterSpacing: 0.8,
-                                      fontWeight: FontWeight.w600,
                                     ),
                               ),
                             ],
-                          ),
+                            if (noMatches) ...[
+                              const SizedBox(height: 8),
+                              Text(
+                                l10n.billsFiltersAdjustHint,
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(
+                                      color: cs.onSurfaceVariant,
+                                    ),
+                              ),
+                              if (_hasActiveFilters ||
+                                  _searchCtrl.text.isNotEmpty) ...[
+                                const SizedBox(height: 12),
+                                TextButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      _selectedCategories.clear();
+                                      _selectedParticipants.clear();
+                                      _searchCtrl.clear();
+                                    });
+                                  },
+                                  child: Text(l10n.billsFiltersClearAll),
+                                ),
+                              ],
+                            ],
+                          ],
                         ),
-                        for (final s in groups[k]!)
-                          PostedBillExpandableCard(
-                            key: ValueKey(s.transaction.id),
-                            summary: s,
-                            locale: locale,
+                      )
+                    else
+                      ...[
+                        for (final k in keys) ...[
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8, top: 8),
+                            child: Row(
+                              children: [
+                                Text(
+                                  DateFormat.yMMMM(
+                                    locale.toString(),
+                                  ).format(k).toUpperCase(),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .labelLarge
+                                      ?.copyWith(
+                                        color: cs.onSurfaceVariant,
+                                        letterSpacing: 0.8,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                ),
+                              ],
+                            ),
                           ),
+                          for (final s in groups[k]!)
+                            PostedBillExpandableCard(
+                              key: ValueKey(s.transaction.id),
+                              summary: s,
+                              locale: locale,
+                            ),
+                        ],
                       ],
-                    ],
-                ],
+                  ],
+                ),
               ),
               Positioned(
                 top: topPad + 8,
                 right: 16,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _CircleChromeButton(
-                      icon: _searchOpen ? Icons.close : Icons.search,
-                      onPressed: () {
-                        HapticFeedback.selectionClick();
-                        setState(() {
-                          _searchOpen = !_searchOpen;
-                          if (!_searchOpen) {
-                            _searchCtrl.clear();
-                          }
-                        });
-                      },
+                child: AnimatedOpacity(
+                  opacity: _headerChromeVisible ? 1 : 0,
+                  duration: const Duration(milliseconds: 220),
+                  curve: Curves.easeOut,
+                  child: IgnorePointer(
+                    ignoring: !_headerChromeVisible,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _CircleChromeButton(
+                          icon: _searchOpen ? Icons.close : Icons.search,
+                          onPressed: () {
+                            HapticFeedback.selectionClick();
+                            setState(() {
+                              _searchOpen = !_searchOpen;
+                              if (!_searchOpen) {
+                                _searchCtrl.clear();
+                              }
+                            });
+                          },
+                        ),
+                        const SizedBox(width: 8),
+                        _CircleChromeButton(
+                          icon: Icons.person_outline,
+                          onPressed: () {
+                            HapticFeedback.selectionClick();
+                            Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) => const SettingsScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                    _CircleChromeButton(
-                      icon: Icons.person_outline,
-                      onPressed: () {
-                        HapticFeedback.selectionClick();
-                        Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => const SettingsScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
+                  ),
                 ),
               ),
               if (_searchOpen)
@@ -246,6 +550,7 @@ class _BillsScreenState extends ConsumerState<BillsScreen> {
                 onNewBill: widget.onNewBill,
                 onScanBill: widget.onScanBillEntry,
                 onCreateReport: widget.onSwitchToBalances,
+                visible: _fabVisible,
               ),
             ],
           );

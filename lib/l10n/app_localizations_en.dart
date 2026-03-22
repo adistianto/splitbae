@@ -649,6 +649,21 @@ class AppLocalizationsEn extends AppLocalizations {
       'Tap + to add a bill and start splitting.';
 
   @override
+  String get billsFiltersTitle => 'Filters';
+
+  @override
+  String get billsFiltersCategorySection => 'Category';
+
+  @override
+  String get billsFiltersPeopleSection => 'People';
+
+  @override
+  String get billsFiltersClearAll => 'Clear all';
+
+  @override
+  String get billsFiltersAdjustHint => 'Try adjusting filters or search.';
+
+  @override
   String get fabNewBill => 'New Bill';
 
   @override

@@ -1234,6 +1234,36 @@ abstract class AppLocalizations {
   /// **'Tap + to add a bill and start splitting.'**
   String get billsEmptyHeroSubtitle;
 
+  /// Title for Bills category/people filter sheet (v0 parity).
+  ///
+  /// In en, this message translates to:
+  /// **'Filters'**
+  String get billsFiltersTitle;
+
+  /// Section label in Bills filter sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get billsFiltersCategorySection;
+
+  /// Section label in Bills filter sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'People'**
+  String get billsFiltersPeopleSection;
+
+  /// Reset category and people filters on Bills.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear all'**
+  String get billsFiltersClearAll;
+
+  /// Empty state when filters or search exclude all bills.
+  ///
+  /// In en, this message translates to:
+  /// **'Try adjusting filters or search.'**
+  String get billsFiltersAdjustHint;
+
   /// FAB speed dial: open compose flow.
   ///
   /// In en, this message translates to:

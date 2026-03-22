@@ -10,11 +10,15 @@ class SplitBaeFabMenu extends StatefulWidget {
     required this.onNewBill,
     required this.onScanBill,
     required this.onCreateReport,
+    this.visible = true,
   });
 
   final VoidCallback onNewBill;
   final VoidCallback onScanBill;
   final VoidCallback onCreateReport;
+
+  /// Hides the dial when scrolling down (v0 [fab-menu] behavior).
+  final bool visible;
 
   @override
   State<SplitBaeFabMenu> createState() => _SplitBaeFabMenuState();
@@ -40,7 +44,7 @@ class _SplitBaeFabMenuState extends State<SplitBaeFabMenu> {
         clipBehavior: Clip.none,
         alignment: Alignment.bottomRight,
         children: [
-          if (_open)
+          if (_open && widget.visible)
             Positioned.fill(
               child: GestureDetector(
                 onTap: () => setState(() => _open = false),
@@ -51,83 +55,91 @@ class _SplitBaeFabMenuState extends State<SplitBaeFabMenu> {
           Positioned(
             right: 20,
             bottom: navBarReserve + bottomSafe,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                if (_open) ...[
-                  _FabPill(
-                    label: l10n.fabCreateReport,
-                    background: cs.secondaryContainer,
-                    foreground: cs.onSecondaryContainer,
-                    icon: Icons.description_outlined,
-                    onTap: () {
-                      HapticFeedback.selectionClick();
-                      _closeAnd(widget.onCreateReport);
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  _FabPill(
-                    label: l10n.fabScanBill,
-                    background: cs.tertiaryContainer,
-                    foreground: cs.onTertiaryContainer,
-                    icon: Icons.photo_camera_outlined,
-                    onTap: () {
-                      HapticFeedback.selectionClick();
-                      _closeAnd(widget.onScanBill);
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  _FabPill(
-                    label: l10n.fabNewBill,
-                    background: cs.primaryContainer,
-                    foreground: cs.onPrimaryContainer,
-                    icon: Icons.receipt_long_outlined,
-                    onTap: () {
-                      HapticFeedback.selectionClick();
-                      _closeAnd(widget.onNewBill);
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                ],
-                AnimatedContainer(
-                  duration: splitBaeAnimationDuration(
-                    context,
-                    const Duration(milliseconds: 200),
-                  ),
-                  curve: splitBaeAnimationCurve(context),
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: _open ? cs.onSurface : cs.primary,
-                    borderRadius: BorderRadius.circular(_open ? 28 : 20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: cs.primary.withValues(alpha: 0.35),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
+            child: AnimatedOpacity(
+              opacity: widget.visible ? 1 : 0,
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOut,
+              child: IgnorePointer(
+                ignoring: !widget.visible,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    if (_open) ...[
+                      _FabPill(
+                        label: l10n.fabCreateReport,
+                        background: cs.secondaryContainer,
+                        foreground: cs.onSecondaryContainer,
+                        icon: Icons.description_outlined,
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          _closeAnd(widget.onCreateReport);
+                        },
                       ),
+                      const SizedBox(height: 12),
+                      _FabPill(
+                        label: l10n.fabScanBill,
+                        background: cs.tertiaryContainer,
+                        foreground: cs.onTertiaryContainer,
+                        icon: Icons.photo_camera_outlined,
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          _closeAnd(widget.onScanBill);
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      _FabPill(
+                        label: l10n.fabNewBill,
+                        background: cs.primaryContainer,
+                        foreground: cs.onPrimaryContainer,
+                        icon: Icons.receipt_long_outlined,
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          _closeAnd(widget.onNewBill);
+                        },
+                      ),
+                      const SizedBox(height: 16),
                     ],
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () {
-                        HapticFeedback.mediumImpact();
-                        setState(() => _open = !_open);
-                      },
-                      borderRadius: BorderRadius.circular(_open ? 28 : 20),
-                      child: Center(
-                        child: Icon(
-                          _open ? Icons.close : Icons.add,
-                          size: 32,
-                          color: _open ? cs.surface : cs.onPrimary,
+                    AnimatedContainer(
+                      duration: splitBaeAnimationDuration(
+                        context,
+                        const Duration(milliseconds: 200),
+                      ),
+                      curve: splitBaeAnimationCurve(context),
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        color: _open ? cs.onSurface : cs.primary,
+                        borderRadius: BorderRadius.circular(_open ? 28 : 20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: cs.primary.withValues(alpha: 0.35),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () {
+                            HapticFeedback.mediumImpact();
+                            setState(() => _open = !_open);
+                          },
+                          borderRadius: BorderRadius.circular(_open ? 28 : 20),
+                          child: Center(
+                            child: Icon(
+                              _open ? Icons.close : Icons.add,
+                              size: 32,
+                              color: _open ? cs.surface : cs.onPrimary,
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ],

@@ -36,7 +36,9 @@ class BillPostingRepository {
         transactionId: t.id,
       );
       var sumPrimary = 0;
+      final labelParts = <String>[];
       for (final line in lines) {
+        labelParts.add(line.receiptItem.name);
         if (line.receiptItem.currencyCode == t.currencyCode) {
           sumPrimary += amountToMinorUnits(
             line.receiptItem.price,
@@ -44,11 +46,15 @@ class BillPostingRepository {
           );
         }
       }
+      final pIds = participants.map((e) => e.participantId).toList();
+      final searchBlob = labelParts.join(' ').toLowerCase();
       out.add(
         PostedBillSummary(
           transaction: t,
           participantCount: participants.length,
           totalMinorPrimary: sumPrimary,
+          participantIds: pIds,
+          lineLabelsSearchText: searchBlob,
         ),
       );
     }
