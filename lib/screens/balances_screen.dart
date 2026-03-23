@@ -90,7 +90,10 @@ class _BalancesScreenState extends ConsumerState<BalancesScreen> {
               return splitBaeAnimationsEnabled(context)
                   ? empty
                       .animate()
-                      .fadeIn(duration: 280.ms, curve: Curves.easeOutCubic)
+                      .fadeIn(
+                        duration: splitBaeMountDuration(context),
+                        curve: splitBaeMountCurve(context),
+                      )
                   : empty;
             }
             return Column(
@@ -135,16 +138,16 @@ class _BalancesScreenState extends ConsumerState<BalancesScreen> {
                       return card
                           .animate()
                           .fadeIn(
-                            duration: 320.ms,
-                            delay: (i * 70).ms,
-                            curve: Curves.easeOutCubic,
+                            duration: splitBaeMountDuration(context),
+                            delay: splitBaeStaggerDelay(context, i),
+                            curve: splitBaeMountCurve(context),
                           )
                           .slideY(
                             begin: 0.05,
                             end: 0,
-                            duration: 360.ms,
-                            delay: (i * 70).ms,
-                            curve: Curves.easeOutCubic,
+                            duration: splitBaeMountDuration(context),
+                            delay: splitBaeStaggerDelay(context, i),
+                            curve: splitBaeMountCurve(context),
                           );
                     },
                   ),
@@ -304,7 +307,7 @@ class _BalancesLoadingSkeleton extends StatelessWidget {
               .animate(onPlay: (c) => c.repeat())
               .shimmer(
                 duration: 1400.ms,
-                delay: (index * 70).ms,
+                delay: splitBaeStaggerDelay(context, index),
                 color: m3e.colors.onSurface.withValues(alpha: 0.14),
               );
         }),

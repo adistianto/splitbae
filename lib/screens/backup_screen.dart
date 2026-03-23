@@ -5,6 +5,7 @@ import 'package:m3e_collection/m3e_collection.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import 'package:splitbae/core/layout/adaptive_insets.dart';
+import 'package:splitbae/core/ui/splitbae_motion.dart';
 import 'package:splitbae/core/platform/adaptive_confirm_dialog.dart';
 import 'package:splitbae/core/widgets/adaptive_app_bar.dart';
 import 'package:splitbae/l10n/app_localizations.dart';
@@ -44,7 +45,10 @@ class BackupScreen extends ConsumerWidget {
             Center(
               child: const CircularProgressIndicator(strokeWidth: 2)
                   .animate()
-                  .fadeIn(duration: 240.ms),
+                  .fadeIn(
+                    duration: splitBaeMountDuration(context),
+                    curve: splitBaeMountCurve(context),
+                  ),
             ),
             const SizedBox(height: 20),
           ],

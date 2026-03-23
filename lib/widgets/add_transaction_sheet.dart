@@ -15,7 +15,7 @@ import 'package:splitbae/core/domain/participant_entry.dart';
 import 'package:splitbae/core/providers/database_providers.dart';
 import 'package:splitbae/core/suggest/category_from_description.dart';
 import 'package:splitbae/core/theme/splitbae_semantic_colors.dart';
-import 'package:splitbae/core/theme/splitbae_v0_theme.dart';
+import 'package:splitbae/core/platform/host_platform.dart';
 import 'package:splitbae/core/ui/category_icons.dart';
 import 'package:splitbae/app_settings.dart';
 import 'package:splitbae/core/widgets/adaptive_app_bar.dart';
@@ -629,7 +629,8 @@ class _AddTransactionSheetBodyState
     final ccy = _primaryCurrency(items);
     final bottom = MediaQuery.viewInsetsOf(context).bottom;
     final h = MediaQuery.sizeOf(context).height;
-    final scheme = splitBaeV0DarkColorScheme();
+    final scheme = Theme.of(context).colorScheme;
+    final isApple = hostPlatformIsApple();
 
     var subtotal = 0.0;
     for (final line in items) {
@@ -639,23 +640,18 @@ class _AddTransactionSheetBodyState
     final grand = subtotal + (taxVal < 0 ? 0 : taxVal);
     final activeList = activeAsync.valueOrNull ?? [];
 
-    return Theme(
-      data: Theme.of(context).copyWith(
-        colorScheme: scheme,
-        brightness: Brightness.dark,
+    return Container(
+      decoration: BoxDecoration(
+        color: isApple ? scheme.surface.withValues(alpha: 0.88) : scheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
       ),
-      child: Container(
-        decoration: BoxDecoration(
-          color: scheme.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        ),
-        child: SizedBox(
-          height: (h * 0.92).clamp(400.0, h),
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(20, 8, 20, 16 + bottom),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
+      child: SizedBox(
+        height: (h * 0.92).clamp(400.0, h),
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(24, 20, 24, 16 + bottom),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
                 Row(
                   children: [
                     Expanded(
@@ -1102,8 +1098,7 @@ class _AddTransactionSheetBodyState
                     ],
                   ),
                 ),
-              ],
-            ),
+            ],
           ),
         ),
       ),
@@ -1116,6 +1111,7 @@ class _AddTransactionSheetBodyState
       style: Theme.of(context).textTheme.labelSmall?.copyWith(
             color: Theme.of(context).colorScheme.onSurfaceVariant,
             fontWeight: FontWeight.w700,
+        letterSpacing: 0.8,
           ),
     );
   }

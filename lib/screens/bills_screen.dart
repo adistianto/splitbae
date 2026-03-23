@@ -11,6 +11,7 @@ import 'package:splitbae/core/domain/bills_insights.dart';
 import 'package:splitbae/core/domain/posted_bill_summary.dart';
 import 'package:splitbae/core/theme/splitbae_semantic_colors.dart';
 import 'package:splitbae/core/theme/splitbae_v0_ui_contract.dart';
+import 'package:splitbae/core/ui/splitbae_motion.dart';
 import 'package:splitbae/core/widgets/adaptive_app_bar.dart';
 import 'package:splitbae/features/bills/application/bills_provider.dart';
 import 'package:splitbae/l10n/app_localizations.dart';
@@ -296,6 +297,9 @@ class _BillsScreenState extends ConsumerState<BillsScreen> {
     return const TransactionsScreen();
   }
 
+  // The v0 Bills tab currently routes to the dense Transactions ledger UI.
+  // Keep the legacy implementation around for later without failing analysis.
+  // ignore: unused_element
   Widget _buildBillsContent(
     BuildContext context,
     AppLocalizations l10n,
@@ -328,7 +332,7 @@ class _BillsScreenState extends ConsumerState<BillsScreen> {
               Padding(
                 padding: EdgeInsets.fromLTRB(
                   SplitBaeV0Layout.screenHorizontalPadding,
-                  topPad + 8,
+                  topPad + 24,
                   SplitBaeV0Layout.screenHorizontalPadding,
                   0,
                 ),
@@ -519,7 +523,7 @@ class _BillsScreenState extends ConsumerState<BillsScreen> {
           ),
           if (!widget.v0ShellMode) ...[
             Positioned(
-              top: topPad + 8,
+              top: topPad + 24,
               right: 16,
               child: AnimatedOpacity(
                 opacity: _headerChromeVisible ? 1 : 0,
@@ -617,6 +621,7 @@ class _BillsScreenState extends ConsumerState<BillsScreen> {
     );
   }
 
+  // ignore: unused_element
   Widget _buildBillsLoading(BuildContext context, AppLocalizations l10n) {
     final topPad = MediaQuery.paddingOf(context).top;
     final cs = Theme.of(context).colorScheme;
@@ -629,7 +634,7 @@ class _BillsScreenState extends ConsumerState<BillsScreen> {
           Padding(
             padding: EdgeInsets.fromLTRB(
               SplitBaeV0Layout.screenHorizontalPadding,
-              topPad + 8,
+              topPad + 24,
               SplitBaeV0Layout.screenHorizontalPadding,
               0,
             ),
@@ -688,6 +693,7 @@ class _BillsScreenState extends ConsumerState<BillsScreen> {
     );
   }
 
+  // ignore: unused_element
   Widget _buildBillsError(BuildContext context, AppLocalizations l10n) {
     final topPad = MediaQuery.paddingOf(context).top;
     final cs = Theme.of(context).colorScheme;
@@ -850,7 +856,7 @@ class _PostedBillSkeletonRow extends StatelessWidget {
         .animate(onPlay: (c) => c.repeat())
         .shimmer(
           duration: 1400.ms,
-          delay: (index * 70).ms,
+          delay: splitBaeStaggerDelay(context, index),
           color: m3e.colors.onSurface.withValues(alpha: 0.14),
         );
   }

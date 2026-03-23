@@ -17,7 +17,7 @@ class ShellBillsPlaceholder extends StatelessWidget {
     return ListView(
       padding: EdgeInsets.fromLTRB(
         SplitBaeV0Layout.screenHorizontalPadding,
-        topPad + 8,
+        topPad + 24,
         SplitBaeV0Layout.screenHorizontalPadding,
         SplitBaeV0Layout.listBottomInsetForShell,
       ),
@@ -328,7 +328,7 @@ class ShellBalancesPlaceholder extends StatelessWidget {
     return ListView(
       padding: EdgeInsets.fromLTRB(
         SplitBaeV0Layout.screenHorizontalPadding,
-        topPad + 8,
+        topPad + 24,
         SplitBaeV0Layout.screenHorizontalPadding,
         SplitBaeV0Layout.listBottomInsetForShell,
       ),

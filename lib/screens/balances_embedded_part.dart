@@ -189,7 +189,7 @@ class _BalancesEmbeddedV0State extends ConsumerState<_BalancesEmbeddedV0> {
                           padding: EdgeInsets.only(
                             left: 20,
                             right: 20,
-                            top: topPad + 8,
+                            top: topPad + 24,
                             bottom: 120,
                           ),
                           children: [

@@ -320,19 +320,33 @@ class _AdaptiveHomeScreenState extends ConsumerState<AdaptiveHomeScreen> {
                     onPopInvokedWithResult: (didPop, result) {
                       if (!didPop) _closeScanOverlay();
                     },
-                    child: Material(
-                      color: Theme.of(context).colorScheme.surface,
-                      child: Consumer(
-                        builder: (context, ref, _) => ScanReceiptScreen(
-                          currencyCode: ref.read(draftBillCurrencyProvider),
-                          openDraftAfterBatchAdd: true,
-                          onAddAllLines: (candidates) =>
-                              _addOcrLinesToDraft(ref, candidates),
-                          onDismiss: _closeScanOverlay,
-                          onNavigateToDraft: _openDraftAfterScanImport,
-                        ),
-                      ),
-                    ),
+                    child: hostPlatformIsApple()
+                        ? Consumer(
+                            builder: (context, ref, _) => ScanReceiptScreen(
+                              currencyCode:
+                                  ref.read(draftBillCurrencyProvider),
+                              openDraftAfterBatchAdd: true,
+                              onAddAllLines: (candidates) =>
+                                  _addOcrLinesToDraft(ref, candidates),
+                              onDismiss: _closeScanOverlay,
+                              onNavigateToDraft: _openDraftAfterScanImport,
+                            ),
+                          )
+                        : Material(
+                            color: Theme.of(context).colorScheme.surface,
+                            child: Consumer(
+                              builder: (context, ref, _) =>
+                                  ScanReceiptScreen(
+                                currencyCode:
+                                    ref.read(draftBillCurrencyProvider),
+                                openDraftAfterBatchAdd: true,
+                                onAddAllLines: (candidates) =>
+                                    _addOcrLinesToDraft(ref, candidates),
+                                onDismiss: _closeScanOverlay,
+                                onNavigateToDraft: _openDraftAfterScanImport,
+                              ),
+                            ),
+                          ),
                   ),
                 ),
             ],

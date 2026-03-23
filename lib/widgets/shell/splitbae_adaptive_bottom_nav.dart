@@ -32,7 +32,7 @@ class SplitBaeAdaptiveBottomNav extends StatelessWidget {
           top: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.35)),
         ),
       ),
-      padding: EdgeInsets.fromLTRB(20, 8, 20, 8 + bottom),
+      padding: EdgeInsets.fromLTRB(24, 8, 24, 8 + bottom),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420),
@@ -115,7 +115,7 @@ class _NavSlot extends StatelessWidget {
                     curve: const Cubic(0.34, 1.56, 0.64, 1),
                     scale: selected ? 1 : 0.92,
                     child: AnimatedOpacity(
-                      duration: const Duration(milliseconds: 280),
+                  duration: const Duration(milliseconds: 300),
                       opacity: selected ? 1 : 0,
                       child: Container(
                         width: 64,

@@ -82,7 +82,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                   child: Padding(
                     padding: EdgeInsets.fromLTRB(
                       SplitBaeV0Layout.screenHorizontalPadding,
-                      topPad + 8,
+                      topPad + 24,
                       SplitBaeV0Layout.screenHorizontalPadding,
                       0,
                     ),
@@ -731,7 +731,7 @@ class _M3eInsightChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(SplitBaeV0Layout.insightChipRadius),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         child: child,
       ),
     );
@@ -785,7 +785,7 @@ class _CategoryChipsRow extends StatelessWidget {
               icon: categories[i].icon,
               onTap: () => onSelected(categories[i].filter),
             ),
-            if (i != categories.length - 1) const SizedBox(width: 10),
+            if (i != categories.length - 1) const SizedBox(width: 8),
           ],
         ],
       ),
@@ -830,7 +830,7 @@ class _LedgerCategoryChip extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -905,15 +905,15 @@ class _LedgerRow extends StatelessWidget {
         child: InkWell(
           onTap: () => openTransactionDetailScreen(context, t.id),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            padding: const EdgeInsets.all(16),
             child: Row(
               children: [
                 Container(
-                  width: 40,
-                  height: 40,
+                  width: 48,
+                  height: 48,
                   decoration: BoxDecoration(
                     color: catBg,
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                   child: Icon(
                     icon,
@@ -965,6 +965,21 @@ class _LedgerRow extends StatelessWidget {
                         fontWeight: FontWeight.w800,
                         color: cs.primary,
                       ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    color: Colors.transparent,
+                  ),
+                  alignment: Alignment.center,
+                  child: Icon(
+                    PhosphorIconsRegular.caretDown,
+                    size: 20,
+                    color: cs.onSurfaceVariant.withValues(alpha: 0.85),
+                  ),
                 ),
               ],
             ),

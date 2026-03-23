@@ -215,11 +215,11 @@ class _FabPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AnimatedSlide(
-      duration: Duration(milliseconds: 240 + staggerIndex * 55),
-      curve: const Cubic(0.34, 1.56, 0.64, 1),
+      duration: Duration(milliseconds: 300 + staggerIndex * 50),
+      curve: Curves.easeOutCubic,
       offset: open ? Offset.zero : const Offset(0.2, 0),
       child: AnimatedOpacity(
-        duration: Duration(milliseconds: 200 + staggerIndex * 55),
+        duration: Duration(milliseconds: 300 + staggerIndex * 50),
         opacity: open ? 1 : 0,
         child: Material(
           elevation: 4,
@@ -232,7 +232,7 @@ class _FabPill extends StatelessWidget {
             borderRadius:
                 BorderRadius.circular(SplitBaeV0Layout.fabPillRadius),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              padding: const EdgeInsets.fromLTRB(20, 14, 16, 14),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
