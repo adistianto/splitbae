@@ -61,6 +61,7 @@ dependencies:
   app_bar_m3e: ^0.1.2
   tofu_expressive: ^0.0.3
   liquid_glass_easy: ^1.1.1
+  image: ^4.8.0
 
 dev_dependencies:
   flutter_test:

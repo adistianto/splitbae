@@ -11,14 +11,19 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:splitbae/core/data/amount_minor.dart';
+import 'package:splitbae/core/domain/ledger_ids.dart';
 import 'package:splitbae/core/ocr/receipt_line_parse.dart';
+import 'package:splitbae/core/ocr/receipt_merchant_hint.dart';
 import 'package:splitbae/core/ocr/receipt_ocr_channel.dart';
 import 'package:splitbae/core/ocr/receipt_spatial_parse.dart';
+import 'package:splitbae/core/providers/database_providers.dart';
 import 'package:splitbae/core/platform/host_platform.dart';
 import 'package:splitbae/core/platform/receipt_scan_permissions.dart';
 import 'package:splitbae/l10n/app_localizations.dart';
 import 'package:splitbae/providers.dart';
 import 'package:splitbae/screens/draft_split_screen.dart';
+
+enum _OcrRecoveryKind { none, noLines, timeout, error }
 
 /// Full-screen receipt capture aligned with v0 `scan-tab.tsx`: hero card, large
 /// take-photo control, gallery / file, processing overlay with shimmer, then
@@ -65,6 +70,9 @@ class _ScanReceiptScreenState extends ConsumerState<ScanReceiptScreen> {
   /// Multi-line OCR: editable chips before confirm.
   List<ReceiptLineCandidate>? _reviewCandidates;
 
+  /// Inline recovery when OCR times out, errors, or finds no lines (not a dead end).
+  _OcrRecoveryKind _ocrRecovery = _OcrRecoveryKind.none;
+
   static const Color _galleryRowBg = Color(0xFF161B22);
 
   bool get _showFilePicker =>
@@ -88,6 +96,7 @@ class _ScanReceiptScreenState extends ConsumerState<ScanReceiptScreen> {
       _imagePath = null;
       _detectedCount = null;
       _reviewCandidates = null;
+      _ocrRecovery = _OcrRecoveryKind.none;
     });
   }
 
@@ -135,6 +144,7 @@ class _ScanReceiptScreenState extends ConsumerState<ScanReceiptScreen> {
           _imageBytes = f.bytes;
           _imagePath = null;
           _reviewCandidates = null;
+          _ocrRecovery = _OcrRecoveryKind.none;
         });
         await _runOcr(l10n);
       } else {
@@ -163,6 +173,7 @@ class _ScanReceiptScreenState extends ConsumerState<ScanReceiptScreen> {
       _imagePath = x.path;
       _detectedCount = null;
       _reviewCandidates = null;
+      _ocrRecovery = _OcrRecoveryKind.none;
     });
     final l10n = AppLocalizations.of(context)!;
     await _runOcr(l10n);
@@ -183,7 +194,10 @@ class _ScanReceiptScreenState extends ConsumerState<ScanReceiptScreen> {
       return;
     }
 
-    setState(() => _ocrBusy = true);
+    setState(() {
+      _ocrBusy = true;
+      _ocrRecovery = _OcrRecoveryKind.none;
+    });
     ReceiptOcrNativeResult structured;
     try {
       structured = await ReceiptOcrChannel.recognizeTextStructured(path).timeout(
@@ -192,45 +206,51 @@ class _ScanReceiptScreenState extends ConsumerState<ScanReceiptScreen> {
       );
     } on TimeoutException {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.scanReceiptTimeout)),
-        );
+        setState(() {
+          _ocrBusy = false;
+          _ocrRecovery = _OcrRecoveryKind.timeout;
+        });
       }
-      setState(() => _ocrBusy = false);
       return;
-    } on ReceiptOcrException catch (e) {
+    } on ReceiptOcrException {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.scanReceiptErrorDetail(e.message))),
-        );
+        setState(() {
+          _ocrBusy = false;
+          _ocrRecovery = _OcrRecoveryKind.error;
+        });
       }
-      setState(() => _ocrBusy = false);
       return;
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.scanReceiptErrorGeneric)),
-        );
+        setState(() {
+          _ocrBusy = false;
+          _ocrRecovery = _OcrRecoveryKind.error;
+        });
       }
-      setState(() => _ocrBusy = false);
       return;
     }
 
     if (!mounted) return;
     setState(() => _ocrBusy = false);
 
+    await _maybeApplyMerchantHint(structured.text);
+    if (!mounted) return;
+
     final candidates = parseReceiptLineCandidatesFromNative(
       structured,
       currencyCode: widget.currencyCode,
     );
     if (candidates.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.scanReceiptNoLines)),
-      );
+      if (mounted) {
+        setState(() => _ocrRecovery = _OcrRecoveryKind.noLines);
+      }
       return;
     }
 
-    setState(() => _detectedCount = candidates.length);
+    setState(() {
+      _detectedCount = candidates.length;
+      _ocrRecovery = _OcrRecoveryKind.none;
+    });
 
     if (candidates.length == 1) {
       await _applySingle(l10n, candidates.first);
@@ -238,6 +258,32 @@ class _ScanReceiptScreenState extends ConsumerState<ScanReceiptScreen> {
     }
 
     setState(() => _reviewCandidates = List<ReceiptLineCandidate>.from(candidates));
+  }
+
+  Future<void> _maybeApplyMerchantHint(String ocrText) async {
+    final hint = suggestMerchantNameFromReceiptOcr(
+      ocrText,
+      region: receiptParseRegionForCurrency(widget.currencyCode),
+    );
+    if (hint == null) return;
+    try {
+      await ref.read(lineItemRepositoryProvider).setDraftDescriptionIfEmpty(
+            ledgerId: kDefaultLedgerId,
+            description: hint,
+          );
+    } catch (_) {
+      // Best-effort; scan flow must continue.
+    }
+  }
+
+  String _ocrRecoveryMessage(AppLocalizations l10n) {
+    if (_ocrRecovery == _OcrRecoveryKind.timeout) {
+      return l10n.scanReceiptRecoveryTimeoutMessage;
+    }
+    if (_ocrRecovery == _OcrRecoveryKind.error) {
+      return l10n.scanReceiptRecoveryErrorMessage;
+    }
+    return l10n.scanReceiptRecoveryNoLinesMessage;
   }
 
   Future<void> _onConfirmReviewedLines(AppLocalizations l10n) async {
@@ -625,6 +671,24 @@ class _ScanReceiptScreenState extends ConsumerState<ScanReceiptScreen> {
                   ),
                 ),
               ),
+            if (_imageBytes != null &&
+                !_ocrBusy &&
+                _ocrRecovery != _OcrRecoveryKind.none &&
+                (_reviewCandidates == null || _reviewCandidates!.isEmpty))
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                sliver: SliverToBoxAdapter(
+                  child: _OcrRecoveryBanner(
+                    message: _ocrRecoveryMessage(l10n),
+                    onRetake: _clearImage,
+                    onManual: () => _exitScan(null),
+                    retakeLabel: l10n.scanReceiptRetakePhoto,
+                    manualLabel: l10n.scanReceiptEnterManually,
+                    colorScheme: cs,
+                    theme: theme,
+                  ),
+                ),
+              ),
             if (_imageBytes == null)
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
@@ -642,6 +706,14 @@ class _ScanReceiptScreenState extends ConsumerState<ScanReceiptScreen> {
                           ),
                           const _ReceiptScanCornerOverlay(),
                         ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        l10n.scanReceiptPhotoQualityHint,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: cs.onSurfaceVariant,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 14),
                       SizedBox(
@@ -735,6 +807,66 @@ class _ScanReceiptScreenState extends ConsumerState<ScanReceiptScreen> {
           duration: 1200.ms,
           color: cs.primary.withValues(alpha: 0.45),
         );
+  }
+}
+
+class _OcrRecoveryBanner extends StatelessWidget {
+  const _OcrRecoveryBanner({
+    required this.message,
+    required this.onRetake,
+    required this.onManual,
+    required this.retakeLabel,
+    required this.manualLabel,
+    required this.colorScheme,
+    required this.theme,
+  });
+
+  final String message;
+  final VoidCallback onRetake;
+  final VoidCallback onManual;
+  final String retakeLabel;
+  final String manualLabel;
+  final ColorScheme colorScheme;
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = colorScheme;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerHighest.withValues(alpha: 0.88),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: cs.outlineVariant),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              message,
+              style: theme.textTheme.bodyMedium?.copyWith(color: cs.onSurface),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              alignment: WrapAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: onManual,
+                  child: Text(manualLabel),
+                ),
+                OutlinedButton(
+                  onPressed: onRetake,
+                  child: Text(retakeLabel),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

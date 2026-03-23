@@ -315,6 +315,26 @@
       }
     }
   },
+  "scanReceiptRecoveryNoLinesMessage": "No line items found. Retake the photo or enter amounts manually.",
+  "@scanReceiptRecoveryNoLinesMessage": {
+    "description": "Inline help when OCR returned no parseable lines; offers retake or manual entry."
+  },
+  "scanReceiptRecoveryTimeoutMessage": "Scan took too long. Retake or enter the item manually.",
+  "@scanReceiptRecoveryTimeoutMessage": {
+    "description": "Inline help when native OCR hit the time limit."
+  },
+  "scanReceiptRecoveryErrorMessage": "Could not read this photo. Retake or enter the item manually.",
+  "@scanReceiptRecoveryErrorMessage": {
+    "description": "Inline help when OCR failed with an error or generic failure."
+  },
+  "scanReceiptRetakePhoto": "Retake photo",
+  "@scanReceiptRetakePhoto": {
+    "description": "Clears the preview so the user can capture or pick another receipt image."
+  },
+  "scanReceiptPhotoQualityHint": "Use good light, hold steady, and keep the receipt in frame.",
+  "@scanReceiptPhotoQualityHint": {
+    "description": "Optional short tip under the take-photo control to improve OCR (no new sensors)."
+  },
   "itemNameLabel": "Item name",
   "@itemNameLabel": {
     "description": "Form label for the line description (e.g. food name)."
@@ -1003,9 +1023,9 @@
   "@addTransactionDescriptionSection": {
     "description": "Section label for bill title / memo."
   },
-  "addTransactionDescriptionAutoHint": "Auto-fills from first item if empty",
+  "addTransactionDescriptionAutoHint": "Auto-fills from receipt scan or first item if empty",
   "@addTransactionDescriptionAutoHint": {
-    "description": "Hint that description can be left blank."
+    "description": "Hint that description can be left blank; OCR may suggest a store name."
   },
   "addTransactionSuggestedCategory": "Suggested",
   "@addTransactionSuggestedCategory": {

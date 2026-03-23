@@ -272,6 +272,25 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
+  String get scanReceiptRecoveryNoLinesMessage =>
+      'Tidak ada baris item. Ambil ulang foto atau isi nominal secara manual.';
+
+  @override
+  String get scanReceiptRecoveryTimeoutMessage =>
+      'Pindaian terlalu lama. Ambil ulang atau isi item manual.';
+
+  @override
+  String get scanReceiptRecoveryErrorMessage =>
+      'Tidak bisa membaca foto ini. Ambil ulang atau isi item manual.';
+
+  @override
+  String get scanReceiptRetakePhoto => 'Ambil ulang foto';
+
+  @override
+  String get scanReceiptPhotoQualityHint =>
+      'Pakai pencahayaan cukup, tahan kamera tetap, dan pastikan struk terlihat utuh.';
+
+  @override
   String get itemNameLabel => 'Nama item';
 
   @override
@@ -862,7 +881,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get addTransactionDescriptionAutoHint =>
-      'Otomatis dari item pertama jika kosong';
+      'Otomatis dari pindaian struk atau item pertama jika kosong';
 
   @override
   String get addTransactionSuggestedCategory => 'Saran';

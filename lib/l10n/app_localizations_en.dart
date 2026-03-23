@@ -270,6 +270,25 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get scanReceiptRecoveryNoLinesMessage =>
+      'No line items found. Retake the photo or enter amounts manually.';
+
+  @override
+  String get scanReceiptRecoveryTimeoutMessage =>
+      'Scan took too long. Retake or enter the item manually.';
+
+  @override
+  String get scanReceiptRecoveryErrorMessage =>
+      'Could not read this photo. Retake or enter the item manually.';
+
+  @override
+  String get scanReceiptRetakePhoto => 'Retake photo';
+
+  @override
+  String get scanReceiptPhotoQualityHint =>
+      'Use good light, hold steady, and keep the receipt in frame.';
+
+  @override
   String get itemNameLabel => 'Item name';
 
   @override
@@ -856,7 +875,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get addTransactionDescriptionAutoHint =>
-      'Auto-fills from first item if empty';
+      'Auto-fills from receipt scan or first item if empty';
 
   @override
   String get addTransactionSuggestedCategory => 'Suggested';

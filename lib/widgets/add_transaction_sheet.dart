@@ -113,6 +113,24 @@ class _AddTransactionSheetBodyState
     _peopleSearchFocus.addListener(() {
       setState(() => _peopleMenuOpen = _peopleSearchFocus.hasFocus);
     });
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => _loadDraftDescription());
+  }
+
+  Future<void> _loadDraftDescription() async {
+    final db = ref.read(appDatabaseProvider);
+    final draftTx = draftTransactionIdForLedger(kDefaultLedgerId);
+    final row = await (db.select(db.transactions)
+          ..where((t) => t.id.equals(draftTx)))
+        .getSingle();
+    if (!mounted) return;
+    final d = row.description.trim();
+    if (d.isEmpty || _desc.text.isNotEmpty) return;
+    setState(() {
+      _desc.text = d;
+      final s = suggestCategoryFromDescription(d);
+      _suggestedCategory = (s != null && s != _category) ? s : null;
+    });
   }
 
   @override

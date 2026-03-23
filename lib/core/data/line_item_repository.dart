@@ -164,6 +164,29 @@ class LineItemRepository {
     await (_db.delete(_db.receiptLines)..where((t) => t.id.equals(id))).go();
   }
 
+  /// Sets the draft bill [Transactions.description] only when it is blank.
+  /// Used for OCR-derived merchant / store name hints so user edits are not overwritten.
+  Future<void> setDraftDescriptionIfEmpty({
+    required String ledgerId,
+    required String description,
+  }) async {
+    final draftTx = draftTransactionIdForLedger(ledgerId);
+    final row = await (_db.select(_db.transactions)
+          ..where((t) => t.id.equals(draftTx)))
+        .getSingle();
+    if (row.description.trim().isNotEmpty) return;
+    final d = description.trim();
+    if (d.isEmpty) return;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await (_db.update(_db.transactions)..where((t) => t.id.equals(draftTx)))
+        .write(
+      TransactionsCompanion(
+        description: Value(d),
+        updatedAtMs: Value(now),
+      ),
+    );
+  }
+
   /// Keeps the draft [Transactions] row’s [currencyCode] as the single **bill**
   /// currency. When there are no lines, uses [defaultWhenNoLines]. When lines
   /// exist, uses the dominant code among lines, then **normalizes** every line

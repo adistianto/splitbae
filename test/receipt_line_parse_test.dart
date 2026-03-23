@@ -169,4 +169,40 @@ TOTAL 104.00
     expect(list[0].quantity, 2);
     expect(list[0].amountMinor, amountToMinorUnits(24.00, 'AUD'));
   });
+
+  test('NZD decimal trailing amounts', () {
+    const ocr = '''
+Flat White 5.50
+Eggs Benedict 18.00
+''';
+    final list = parseReceiptLineCandidates(ocr, currencyCode: 'NZD');
+    expect(list.length, 2);
+    expect(list[0].label, 'Flat White');
+    expect(list[0].amountMinor, amountToMinorUnits(5.5, 'NZD'));
+    expect(list[1].label, 'Eggs Benedict');
+    expect(list[1].amountMinor, amountToMinorUnits(18, 'NZD'));
+  });
+
+  test('SGD decimal lines; rejects rounding and PayNow payment line', () {
+    const ocr = '''
+Chicken Rice 4.50
+Rounding 0.01
+PayNow 12.51
+''';
+    final list = parseReceiptLineCandidates(ocr, currencyCode: 'SGD');
+    expect(list.length, 1);
+    expect(list.single.label, 'Chicken Rice');
+    expect(list.single.amountMinor, amountToMinorUnits(4.5, 'SGD'));
+  });
+
+  test('IDR rejects total bayar footer but keeps item lines', () {
+    const ocr = '''
+Nasi Campur 35.000
+Total Bayar 35.000
+''';
+    final list = parseReceiptLineCandidates(ocr, currencyCode: 'IDR');
+    expect(list.length, 1);
+    expect(list.single.label, 'Nasi Campur');
+    expect(list.single.amountMinor, 35000);
+  });
 }

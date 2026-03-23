@@ -1,6 +1,48 @@
 import 'package:splitbae/core/data/amount_minor.dart';
 import 'package:splitbae/core/ocr/receipt_ocr_refiner.dart';
 
+/// Thin region hint derived from **bill currency** (ISO 4217). Used to pick
+/// small, scoped keyword sets for summary/footer lines so we do not maintain one
+/// global list that misfires across locales. Callers may override via
+/// [parseReceiptLineCandidates] `regionHint` when currency is unknown but locale
+/// is known.
+enum ReceiptParseRegion {
+  /// Indonesia: IDR thousands, PPN / total bayar–style footers.
+  id,
+  /// Australia & New Zealand: GST-inclusive totals, similar merchant blocks.
+  auNz,
+  /// Singapore: GST @ 9%, PayNow/NETS-style payment lines, nett total.
+  sg,
+  /// English-first and rest-of-world: generic totals, rounding, card schemes.
+  intlEn,
+}
+
+/// Maps ISO currency to a [ReceiptParseRegion]. Unknown codes use [intlEn].
+ReceiptParseRegion receiptParseRegionForCurrency(String? currencyCode) {
+  final c = (currencyCode ?? '').trim().toUpperCase();
+  switch (c) {
+    case 'IDR':
+      return ReceiptParseRegion.id;
+    case 'AUD':
+    case 'NZD':
+      return ReceiptParseRegion.auNz;
+    case 'SGD':
+      return ReceiptParseRegion.sg;
+    default:
+      return ReceiptParseRegion.intlEn;
+  }
+}
+
+class _ReceiptParseContext {
+  const _ReceiptParseContext({
+    required this.currencyCode,
+    required this.region,
+  });
+
+  final String currencyCode;
+  final ReceiptParseRegion region;
+}
+
 /// Heuristic parse of OCR text into (label, amount) candidates for receipt lines.
 /// [amountMinor] is the **line total** in minor units (qty × unit when a qty column exists).
 /// [quantity] is set when a Qty / Item / Amount table is detected.
@@ -101,7 +143,15 @@ bool isReceiptMetadataOrFooterRow(String line) {
 }
 
 /// Fuzzy match for OCR garbling of TOTAL / SUBTOTAL / TAX (same visual row).
-bool isLikelySummaryTaxTotalRow(String line) {
+/// [region] refines locale-specific summary keywords (see [receiptParseRegionForCurrency]).
+bool isLikelySummaryTaxTotalRow(
+  String line, [
+  ReceiptParseRegion region = ReceiptParseRegion.intlEn,
+]) {
+  return _isLikelySummaryTaxTotalRow(line, region);
+}
+
+bool _isLikelySummaryTaxTotalRow(String line, ReceiptParseRegion region) {
   final raw = line.toLowerCase().trim();
   if (raw.isEmpty) return false;
   final ocr = raw.replaceAll('0', 'o').replaceAll('1', 'l');
@@ -112,21 +162,59 @@ bool isLikelySummaryTaxTotalRow(String line) {
   if (RegExp(r'^\s*(grand\s+)?total\b').hasMatch(raw)) return true;
   if (RegExp(r'^\s*(sub)?total\b').hasMatch(ocr)) return true;
   if (RegExp(r'^\s*(amount|balance)\s+due\b').hasMatch(raw)) return true;
+  if (RegExp(r'^\s*amount\s+payable\b').hasMatch(raw)) return true;
+  if (RegExp(r'^\s*rounding\b').hasMatch(raw)) return true;
+  if (RegExp(r'^\s*(cash\s+tendered|change)\b').hasMatch(raw)) return true;
   if (RegExp(r'^\s*(gst|vat|ppn)\b').hasMatch(raw)) return true;
   if (RegExp(r'^\s*tax\b').hasMatch(raw)) return true;
   if (RegExp(r'^\s*sales\s+tax\b').hasMatch(raw)) return true;
+
+  switch (region) {
+    case ReceiptParseRegion.id:
+      if (RegExp(
+        r'^\s*(total\s+bayar|tagihan|jumlah\s+harus\s+dibayar)\b',
+      ).hasMatch(raw)) {
+        return true;
+      }
+      if (RegExp(r'^\s*(diskon|potongan)\s*(total)?\b').hasMatch(raw)) {
+        return true;
+      }
+      break;
+    case ReceiptParseRegion.auNz:
+      if (RegExp(r'^\s*gst\s*(incl|included|inc\.?)\b').hasMatch(raw)) {
+        return true;
+      }
+      if (RegExp(r'^\s*(includes?|incl\.?)\s+gst\b').hasMatch(raw)) return true;
+      if (RegExp(r'^\s*total\s+due\b').hasMatch(raw)) return true;
+      break;
+    case ReceiptParseRegion.sg:
+      if (RegExp(r'^\s*(nett|net)\s+total\b').hasMatch(raw)) return true;
+      if (RegExp(r'^\s*gst\s*[@(]').hasMatch(raw)) return true;
+      if (RegExp(r'^\s*total\s+payable\b').hasMatch(raw)) return true;
+      break;
+    case ReceiptParseRegion.intlEn:
+      break;
+  }
   return false;
 }
 
 /// Parses [ocrText] into line items. [currencyCode] refines numeric tails (e.g. IDR uses `.` as thousands).
 /// When omitted, **IDR** is assumed (product default).
+/// [regionHint] overrides [receiptParseRegionForCurrency] for summary/noise keywords.
+/// Spatial row clustering and fallback to this parser are documented on
+/// `parseReceiptLineCandidatesFromNative` in `receipt_spatial_parse.dart`.
 List<ReceiptLineCandidate> parseReceiptLineCandidates(
   String ocrText, {
   String? currencyCode,
+  ReceiptParseRegion? regionHint,
 }) {
   final cc = (currencyCode == null || currencyCode.trim().isEmpty)
       ? 'IDR'
       : currencyCode.trim();
+  final ctx = _ReceiptParseContext(
+    currencyCode: cc,
+    region: regionHint ?? receiptParseRegionForCurrency(cc),
+  );
 
   var lines = refineOcrText(ocrText)
       .split(RegExp(r'\r?\n'))
@@ -135,12 +223,12 @@ List<ReceiptLineCandidate> parseReceiptLineCandidates(
       .toList();
   lines = _mergeBrokenTableRows(lines);
 
-  final structured = _parseStructuredReceipt(lines, cc);
+  final structured = _parseStructuredReceipt(lines, ctx);
   if (structured.isNotEmpty) {
     return structured.length > 40 ? structured.sublist(0, 40) : structured;
   }
 
-  return _parseHeuristicTrailingAmount(lines, cc);
+  return _parseHeuristicTrailingAmount(lines, ctx);
 }
 
 /// OCR often splits one table row across lines (e.g. `3 LRG FRIES W/` + `AIOLI 42.00`).
@@ -184,7 +272,7 @@ bool _shouldMergeTableContinuation(String cur, String next) {
 /// Columnar receipts (Qty / Item / Amount) and similar.
 List<ReceiptLineCandidate> _parseStructuredReceipt(
   List<String> lines,
-  String? currencyCode,
+  _ReceiptParseContext ctx,
 ) {
   int? headerLineIndex;
   for (var i = 0; i < lines.length; i++) {
@@ -199,11 +287,11 @@ List<ReceiptLineCandidate> _parseStructuredReceipt(
     while (tableStart < lines.length && _isSeparatorOrNoiseLine(lines[tableStart])) {
       tableStart++;
     }
-    final out = _scanTableRows(lines, tableStart, currencyCode, maxQty: 999);
+    final out = _scanTableRows(lines, tableStart, ctx, maxQty: 999);
     if (out.isNotEmpty) return out;
   }
 
-  final headerless = _parseHeaderlessQtyRows(lines, currencyCode);
+  final headerless = _parseHeaderlessQtyRows(lines, ctx);
   if (headerless.isNotEmpty) return headerless;
 
   return const [];
@@ -212,15 +300,15 @@ List<ReceiptLineCandidate> _parseStructuredReceipt(
 List<ReceiptLineCandidate> _scanTableRows(
   List<String> lines,
   int start,
-  String? currencyCode, {
+  _ReceiptParseContext ctx, {
   required int maxQty,
 }) {
   final out = <ReceiptLineCandidate>[];
   for (var i = start; i < lines.length; i++) {
     final line = lines[i];
     if (_isSeparatorOrNoiseLine(line)) continue;
-    if (_shouldStopTableParsing(line)) break;
-    final row = _parseQtyItemAmountLine(line, currencyCode, maxQty: maxQty);
+    if (_shouldStopTableParsing(line, ctx.region)) break;
+    final row = _parseQtyItemAmountLine(line, ctx.currencyCode, maxQty: maxQty);
     if (row != null) out.add(row);
   }
   return out;
@@ -229,12 +317,12 @@ List<ReceiptLineCandidate> _scanTableRows(
 /// Rows like `2 SOURDOUGH G&H 24.00` without a header (OCR dropped the header line).
 List<ReceiptLineCandidate> _parseHeaderlessQtyRows(
   List<String> lines,
-  String? currencyCode,
+  _ReceiptParseContext ctx,
 ) {
   final out = <ReceiptLineCandidate>[];
   for (final line in lines) {
-    if (_shouldStopTableParsing(line)) continue;
-    final row = _parseQtyItemAmountLine(line, currencyCode, maxQty: 48);
+    if (_shouldStopTableParsing(line, ctx.region)) continue;
+    final row = _parseQtyItemAmountLine(line, ctx.currencyCode, maxQty: 48);
     if (row == null) continue;
     if (_isLikelyNonItemLabel(row.label)) continue;
     out.add(row);
@@ -263,7 +351,7 @@ bool _isSeparatorOrNoiseLine(String line) {
   return nonDash.isEmpty;
 }
 
-bool _shouldStopTableParsing(String line) {
+bool _shouldStopTableParsing(String line, ReceiptParseRegion region) {
   final t = line.trim().toLowerCase();
   if (t.isEmpty) return false;
   if (RegExp(r'^\s*total\b').hasMatch(t) && !t.startsWith('subtotal')) {
@@ -273,10 +361,26 @@ bool _shouldStopTableParsing(String line) {
   if (RegExp(r'^\s*gst\b').hasMatch(t)) return true;
   if (RegExp(r'^\s*tax\b').hasMatch(t) && !t.contains('invoice')) return true;
   if (RegExp(r'^\s*amount\s+due\b').hasMatch(t)) return true;
+  if (RegExp(r'^\s*amount\s+payable\b').hasMatch(t)) return true;
+  if (RegExp(r'^\s*rounding\b').hasMatch(t)) return true;
   if (RegExp(r'^\s*balance\b').hasMatch(t)) return true;
   if (RegExp(r'^\s*payment\b').hasMatch(t)) return true;
   if (RegExp(r'^\s*tip\b').hasMatch(t)) return true;
   if (RegExp(r'thank\s+you').hasMatch(t)) return true;
+  switch (region) {
+    case ReceiptParseRegion.id:
+      if (RegExp(r'^\s*(total\s+bayar|tagihan)\b').hasMatch(t)) return true;
+      break;
+    case ReceiptParseRegion.auNz:
+      if (RegExp(r'^\s*total\s+due\b').hasMatch(t)) return true;
+      break;
+    case ReceiptParseRegion.sg:
+      if (RegExp(r'^\s*(nett|net)\s+total\b').hasMatch(t)) return true;
+      if (RegExp(r'^\s*paynow\b').hasMatch(t)) return true;
+      break;
+    case ReceiptParseRegion.intlEn:
+      break;
+  }
   return false;
 }
 
@@ -331,10 +435,11 @@ bool _isLikelyNonItemLabel(String name) {
 
 List<ReceiptLineCandidate> _parseHeuristicTrailingAmount(
   List<String> lines,
-  String? currencyCode,
+  _ReceiptParseContext ctx,
 ) {
   final out = <ReceiptLineCandidate>[];
   final amountRe = RegExp(r'([\d$][\d.,]*)\s*$');
+  final cc = ctx.currencyCode;
 
   for (final line in lines) {
     final m = amountRe.firstMatch(line);
@@ -356,14 +461,14 @@ List<ReceiptLineCandidate> _parseHeuristicTrailingAmount(
       numStr = numStr.replaceAll(',', '');
     }
 
-    final amt = _parseAmountWithCurrencyHint(numStr, currencyCode);
-    final minor = _doubleToMinor(amt, currencyCode);
+    final amt = _parseAmountWithCurrencyHint(numStr, cc);
+    final minor = _doubleToMinor(amt, cc);
     if (minor == null) continue;
 
     var label = line.substring(0, m.start).trim();
     label = label.replaceAll(RegExp(r'^[-–—•\s]+'), '').trim();
     if (label.isEmpty) continue;
-    if (_shouldRejectHeuristicLine(label, amt)) continue;
+    if (_shouldRejectHeuristicLine(label, amt, ctx.region)) continue;
 
     out.add(ReceiptLineCandidate(label: label, amountMinor: minor));
   }
@@ -371,7 +476,12 @@ List<ReceiptLineCandidate> _parseHeuristicTrailingAmount(
 }
 
 /// Shared noise filter for plain-line heuristics and spatial row text.
-bool isHeuristicReceiptNoiseLine(String label, double? amount) {
+/// [region] adds small scoped keywords (see [receiptParseRegionForCurrency]).
+bool isHeuristicReceiptNoiseLine(
+  String label,
+  double? amount, [
+  ReceiptParseRegion region = ReceiptParseRegion.intlEn,
+]) {
   final l = label.toLowerCase().trim();
 
   if (RegExp(
@@ -380,6 +490,8 @@ bool isHeuristicReceiptNoiseLine(String label, double? amount) {
     return true;
   }
   if (RegExp(r'^(amount|qty|item|items)\b').hasMatch(l)) return true;
+  if (RegExp(r'^\s*rounding\b').hasMatch(l)) return true;
+  if (RegExp(r'^\s*cash\s+tendered\b').hasMatch(l)) return true;
   if (RegExp(
     r'\b(visa|mastercard|eftpos|efpos|surcharge|service\s*charge)\b',
   ).hasMatch(l)) {
@@ -394,6 +506,22 @@ bool isHeuristicReceiptNoiseLine(String label, double? amount) {
   }
   if (RegExp(r'\btax\s+invoice\b').hasMatch(l)) return true;
   if (l.length <= 2 && RegExp(r'^\d+$').hasMatch(l)) return true;
+
+  switch (region) {
+    case ReceiptParseRegion.sg:
+      if (RegExp(r'\b(paynow|nets|paylah|grabpay)\b').hasMatch(l)) {
+        return true;
+      }
+      break;
+    case ReceiptParseRegion.id:
+      if (RegExp(r'^\s*(total\s+bayar|diskon\s+total)\b').hasMatch(l)) {
+        return true;
+      }
+      break;
+    case ReceiptParseRegion.auNz:
+    case ReceiptParseRegion.intlEn:
+      break;
+  }
 
   // Dates: DD/MM/YYYY, MM-DD-YY, ISO fragments often picked up with amounts.
   if (RegExp(
@@ -428,8 +556,12 @@ bool isHeuristicReceiptNoiseLine(String label, double? amount) {
   return false;
 }
 
-bool _shouldRejectHeuristicLine(String label, double? amount) {
-  return isHeuristicReceiptNoiseLine(label, amount);
+bool _shouldRejectHeuristicLine(
+  String label,
+  double? amount,
+  ReceiptParseRegion region,
+) {
+  return isHeuristicReceiptNoiseLine(label, amount, region);
 }
 
 bool _looksLikePhoneOrOrderLine(String l) {

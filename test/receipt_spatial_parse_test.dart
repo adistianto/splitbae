@@ -159,4 +159,62 @@ void main() {
     expect(list.single.label, isEmpty);
     expect(list.single.amountMinor, 25000);
   });
+
+  test('NZD wide label and far-right price cluster to one line', () {
+    final result = ReceiptOcrNativeResult(
+      text: '',
+      lines: [
+        const ReceiptOcrTextLine(
+          text: 'Eggs Benedict',
+          left: 0.04,
+          top: 0.22,
+          width: 0.28,
+          height: 0.03,
+        ),
+        const ReceiptOcrTextLine(
+          text: '18.50',
+          left: 0.78,
+          top: 0.221,
+          width: 0.16,
+          height: 0.03,
+        ),
+      ],
+    );
+
+    final list = parseReceiptLineCandidatesFromNative(
+      result,
+      currencyCode: 'NZD',
+    );
+    expect(list.length, 1);
+    expect(list.single.label, 'Eggs Benedict');
+    expect(list.single.amountMinor, amountToMinorUnits(18.5, 'NZD'));
+  });
+
+  test('SGD drops PayNow payment row (region noise)', () {
+    final result = ReceiptOcrNativeResult(
+      text: '',
+      lines: [
+        const ReceiptOcrTextLine(
+          text: 'PayNow',
+          left: 0.06,
+          top: 0.55,
+          width: 0.2,
+          height: 0.028,
+        ),
+        const ReceiptOcrTextLine(
+          text: '12.51',
+          left: 0.76,
+          top: 0.552,
+          width: 0.18,
+          height: 0.028,
+        ),
+      ],
+    );
+
+    final list = parseReceiptLineCandidatesFromNative(
+      result,
+      currencyCode: 'SGD',
+    );
+    expect(list, isEmpty);
+  });
 }

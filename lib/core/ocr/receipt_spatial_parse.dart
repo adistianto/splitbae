@@ -4,25 +4,50 @@ import 'package:splitbae/core/ocr/receipt_line_parse.dart';
 import 'package:splitbae/core/ocr/receipt_ocr_channel.dart';
 import 'package:splitbae/core/ocr/receipt_ocr_refiner.dart';
 
+/// **Merge policy (spatial + plain text):**
+///
+/// 1. If native returns **no text lines**, or **no usable bounding boxes**
+///    (all missing left/top/width/height), parse **[ReceiptOcrNativeResult.text]**
+///    only via [parseReceiptLineCandidates] with the same [currencyCode] and
+///    optional [regionHint].
+/// 2. Otherwise cluster lines by **vertical overlap** (union-find), concatenate
+///    left-to-right text per row, take the **right-most parseable money token**
+///    as the line amount, and apply the **same** metadata / summary / noise
+///    filters as the text parser using [receiptParseRegionForCurrency] (or
+///    [regionHint]).
+/// 3. If every spatial row is filtered out or yields no price, **fall back** to
+///    step 1 on full [ReceiptOcrNativeResult.text] (same pipeline as a photo
+///    with no bounds).
+///
 /// Uses native line bounding boxes to group far-apart name + price into one
 /// [ReceiptLineCandidate], then falls back to [parseReceiptLineCandidates] when
 /// bounds are missing or nothing survives filters.
 List<ReceiptLineCandidate> parseReceiptLineCandidatesFromNative(
   ReceiptOcrNativeResult result, {
   String? currencyCode,
+  ReceiptParseRegion? regionHint,
 }) {
   final cc = (currencyCode == null || currencyCode.trim().isEmpty)
       ? 'IDR'
       : currencyCode.trim();
+  final region = regionHint ?? receiptParseRegionForCurrency(cc);
 
   final usable =
       result.lines.where((l) => l.text.trim().isNotEmpty).toList();
   if (usable.isEmpty) {
-    return parseReceiptLineCandidates(result.text, currencyCode: cc);
+    return parseReceiptLineCandidates(
+      result.text,
+      currencyCode: cc,
+      regionHint: regionHint,
+    );
   }
 
   if (!usable.any(_hasUsableBounds)) {
-    return parseReceiptLineCandidates(result.text, currencyCode: cc);
+    return parseReceiptLineCandidates(
+      result.text,
+      currencyCode: cc,
+      regionHint: regionHint,
+    );
   }
 
   final spatial = _withSyntheticBoundsWhereNeeded(usable);
@@ -31,12 +56,16 @@ List<ReceiptLineCandidate> parseReceiptLineCandidatesFromNative(
 
   final out = <ReceiptLineCandidate>[];
   for (final row in rows) {
-    final c = _candidateFromVisualRow(row, cc);
+    final c = _candidateFromVisualRow(row, cc, region);
     if (c != null) out.add(c);
   }
 
   if (out.isEmpty) {
-    return parseReceiptLineCandidates(result.text, currencyCode: cc);
+    return parseReceiptLineCandidates(
+      result.text,
+      currencyCode: cc,
+      regionHint: regionHint,
+    );
   }
 
   return out.length > 40 ? out.sublist(0, 40) : out;
@@ -145,7 +174,7 @@ _PriceHit? _findRightmostPriceHit(String combined, String cc) {
   final hits = <_PriceHit>[];
 
   final currencyFirst = RegExp(
-    r'(?:Rp\.?\s*|IDR\s*|USD\s*|US\$|AUD\s*|SGD\s*|EUR\s*|€\s*|\$\s*)([\d][\d.,OolI|]*)',
+    r'(?:Rp\.?\s*|IDR\s*|USD\s*|US\$|AUD\s*|NZD\s*|SGD\s*|EUR\s*|€\s*|\$\s*)([\d][\d.,OolI|]*)',
     caseSensitive: false,
   );
   for (final m in currencyFirst.allMatches(combined)) {
@@ -188,17 +217,21 @@ bool _isMessyItemName(String label) {
   return false;
 }
 
-bool _shouldRejectSpatialRow(String combined) {
+bool _shouldRejectSpatialRow(String combined, ReceiptParseRegion region) {
   final t = combined.trim();
   if (t.length < 3) return true;
 
   if (isReceiptMetadataOrFooterRow(t)) return true;
-  if (isLikelySummaryTaxTotalRow(t)) return true;
-  if (isHeuristicReceiptNoiseLine(t, null)) return true;
+  if (isLikelySummaryTaxTotalRow(t, region)) return true;
+  if (isHeuristicReceiptNoiseLine(t, null, region)) return true;
   return false;
 }
 
-ReceiptLineCandidate? _candidateFromVisualRow(List<_BoxLine> row, String cc) {
+ReceiptLineCandidate? _candidateFromVisualRow(
+  List<_BoxLine> row,
+  String cc,
+  ReceiptParseRegion region,
+) {
   row.sort((a, b) => a.left.compareTo(b.left));
   final parts = <String>[];
   for (final box in row) {
@@ -212,7 +245,7 @@ ReceiptLineCandidate? _candidateFromVisualRow(List<_BoxLine> row, String cc) {
   if (parts.isEmpty) return null;
 
   final combined = parts.join(' ');
-  if (_shouldRejectSpatialRow(combined)) return null;
+  if (_shouldRejectSpatialRow(combined, region)) return null;
 
   final hit = _findRightmostPriceHit(combined, cc);
   if (hit == null) return null;

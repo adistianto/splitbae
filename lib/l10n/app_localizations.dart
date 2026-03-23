@@ -540,6 +540,36 @@ abstract class AppLocalizations {
   /// **'Could not read the receipt: {message}'**
   String scanReceiptErrorDetail(String message);
 
+  /// Inline help when OCR returned no parseable lines; offers retake or manual entry.
+  ///
+  /// In en, this message translates to:
+  /// **'No line items found. Retake the photo or enter amounts manually.'**
+  String get scanReceiptRecoveryNoLinesMessage;
+
+  /// Inline help when native OCR hit the time limit.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan took too long. Retake or enter the item manually.'**
+  String get scanReceiptRecoveryTimeoutMessage;
+
+  /// Inline help when OCR failed with an error or generic failure.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not read this photo. Retake or enter the item manually.'**
+  String get scanReceiptRecoveryErrorMessage;
+
+  /// Clears the preview so the user can capture or pick another receipt image.
+  ///
+  /// In en, this message translates to:
+  /// **'Retake photo'**
+  String get scanReceiptRetakePhoto;
+
+  /// Optional short tip under the take-photo control to improve OCR (no new sensors).
+  ///
+  /// In en, this message translates to:
+  /// **'Use good light, hold steady, and keep the receipt in frame.'**
+  String get scanReceiptPhotoQualityHint;
+
   /// Form label for the line description (e.g. food name).
   ///
   /// In en, this message translates to:
@@ -1618,10 +1648,10 @@ abstract class AppLocalizations {
   /// **'Description'**
   String get addTransactionDescriptionSection;
 
-  /// Hint that description can be left blank.
+  /// Hint that description can be left blank; OCR may suggest a store name.
   ///
   /// In en, this message translates to:
-  /// **'Auto-fills from first item if empty'**
+  /// **'Auto-fills from receipt scan or first item if empty'**
   String get addTransactionDescriptionAutoHint;
 
   /// Prefix before apply-suggestion chip.
