@@ -19,6 +19,7 @@ import 'package:splitbae/providers.dart';
 import 'package:splitbae/screens/settings_screen.dart';
 import 'package:splitbae/widgets/posted_bill_expandable_card.dart';
 import 'package:splitbae/widgets/splitbae_v0_chrome.dart';
+import 'package:splitbae/screens/transactions_screen.dart';
 
 /// Bills dashboard: v0 hero (fixed), insight chips, month groups, M3E expense cards.
 class BillsScreen extends ConsumerStatefulWidget {
@@ -291,13 +292,8 @@ class _BillsScreenState extends ConsumerState<BillsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final billsAsync = ref.watch(billsFeedProvider);
-    return billsAsync.when(
-      data: (all) => _buildBillsContent(context, l10n, all),
-      loading: () => _buildBillsLoading(context, l10n),
-      error: (err, stack) => _buildBillsError(context, l10n),
-    );
+    // v0 Bills tab now hosts the dense Transactions ledger UI.
+    return const TransactionsScreen();
   }
 
   Widget _buildBillsContent(

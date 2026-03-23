@@ -11,6 +11,7 @@ import 'package:splitbae/core/shell/splitbae_apple_liquid_glass.dart';
 import 'package:splitbae/core/shell/splitbae_shell_placeholders.dart';
 import 'package:splitbae/core/theme/splitbae_v0_ui_contract.dart';
 import 'package:splitbae/l10n/app_localizations.dart';
+import 'package:splitbae/screens/bills_screen.dart';
 import 'package:splitbae/widgets/shell/splitbae_shell_chrome_button.dart';
 import 'package:splitbae/widgets/shell/splitbae_shell_search_field.dart';
 
@@ -211,6 +212,7 @@ class _SplitBaeAppShellState extends State<SplitBaeAppShell> {
               : double.infinity;
           final topPad = MediaQuery.paddingOf(context).top;
           final showChrome = _chromeVisible && !_scanOpen;
+          final showShellSearch = showChrome && _bottomTabIndex == 1;
           final cs = Theme.of(context).colorScheme;
 
           final bodyStack = Stack(
@@ -226,7 +228,13 @@ class _SplitBaeAppShellState extends State<SplitBaeAppShell> {
                         constraints: BoxConstraints(maxWidth: maxContent),
                         child: Padding(
                           padding: hinge,
-                          child: const ShellBillsPlaceholder(),
+                          child: BillsScreen(
+                            v0ShellMode: false,
+                            onNewBill: () => _toast(l10n.fabNewBill),
+                            onScanBillEntry: () => setState(() {}),
+                            onSwitchToBalances: () =>
+                                setState(() => _bottomTabIndex = 1),
+                          ),
                         ),
                       ),
                     ),
@@ -260,24 +268,25 @@ class _SplitBaeAppShellState extends State<SplitBaeAppShell> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            SplitBaeShellChromeIconButton(
-                              icon: _searchOpen
-                                  ? PhosphorIconsRegular.x
-                                  : PhosphorIconsRegular.magnifyingGlass,
-                              semanticLabel: _searchOpen
-                                  ? MaterialLocalizations.of(
-                                      context,
-                                    ).closeButtonLabel
-                                  : l10n.billsSearchHint,
-                              onPressed: () {
-                                HapticFeedback.selectionClick();
-                                setState(() {
-                                  _searchOpen = !_searchOpen;
-                                  if (!_searchOpen) _searchCtrl.clear();
-                                });
-                              },
-                            ),
-                            const SizedBox(width: 8),
+                            if (showShellSearch)
+                              SplitBaeShellChromeIconButton(
+                                icon: _searchOpen
+                                    ? PhosphorIconsRegular.x
+                                    : PhosphorIconsRegular.magnifyingGlass,
+                                semanticLabel: _searchOpen
+                                    ? MaterialLocalizations.of(
+                                        context,
+                                      ).closeButtonLabel
+                                    : l10n.balancesSearchPeopleHint,
+                                onPressed: () {
+                                  HapticFeedback.selectionClick();
+                                  setState(() {
+                                    _searchOpen = !_searchOpen;
+                                    if (!_searchOpen) _searchCtrl.clear();
+                                  });
+                                },
+                              ),
+                            if (showShellSearch) const SizedBox(width: 8),
                             SplitBaeShellChromeIconButton(
                               icon: PhosphorIconsRegular.user,
                               semanticLabel: l10n.v0UserMenuTitle,
@@ -292,16 +301,14 @@ class _SplitBaeAppShellState extends State<SplitBaeAppShell> {
                     ),
                   ),
                 ),
-              if (_searchOpen && showChrome)
+              if (_searchOpen && showShellSearch)
                 Positioned(
                   top: topPad + 56,
                   left: 16,
                   right: 16,
                   child: SplitBaeShellSearchField(
                     controller: _searchCtrl,
-                    hintText: _bottomTabIndex == 0
-                        ? l10n.billsSearchHint
-                        : l10n.balancesSearchPeopleHint,
+                    hintText: l10n.balancesSearchPeopleHint,
                     onChanged: (_) => setState(() {}),
                   ),
                 ),
@@ -410,7 +417,13 @@ class _SplitBaeAppShellState extends State<SplitBaeAppShell> {
               child: _railIndex == 0
                   ? Padding(
                       padding: hinge,
-                      child: const ShellBillsPlaceholder(),
+                      child: BillsScreen(
+                        v0ShellMode: false,
+                        onNewBill: () => _toast(l10n.fabNewBill),
+                        onScanBillEntry: () => setState(() {}),
+                        onSwitchToBalances: () =>
+                            setState(() => _bottomTabIndex = 1),
+                      ),
                     )
                   : _railIndex == 1
                   ? Padding(

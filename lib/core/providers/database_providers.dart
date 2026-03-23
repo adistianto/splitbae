@@ -40,6 +40,22 @@ class AppDatabaseController extends StateNotifier<AppDatabase> {
     }
   }
 
+  /// Closes and reopens the current on-disk database (no file deletion).
+  ///
+  /// Used after backup restore so Drift has a fresh handle to the
+  /// overwritten database + sidecar files.
+  Future<void> reopenFromDisk() async {
+    try {
+      await state.close();
+      final reopened = await openAppDatabase();
+      await LedgerRepository(reopened).ensureSeedData();
+      state = reopened;
+    } catch (e, st) {
+      debugPrint('reopenFromDisk: $e\n$st');
+      rethrow;
+    }
+  }
+
   /// Exports the current DB, applies the new encryption preference, recreates
   /// on-disk storage, and imports rows back. Returns `true` on success; `false`
   /// if the switch was rolled back (snapshot restored; prefs match previous).

@@ -214,6 +214,7 @@ class _AdaptiveHomeScreenState extends ConsumerState<AdaptiveHomeScreen> {
           final filtersOpen = ref.watch(v0BillsFiltersSheetOpenProvider);
           final showFloatingChrome =
               _shellChromeVisible && !filtersOpen && !_scanOverlayOpen;
+          final showShellSearch = showFloatingChrome && _bottomTabIndex == 1;
           final appleLg = splitBaeAppleLiquidGlassChromeEnabled(context);
 
           final bodyStack = Stack(
@@ -262,26 +263,27 @@ class _AdaptiveHomeScreenState extends ConsumerState<AdaptiveHomeScreen> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        SplitBaeShellChromeIconButton(
-                          icon: _shellSearchOpen ? Icons.close : Icons.search,
-                          semanticLabel: _shellSearchOpen
-                              ? MaterialLocalizations.of(context)
-                                  .closeButtonLabel
-                              : l10n.billsSearchHint,
-                          onPressed: () {
-                            HapticFeedback.selectionClick();
-                            setState(() {
-                              _shellSearchOpen = !_shellSearchOpen;
-                              if (!_shellSearchOpen) {
-                                _shellSearchController.clear();
-                                ref
-                                    .read(v0ShellSearchQueryProvider.notifier)
-                                    .state = '';
-                              }
-                            });
-                          },
-                        ),
-                        const SizedBox(width: 8),
+                        if (showShellSearch)
+                          SplitBaeShellChromeIconButton(
+                            icon: _shellSearchOpen ? Icons.close : Icons.search,
+                            semanticLabel: _shellSearchOpen
+                                ? MaterialLocalizations.of(context)
+                                    .closeButtonLabel
+                                : l10n.balancesSearchPeopleHint,
+                            onPressed: () {
+                              HapticFeedback.selectionClick();
+                              setState(() {
+                                _shellSearchOpen = !_shellSearchOpen;
+                                if (!_shellSearchOpen) {
+                                  _shellSearchController.clear();
+                                  ref
+                                      .read(v0ShellSearchQueryProvider.notifier)
+                                      .state = '';
+                                }
+                              });
+                            },
+                          ),
+                        if (showShellSearch) const SizedBox(width: 8),
                         SplitBaeShellChromeIconButton(
                           icon: Icons.person_outline,
                           semanticLabel: l10n.v0UserMenuTitle,
@@ -294,16 +296,14 @@ class _AdaptiveHomeScreenState extends ConsumerState<AdaptiveHomeScreen> {
                     ),
                   ),
                 ),
-              if (_shellSearchOpen && showFloatingChrome)
+              if (_shellSearchOpen && showShellSearch)
                 Positioned(
                   top: topPad + 56,
                   left: 16,
                   right: 16,
                   child: SplitBaeShellSearchField(
                     controller: _shellSearchController,
-                    hintText: _bottomTabIndex == 0
-                        ? l10n.billsSearchHint
-                        : l10n.balancesSearchPeopleHint,
+                    hintText: l10n.balancesSearchPeopleHint,
                     onChanged: (_) => setState(() {}),
                   ),
                 ),
