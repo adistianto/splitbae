@@ -570,6 +570,18 @@ abstract class AppLocalizations {
   /// **'Use good light, hold steady, and keep the receipt in frame.'**
   String get scanReceiptPhotoQualityHint;
 
+  /// Recovery action: crop the receipt to improve OCR for line items.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus on line items'**
+  String get scanReceiptCropFocusButton;
+
+  /// Inline hint shown with the crop action after OCR finds no parseable lines.
+  ///
+  /// In en, this message translates to:
+  /// **'Cropping can improve OCR accuracy for line items (not guaranteed).'**
+  String get scanReceiptCropFocusHint;
+
   /// Form label for the line description (e.g. food name).
   ///
   /// In en, this message translates to:

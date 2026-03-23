@@ -83,6 +83,8 @@
   "scanReceiptRecoveryErrorMessage": "Tidak bisa membaca foto ini. Ambil ulang atau isi item manual.",
   "scanReceiptRetakePhoto": "Ambil ulang foto",
   "scanReceiptPhotoQualityHint": "Pakai pencahayaan cukup, tahan kamera tetap, dan pastikan struk terlihat utuh.",
+  "scanReceiptCropFocusButton": "Fokus pada baris item",
+  "scanReceiptCropFocusHint": "Memotong gambar dapat meningkatkan akurasi OCR untuk baris item (tidak dijamin).",
   "itemNameLabel": "Nama item",
   "itemNameHint": "mis. Nasi goreng",
   "priceLabel": "Jumlah",

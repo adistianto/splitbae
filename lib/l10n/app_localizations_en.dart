@@ -289,6 +289,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Use good light, hold steady, and keep the receipt in frame.';
 
   @override
+  String get scanReceiptCropFocusButton => 'Focus on line items';
+
+  @override
+  String get scanReceiptCropFocusHint =>
+      'Cropping can improve OCR accuracy for line items (not guaranteed).';
+
+  @override
   String get itemNameLabel => 'Item name';
 
   @override

@@ -45,6 +45,10 @@ class MainActivity : FlutterActivity() {
             }
             val image: InputImage =
                 try {
+                    // The Dart scan flow may normalize EXIF orientation and cap
+                    // image size before calling the native channel, but
+                    // ML Kit will still respect orientation metadata when
+                    // present.
                     InputImage.fromFilePath(this, file)
                 } catch (e: Exception) {
                     result.error("io", e.message, null)

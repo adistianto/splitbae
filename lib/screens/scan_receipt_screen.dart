@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:file_picker/file_picker.dart';
@@ -10,10 +11,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:splitbae/core/data/amount_minor.dart';
 import 'package:splitbae/core/domain/ledger_ids.dart';
 import 'package:splitbae/core/ocr/receipt_line_parse.dart';
 import 'package:splitbae/core/ocr/receipt_merchant_hint.dart';
+import 'package:splitbae/core/ocr/receipt_ocr_image_preprocess.dart';
 import 'package:splitbae/core/ocr/receipt_ocr_channel.dart';
 import 'package:splitbae/core/ocr/receipt_spatial_parse.dart';
 import 'package:splitbae/core/providers/database_providers.dart';
@@ -198,9 +201,22 @@ class _ScanReceiptScreenState extends ConsumerState<ScanReceiptScreen> {
       _ocrBusy = true;
       _ocrRecovery = _OcrRecoveryKind.none;
     });
+
+    String? preparedPath;
+    try {
+      preparedPath = await preprocessReceiptOcrInputImage(
+        path,
+        bytes: _imageBytes,
+      );
+    } catch (_) {
+      preparedPath = null;
+    }
+    final inputPath = preparedPath ?? path;
+
     ReceiptOcrNativeResult structured;
     try {
-      structured = await ReceiptOcrChannel.recognizeTextStructured(path).timeout(
+      structured = await ReceiptOcrChannel.recognizeTextStructured(inputPath)
+          .timeout(
         const Duration(seconds: 45),
         onTimeout: () => throw TimeoutException('ocr'),
       );
@@ -228,6 +244,14 @@ class _ScanReceiptScreenState extends ConsumerState<ScanReceiptScreen> {
         });
       }
       return;
+    } finally {
+      if (preparedPath != null) {
+        try {
+          await File(preparedPath).delete();
+        } catch (_) {
+          // Best-effort cleanup.
+        }
+      }
     }
 
     if (!mounted) return;
@@ -236,14 +260,57 @@ class _ScanReceiptScreenState extends ConsumerState<ScanReceiptScreen> {
     await _maybeApplyMerchantHint(structured.text);
     if (!mounted) return;
 
-    final candidates = parseReceiptLineCandidatesFromNative(
+    var candidates = parseReceiptLineCandidatesFromNative(
       structured,
       currencyCode: widget.currencyCode,
     );
     if (candidates.isEmpty) {
-      if (mounted) {
-        setState(() => _ocrRecovery = _OcrRecoveryKind.noLines);
+      // Phase 3: one bounded retry with a slightly enhanced OCR input.
+      // This keeps the pipeline single-engine (same native OCR).
+      ReceiptOcrNativeResult? retryStructured;
+      String? retryPreparedPath;
+      try {
+        retryPreparedPath = await preprocessReceiptOcrInputImage(
+          path,
+          bytes: _imageBytes,
+          maxEdgePx: 3200,
+          contrast: 1.12,
+          brightness: 1.05,
+        );
+        final retryInputPath = retryPreparedPath ?? path;
+        retryStructured =
+            await ReceiptOcrChannel.recognizeTextStructured(retryInputPath)
+                .timeout(
+          const Duration(seconds: 25),
+          onTimeout: () => throw TimeoutException('ocr_retry'),
+        );
+      } on TimeoutException {
+        retryStructured = null;
+      } on ReceiptOcrException {
+        retryStructured = null;
+      } catch (_) {
+        retryStructured = null;
+      } finally {
+        if (retryPreparedPath != null) {
+          try {
+            await File(retryPreparedPath).delete();
+          } catch (_) {
+            // Best-effort cleanup.
+          }
+        }
       }
+
+      if (retryStructured != null && mounted) {
+        await _maybeApplyMerchantHint(retryStructured.text);
+        candidates = parseReceiptLineCandidatesFromNative(
+          retryStructured,
+          currencyCode: widget.currencyCode,
+        );
+      }
+    }
+
+    if (candidates.isEmpty) {
+      if (mounted) setState(() => _ocrRecovery = _OcrRecoveryKind.noLines);
       return;
     }
 
@@ -284,6 +351,31 @@ class _ScanReceiptScreenState extends ConsumerState<ScanReceiptScreen> {
       return l10n.scanReceiptRecoveryErrorMessage;
     }
     return l10n.scanReceiptRecoveryNoLinesMessage;
+  }
+
+  Future<void> _cropForLineItems(AppLocalizations l10n) async {
+    final path = _imagePath;
+    if (path == null || path.isEmpty) return;
+
+    final cropped = await ImageCropper().cropImage(
+      sourcePath: path,
+      aspectRatio: const CropAspectRatio(ratioX: 3, ratioY: 4),
+      compressQuality: 85,
+      uiSettings: [
+        AndroidUiSettings(
+          toolbarTitle: l10n.scanReceiptCropFocusButton,
+          lockAspectRatio: true,
+        ),
+        IOSUiSettings(
+          title: l10n.scanReceiptCropFocusButton,
+        ),
+      ],
+    );
+
+    if (!mounted) return;
+    final p = cropped?.path;
+    if (p == null || p.isEmpty) return;
+    await _useXFile(XFile(p));
   }
 
   Future<void> _onConfirmReviewedLines(AppLocalizations l10n) async {
@@ -682,6 +774,11 @@ class _ScanReceiptScreenState extends ConsumerState<ScanReceiptScreen> {
                     message: _ocrRecoveryMessage(l10n),
                     onRetake: _clearImage,
                     onManual: () => _exitScan(null),
+                    onCrop: _ocrRecovery == _OcrRecoveryKind.noLines
+                        ? () => _cropForLineItems(l10n)
+                        : null,
+                    cropLabel: l10n.scanReceiptCropFocusButton,
+                    cropHint: l10n.scanReceiptCropFocusHint,
                     retakeLabel: l10n.scanReceiptRetakePhoto,
                     manualLabel: l10n.scanReceiptEnterManually,
                     colorScheme: cs,
@@ -815,6 +912,9 @@ class _OcrRecoveryBanner extends StatelessWidget {
     required this.message,
     required this.onRetake,
     required this.onManual,
+    this.onCrop,
+    this.cropLabel,
+    this.cropHint,
     required this.retakeLabel,
     required this.manualLabel,
     required this.colorScheme,
@@ -824,6 +924,9 @@ class _OcrRecoveryBanner extends StatelessWidget {
   final String message;
   final VoidCallback onRetake;
   final VoidCallback onManual;
+  final VoidCallback? onCrop;
+  final String? cropLabel;
+  final String? cropHint;
   final String retakeLabel;
   final String manualLabel;
   final ColorScheme colorScheme;
@@ -847,6 +950,15 @@ class _OcrRecoveryBanner extends StatelessWidget {
               message,
               style: theme.textTheme.bodyMedium?.copyWith(color: cs.onSurface),
             ),
+            if (cropHint != null && onCrop != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                cropHint!,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: cs.onSurfaceVariant,
+                ),
+              ),
+            ],
             const SizedBox(height: 12),
             Wrap(
               spacing: 8,
@@ -857,6 +969,11 @@ class _OcrRecoveryBanner extends StatelessWidget {
                   onPressed: onManual,
                   child: Text(manualLabel),
                 ),
+                if (onCrop != null && cropLabel != null)
+                  TextButton(
+                    onPressed: onCrop,
+                    child: Text(cropLabel!),
+                  ),
                 OutlinedButton(
                   onPressed: onRetake,
                   child: Text(retakeLabel),

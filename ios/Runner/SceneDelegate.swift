@@ -52,7 +52,15 @@ enum ReceiptOcrChannelPlugin {
         result(FlutterError(code: "bad_args", message: "Missing path", details: nil))
         return
       }
-      guard let uiImage = UIImage(contentsOfFile: path), let cgImage = uiImage.cgImage else {
+      guard let uiImage = UIImage(contentsOfFile: path) else {
+        result(FlutterError(code: "image", message: "Could not load image", details: nil))
+        return
+      }
+      // Vision uses `cgImage` without applying `UIImage.imageOrientation`.
+      // Normalize orientation so OCR sees upright pixels (works even if the
+      // Dart layer already pre-rotated, and avoids double-counting).
+      let fixed = uiImage.splitbaeFixedOrientation()
+      guard let cgImage = fixed.cgImage else {
         result(FlutterError(code: "image", message: "Could not load image", details: nil))
         return
       }
@@ -113,5 +121,15 @@ enum ReceiptOcrChannelPlugin {
         }
       }
     }
+  }
+}
+
+private extension UIImage {
+  func splitbaeFixedOrientation() -> UIImage {
+    if imageOrientation == .up { return self }
+    UIGraphicsBeginImageContextWithOptions(size, false, scale)
+    defer { UIGraphicsEndImageContext() }
+    draw(in: CGRect(origin: .zero, size: size))
+    return UIGraphicsGetImageFromCurrentImageContext() ?? self
   }
 }

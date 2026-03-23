@@ -291,6 +291,13 @@ class AppLocalizationsId extends AppLocalizations {
       'Pakai pencahayaan cukup, tahan kamera tetap, dan pastikan struk terlihat utuh.';
 
   @override
+  String get scanReceiptCropFocusButton => 'Fokus pada baris item';
+
+  @override
+  String get scanReceiptCropFocusHint =>
+      'Memotong gambar dapat meningkatkan akurasi OCR untuk baris item (tidak dijamin).';
+
+  @override
   String get itemNameLabel => 'Nama item';
 
   @override

@@ -335,6 +335,14 @@
   "@scanReceiptPhotoQualityHint": {
     "description": "Optional short tip under the take-photo control to improve OCR (no new sensors)."
   },
+  "scanReceiptCropFocusButton": "Focus on line items",
+  "@scanReceiptCropFocusButton": {
+    "description": "Recovery action: crop the receipt to improve OCR for line items."
+  },
+  "scanReceiptCropFocusHint": "Cropping can improve OCR accuracy for line items (not guaranteed).",
+  "@scanReceiptCropFocusHint": {
+    "description": "Inline hint shown with the crop action after OCR finds no parseable lines."
+  },
   "itemNameLabel": "Item name",
   "@itemNameLabel": {
     "description": "Form label for the line description (e.g. food name)."
