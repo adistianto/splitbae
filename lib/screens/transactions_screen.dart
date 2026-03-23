@@ -57,7 +57,6 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
     final l10n = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
     final topPad = MediaQuery.paddingOf(context).top;
-
     final search = ref.watch(ledgerSearchQueryProvider);
     final category = ref.watch(ledgerCategoryFilterProvider);
 
@@ -71,56 +70,73 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
       body: SafeArea(
         top: true,
         bottom: false,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: EdgeInsets.fromLTRB(
-                SplitBaeV0Layout.screenHorizontalPadding,
-                topPad + 8,
-                SplitBaeV0Layout.screenHorizontalPadding,
-                0,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    l10n.settingsV0StatTransactions,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Flexible(
+                  // Let the header compress when the viewport is tight;
+                  // otherwise the outer Column can overflow (observed on macOS).
+                  fit: FlexFit.tight,
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      SplitBaeV0Layout.screenHorizontalPadding,
+                      topPad + 8,
+                      SplitBaeV0Layout.screenHorizontalPadding,
+                      0,
+                    ),
+                    child: SingleChildScrollView(
+                      // Only scroll the header if needed (e.g. large text).
+                      scrollDirection: Axis.vertical,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text(
+                            l10n.settingsV0StatTransactions,
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleLarge
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                ),
+                          ),
+                          const SizedBox(height: 8),
+                          SplitBaeShellSearchField(
+                            controller: _searchController,
+                            hintText: l10n.billsSearchHint,
+                            autofocus: false,
+                            onChanged: _setSearch,
+                          ),
+                          const SizedBox(height: 12),
+                          _CategoryChipsRow(
+                            selected: category,
+                            onSelected: _setCategory,
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                  const SizedBox(height: 8),
-                  SplitBaeShellSearchField(
-                    controller: _searchController,
-                    hintText: l10n.billsSearchHint,
-                    autofocus: false,
-                    onChanged: _setSearch,
+                ),
+                const SizedBox(height: 0),
+                Expanded(
+                  child: filteredAsync.when(
+                    data: (filtered) {
+                      final all =
+                          billsAsync.valueOrNull ?? const <PostedBillSummary>[];
+                      return _TransactionsList(
+                        all: all,
+                        filtered: filtered,
+                        showHero: showHero,
+                      );
+                    },
+                    loading: () => _TransactionsLoadingSkeleton(),
+                    error: (e, _) => _TransactionsErrorState(message: '$e'),
                   ),
-                  const SizedBox(height: 12),
-                  _CategoryChipsRow(
-                    selected: category,
-                    onSelected: _setCategory,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 8),
-            Expanded(
-              child: filteredAsync.when(
-                data: (filtered) {
-                  final all = billsAsync.valueOrNull ?? const <PostedBillSummary>[];
-                  return _TransactionsList(
-                    all: all,
-                    filtered: filtered,
-                    showHero: showHero,
-                  );
-                },
-                loading: () => _TransactionsLoadingSkeleton(),
-                error: (e, _) => _TransactionsErrorState(message: '$e'),
-              ),
-            ),
-          ],
+                ),
+              ],
+            );
+          },
         ),
       ),
     );

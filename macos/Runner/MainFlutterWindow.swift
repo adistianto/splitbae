@@ -55,7 +55,13 @@ private final class SplitBaeFlutterHostViewController: NSViewController {
 }
 
 class MainFlutterWindow: NSWindow {
+  private var _didApplyMinSizeFix = false
+
   override func awakeFromNib() {
+    // Ensure the NSWindow is fully initialized from the nib (frame/rect, etc.)
+    // before we query it or apply any Flutter-specific configuration.
+    super.awakeFromNib()
+
     let flutterViewController = FlutterViewController()
 
     // FlutterView defaults to black; must clear before the view hierarchy loads for transparency.
@@ -71,12 +77,71 @@ class MainFlutterWindow: NSWindow {
     let host = SplitBaeFlutterHostViewController(flutterViewController: flutterViewController)
     contentViewController = host
 
-    let windowFrame = self.frame
-    self.setFrame(windowFrame, display: true)
+    // Keep the window from collapsing to an "empty" 1x1 size during
+    // initial AppKit layout (observed on debug startup).
+    let desiredSize = NSSize(width: 800, height: 600)
+    self.minSize = desiredSize
+
+    // Ensure the host view immediately matches the window content bounds.
+    // Without this, the host view can end up with a ~0x0 size, causing
+    // the window to collapse to {1,1} after AppKit layout.
+    if let cv = self.contentView {
+      host.view.frame = cv.bounds
+      host.view.autoresizingMask = [.width, .height]
+    }
+
+    // Log any resize after startup; we want to see when/why it collapses.
+    NotificationCenter.default.addObserver(
+      forName: NSWindow.didResizeNotification,
+      object: self,
+      queue: .main
+    ) { _ in
+      let contentBounds = self.contentView?.bounds ?? NSRect.zero
+
+      if !self._didApplyMinSizeFix,
+         contentBounds.size.width < 50,
+         contentBounds.size.height < 50 {
+        self._didApplyMinSizeFix = true
+        let screenFrame = (NSScreen.main ?? NSScreen.screens.first)?.visibleFrame
+        if let screenFrame {
+          let x = screenFrame.origin.x + (screenFrame.size.width - desiredSize.width) / 2
+          let y = screenFrame.origin.y + (screenFrame.size.height - desiredSize.height) / 2
+          // Schedule restore after the current AppKit resize/layout cycle.
+          // Doing it immediately inside didResize can get overridden back to {1,1}.
+          DispatchQueue.main.async {
+            self.setFrame(
+              NSRect(x: x, y: y, width: desiredSize.width, height: desiredSize.height),
+              display: true
+            )
+            self.setContentSize(desiredSize)
+            self.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            self.contentView?.layoutSubtreeIfNeeded()
+          }
+        }
+      }
+    }
+
+    // Center and ensure the window is on-screen.
+    // Our observed `self.frame` can end up as { {x, y}, {1,1} } on debug startup
+    // (invisible window). Force a reasonable window rect based on screen.
+    let screenFrame = (NSScreen.main ?? NSScreen.screens.first)?.visibleFrame
+    if let screenFrame {
+      let x = screenFrame.origin.x + (screenFrame.size.width - desiredSize.width) / 2
+      let y = screenFrame.origin.y + (screenFrame.size.height - desiredSize.height) / 2
+      self.setFrame(NSRect(x: x, y: y, width: desiredSize.width, height: desiredSize.height),
+                     display: true)
+      self.setContentSize(desiredSize)
+    }
+
+    self.center()
+    self.orderFrontRegardless()
+    self.makeKeyAndOrderFront(nil)
+    NSApp.activate(ignoringOtherApps: true)
+
+    // #endregion agent log
 
     RegisterGeneratedPlugins(registry: flutterViewController)
     AppDelegate.registerReceiptOcrChannel(controller: flutterViewController)
-
-    super.awakeFromNib()
   }
 }
